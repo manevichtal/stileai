@@ -22,34 +22,10 @@ function CodeBlock({ code, caption }: { code: string; caption?: string }) {
   );
 }
 
-function Step({ n, title, where, children, code }: { n: number; title: string; where: string; children: React.ReactNode; code?: React.ReactNode }) {
-  return (
-    <li className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 lg:gap-6">
-      <div className="flex gap-3">
-        <span className="flex-none w-7 h-7 rounded-full bg-bluedim text-blue font-sans font-bold text-[13px] flex items-center justify-center">{n}</span>
-        <div>
-          <div className="font-sans font-semibold text-[13.5px] text-ink">{title}</div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-blue mt-0.5">{where}</div>
-          <p className="font-mono text-[11.5px] text-ink2 leading-relaxed mt-1.5">{children}</p>
-        </div>
-      </div>
-      <div className="lg:pt-0 pl-10 lg:pl-0">{code}</div>
-    </li>
-  );
-}
-
-export function ConnectSection({ origin }: { origin: string }) {
-  const env = `# HTTP mode + point it at StileAI
-INTERLOCK_STORE=api
-INTERLOCK_TRANSPORT=http
-INTERLOCK_DASHBOARD_URL=${origin}
-INTERLOCK_API_KEY=<key from the API keys page>
-INTERLOCK_MCP_AUTH_TOKEN=<a long random secret>`;
-
-  const run = `pip install -r requirements.txt
+const RUN = `pip install -r requirements.txt
 python -m interlock.server   # serves the checkpoint at /mcp`;
 
-  const mcpConfig = `{
+const MCP_CONFIG = `{
   "mcpServers": {
     "stileai": {
       "url": "https://your-checkpoint-host/mcp",
@@ -60,7 +36,7 @@ python -m interlock.server   # serves the checkpoint at /mcp`;
   }
 }`;
 
-  const usage = `# Ask BEFORE doing anything sensitive
+const USAGE = `# Ask BEFORE doing anything sensitive
 decision = request_action(
     actor="agent:support-bot",
     action="payment.charge",
@@ -75,53 +51,126 @@ elif decision["effect"] == "deny":
 else:                                   # "require_approval"
     wait_for_human(decision["decision_id"])  # poll check_status`;
 
+export function ConnectSection({ origin }: { origin: string }) {
+  const env = `# HTTP mode + point it at StileAI
+INTERLOCK_STORE=api
+INTERLOCK_TRANSPORT=http
+INTERLOCK_DASHBOARD_URL=${origin}
+INTERLOCK_API_KEY=<key from the API keys page>
+INTERLOCK_MCP_AUTH_TOKEN=<a long random secret>`;
+
+  const steps = [
+    {
+      title: "Run the checkpoint",
+      where: "on your infrastructure or a host (Render, Railway, Fly)",
+      body: (
+        <>
+          The checkpoint pulls your policies from this dashboard and pushes its audit trail back — automatically, no
+          restarts when you edit rules. <Link href="/keys" className="text-blue hover:underline">Generate the API key →</Link>
+        </>
+      ),
+      code: (
+        <div className="flex flex-col gap-3">
+          <CodeBlock caption="start it in HTTP mode" code={RUN} />
+          <CodeBlock caption="configure it — add to a .env file beside the server, or your host's Environment settings" code={env} />
+        </div>
+      ),
+    },
+    {
+      title: "Point your agent at it",
+      where: "in your agent's MCP client config",
+      body: (
+        <>
+          Register the checkpoint URL and the bearer token your agents send. StileAI speaks the Model Context Protocol,
+          so Claude, Claude Code, or any MCP-compatible agent connects the same way.
+        </>
+      ),
+      code: <CodeBlock caption="e.g. claude_desktop_config.json — any MCP client takes the same URL + header" code={MCP_CONFIG} />,
+    },
+    {
+      title: "Ask before acting",
+      where: "in your agent's code / tool logic",
+      body: (
+        <>
+          Before any sensitive step, your agent calls <span className="text-ink font-medium">request_action</span> and gets
+          back <span className="text-blue">allow</span>, <span className="text-slate">deny</span>, or{" "}
+          <span className="text-ink3">require_approval</span> — every call is logged, and approvals wait for a human here.
+        </>
+      ),
+      code: <CodeBlock caption="call request_action, then honor the answer" code={USAGE} />,
+    },
+  ];
+
+  const [step, setStep] = useState(0);
+  const cur = steps[step];
+
   return (
     <section className="bg-card border border-line rounded-2xl p-6">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-blue"><Icon name="plug" size={18} /></span>
         <h2 className="font-sans font-bold text-[16px] text-ink tracking-[-0.01em]">Connect your checkpoint</h2>
       </div>
-      <p className="font-mono text-[12px] text-ink3 mb-6">
-        StileAI runs as a small server (the checkpoint) that your agents call before acting. Here&apos;s how to wire it up.
+      <p className="font-mono text-[12px] text-ink3 mb-5">
+        StileAI runs as a small server your agents call before acting. Three steps.
       </p>
 
-      <ol className="flex flex-col gap-7">
-        <Step
-          n={1}
-          title="Run the checkpoint"
-          where="on your infrastructure or a host (Render, Railway, Fly)"
-          code={
-            <div className="flex flex-col gap-3">
-              <CodeBlock caption="start it in HTTP mode" code={run} />
-              <CodeBlock caption="configure it — add to a .env file beside the server, or your host's Environment settings" code={env} />
+      {/* stepper */}
+      <div className="flex items-center gap-1 mb-5">
+        {steps.map((s, i) => {
+          const done = i < step;
+          const active = i === step;
+          return (
+            <div key={i} className="flex items-center gap-1 flex-1 last:flex-none">
+              <button onClick={() => setStep(i)} className="flex items-center gap-2 group">
+                <span
+                  className={`flex-none w-6 h-6 rounded-full flex items-center justify-center font-sans font-bold text-[11px] transition-colors ${
+                    active ? "bg-blue text-white" : done ? "bg-bluedim text-blue" : "bg-bg2 border border-line text-ink3 group-hover:text-ink"
+                  }`}
+                >
+                  {done ? <Icon name="check" size={13} /> : i + 1}
+                </span>
+                <span className={`font-sans text-[12px] whitespace-nowrap ${active ? "text-ink font-semibold" : "text-ink3 group-hover:text-ink2"}`}>
+                  {s.title}
+                </span>
+              </button>
+              {i < steps.length - 1 && <span className={`flex-1 h-px mx-2 ${done ? "bg-blue/40" : "bg-line"}`} />}
             </div>
-          }
-        >
-          The checkpoint pulls your policies from this dashboard and pushes its audit trail back — automatically, no
-          restarts when you edit rules. <Link href="/keys" className="text-blue hover:underline">Generate the API key →</Link>
-        </Step>
+          );
+        })}
+      </div>
 
-        <Step
-          n={2}
-          title="Point your agent at it"
-          where="in your agent's MCP client config"
-          code={<CodeBlock caption="e.g. claude_desktop_config.json — any MCP client takes the same URL + header" code={mcpConfig} />}
-        >
-          Register the checkpoint URL and the bearer token your agents must send. StileAI speaks the Model Context
-          Protocol, so Claude, Claude Code, or any MCP-compatible agent connects the same way.
-        </Step>
+      {/* active step */}
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 lg:gap-6 items-start">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-blue">{cur.where}</div>
+          <p className="font-mono text-[12px] text-ink2 leading-relaxed mt-2">{cur.body}</p>
+        </div>
+        <div>{cur.code}</div>
+      </div>
 
-        <Step
-          n={3}
-          title="Ask before acting"
-          where="in your agent's code / tool logic"
-          code={<CodeBlock caption="call request_action, then honor the answer" code={usage} />}
+      {/* nav */}
+      <div className="flex items-center justify-between mt-5 pt-4 border-t border-line">
+        <button
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          disabled={step === 0}
+          className="font-mono text-[11.5px] text-ink3 hover:text-ink disabled:opacity-40 disabled:hover:text-ink3"
         >
-          Before any sensitive step, your agent calls <span className="text-ink font-medium">request_action</span> and gets
-          back <span className="text-blue">allow</span>, <span className="text-slate">deny</span>, or{" "}
-          <span className="text-ink3">require_approval</span> — every call is logged, and approvals wait for a human here in the dashboard.
-        </Step>
-      </ol>
+          ← Back
+        </button>
+        <span className="font-mono text-[10.5px] text-ink4">Step {step + 1} of {steps.length}</span>
+        {step < steps.length - 1 ? (
+          <button
+            onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
+            className="bg-blue text-white font-sans font-semibold text-[12px] rounded-xl px-4 py-2 hover:opacity-90"
+          >
+            Next →
+          </button>
+        ) : (
+          <Link href="/keys" className="bg-blue text-white font-sans font-semibold text-[12px] rounded-xl px-4 py-2 hover:opacity-90">
+            Get your API key →
+          </Link>
+        )}
+      </div>
     </section>
   );
 }
