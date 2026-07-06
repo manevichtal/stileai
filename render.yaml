@@ -1,0 +1,24 @@
+# Render Blueprint for the StileAI MCP checkpoint server.
+# Create it via Render → New → Blueprint → connect this repo. Everything below is
+# pre-filled; you only set the secret INTERLOCK_API_KEY (generated in the dashboard).
+services:
+  - type: web
+    name: stileai-mcp
+    runtime: python
+    rootDir: interlock-mcp
+    plan: free                       # free tier sleeps after 15 min idle; upgrade before real use
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m interlock.server
+    envVars:
+      - key: INTERLOCK_STORE
+        value: api
+      - key: INTERLOCK_TRANSPORT
+        value: http
+      - key: INTERLOCK_DASHBOARD_URL
+        value: https://stileai.vercel.app
+      - key: INTERLOCK_UNAVAILABLE_EFFECT
+        value: deny                  # fail-safe: never allow when the dashboard is unreachable
+      - key: INTERLOCK_API_KEY
+        sync: false                  # secret — set in the Render dashboard, not in git
+      - key: PYTHON_VERSION
+        value: "3.12.6"

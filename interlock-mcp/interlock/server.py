@@ -284,6 +284,12 @@ def guarded_delete_record(actor: str, table: str, record_id: str
 
 def main() -> None:
     if cfg.transport in ("http", "streamable-http", "streamable_http"):
+        # Bind to the host/port the hosting platform provides. Render, Railway,
+        # and Fly.io inject $PORT and expect the service to listen on 0.0.0.0.
+        # (This only affects where the HTTP server binds — not policy logic.)
+        import os
+        mcp.settings.host = os.environ.get("HOST", "0.0.0.0")
+        mcp.settings.port = int(os.environ.get("PORT", str(mcp.settings.port)))
         mcp.run(transport="streamable-http")
     else:
         mcp.run()  # stdio (default) — used by Claude Desktop
