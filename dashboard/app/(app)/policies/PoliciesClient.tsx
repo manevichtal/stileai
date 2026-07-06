@@ -47,7 +47,7 @@ export function PoliciesClient({
   const [tab, setTab] = useState<"rules" | "library">(initialTab);
 
   return (
-    <div className="px-8 pb-8 flex flex-col gap-5 max-w-[1000px]">
+    <div className={`px-8 pb-8 flex flex-col gap-5 ${tab === "library" ? "max-w-[1460px]" : "max-w-[1000px]"}`}>
       <div className="flex gap-6 border-b border-line">
         {([["rules", "Your policies"], ["library", "Policy library"]] as const).map(([k, label]) => (
           <button
@@ -317,7 +317,7 @@ function PolicyLibrary({ existingIds, onChanged }: { existingIds: Set<string>; o
         Turn on a ready-made set of rules. Each pack maps to real controls; enabling one adds its
         policies to yours, which you can then edit or disable individually under <span className="text-ink2">Your policies</span>.
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {POLICY_PACKS.map((pack) => (
           <PackCard key={pack.key} pack={pack} existingIds={existingIds} onChanged={onChanged} />
         ))}
