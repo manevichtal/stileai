@@ -1,7 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
 import { RecentActivity, type Decision } from "@/components/dashboard/RecentActivity";
+import { ConnectSection } from "@/components/dashboard/ConnectSection";
 import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +12,11 @@ export const dynamic = "force-dynamic";
 export default async function OverviewPage() {
   const ctx = await requireProfileContext();
   const supabase = await createClient();
+
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const origin = `${proto}://${host}`;
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -49,23 +57,29 @@ export default async function OverviewPage() {
   const name = greetName(ctx.email, ctx.orgName);
 
   return (
-    <div className="p-6 lg:p-7 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 lg:gap-6 max-w-[1240px]">
-      {/* Left column */}
-      <div className="flex flex-col gap-5">
-        <Hero name={name} orgName={ctx.orgName} />
-        <StatusCard pending={pendingCount ?? 0} policies={policyCount ?? 0} />
-        <RecentActivity decisions={(recent ?? []) as Decision[]} />
+    <div className="p-6 lg:p-7 flex flex-col gap-5 lg:gap-6 max-w-[1280px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 lg:gap-6">
+        {/* Left column */}
+        <div className="flex flex-col gap-5">
+          <Hero name={name} orgName={ctx.orgName} />
+          <StatusCard pending={pendingCount ?? 0} policies={policyCount ?? 0} />
+          <RecentActivity decisions={(recent ?? []) as Decision[]} />
+        </div>
+
+        {/* Right column */}
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 gap-4">
+            <StatTile value={todayCount ?? 0} label="Decisions today" />
+            <StatTile value={pendingCount ?? 0} label="Awaiting approval" accent={(pendingCount ?? 0) > 0} />
+          </div>
+          <StatsCard days={days} deniedToday={deniedToday ?? 0} policies={policyCount ?? 0} />
+          <PromoCard />
+        </div>
       </div>
 
-      {/* Right column */}
-      <div className="flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-4">
-          <StatTile value={todayCount ?? 0} label="Decisions today" />
-          <StatTile value={pendingCount ?? 0} label="Awaiting approval" accent={(pendingCount ?? 0) > 0} />
-        </div>
-        <StatsCard days={days} deniedToday={deniedToday ?? 0} policies={policyCount ?? 0} />
-        <PromoCard />
-      </div>
+      {/* Full-width guidance */}
+      <ConnectSection origin={origin} />
+      <Integrations />
     </div>
   );
 }
@@ -80,8 +94,8 @@ function greetName(email: string | null, org: string): string {
 
 function Hero({ name, orgName }: { name: string; orgName: string }) {
   return (
-    <section className="relative overflow-hidden bg-card border border-line rounded-2xl px-6 py-6">
-      <div className="relative z-10 max-w-[62%]">
+    <section className="relative overflow-hidden bg-card border border-line rounded-2xl px-6 py-6 flex items-center gap-5">
+      <div className="flex-1 min-w-0">
         <h1 className="font-sans font-extrabold text-[26px] tracking-[-0.03em] text-ink leading-tight">
           Welcome back, {name}
         </h1>
@@ -90,17 +104,10 @@ function Hero({ name, orgName }: { name: string; orgName: string }) {
           <span className="text-ink2 font-medium">{orgName || "your organization"}</span>.
         </p>
       </div>
-      {/* signature: an abstract "checkpoint" gate motif */}
-      <svg className="absolute right-4 top-1/2 -translate-y-1/2 opacity-90 hidden sm:block" width="150" height="120" viewBox="0 0 150 120" fill="none" aria-hidden>
-        <rect x="1" y="1" width="148" height="118" rx="14" fill="var(--bluedim)" />
-        <g stroke="var(--blue)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M48 44V34a10 10 0 0 1 10-10h6" />
-          <path d="M86 24h6a10 10 0 0 1 10 10v10" />
-          <path d="M102 76v10a10 10 0 0 1-10 10h-6" />
-          <path d="M64 96h-6a10 10 0 0 1-10-10V76" />
-        </g>
-        <rect x="60" y="46" width="30" height="28" rx="6" transform="rotate(45 75 60)" fill="var(--blue)" />
-      </svg>
+      {/* branded tile using the StileAI wordmark */}
+      <div className="hidden sm:flex flex-none items-center justify-center w-[168px] h-[92px] rounded-xl bg-rail">
+        <Image src="/brandmark.png" alt="StileAI" width={116} height={33} className="h-[26px] w-auto opacity-95" />
+      </div>
     </section>
   );
 }
@@ -198,6 +205,60 @@ function PromoCard() {
         <Link href="/policies?tab=library" className="inline-block mt-3 bg-white text-ink font-sans font-semibold text-[12px] rounded-xl px-3.5 py-2 hover:opacity-90">
           Browse the library
         </Link>
+      </div>
+    </section>
+  );
+}
+
+const AGENTS = [
+  { name: "Model Context Protocol", icon: "plug" },
+  { name: "Anthropic Claude", icon: "spark" },
+  { name: "OpenAI", icon: "spark" },
+  { name: "LangChain", icon: "code" },
+  { name: "LlamaIndex", icon: "code" },
+  { name: "Custom agents", icon: "bolt" },
+];
+const SYSTEMS = [
+  { name: "Databases", icon: "database" },
+  { name: "Email", icon: "mail" },
+  { name: "Payments", icon: "payment" },
+  { name: "Slack", icon: "chat" },
+  { name: "Cloud APIs", icon: "cloud" },
+  { name: "Internal tools", icon: "server" },
+];
+
+function Chip({ name, icon }: { name: string; icon: string }) {
+  return (
+    <span className="flex items-center gap-2 bg-bg2 border border-line rounded-xl px-3 py-2 font-sans text-[12.5px] text-ink2">
+      <span className="text-ink3"><Icon name={icon} size={16} /></span>
+      {name}
+    </span>
+  );
+}
+
+function Integrations() {
+  return (
+    <section className="bg-card border border-line rounded-2xl p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-blue"><Icon name="spark" size={18} /></span>
+        <h2 className="font-sans font-bold text-[16px] text-ink tracking-[-0.01em]">Works with your stack</h2>
+      </div>
+      <p className="font-mono text-[12px] text-ink3 mb-5">
+        StileAI speaks the Model Context Protocol, so it drops in front of any agent — and governs whatever those agents reach.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink4 mb-2.5">Any AI agent</div>
+          <div className="flex flex-wrap gap-2">
+            {AGENTS.map((a) => <Chip key={a.name} {...a} />)}
+          </div>
+        </div>
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink4 mb-2.5">Any system they touch</div>
+          <div className="flex flex-wrap gap-2">
+            {SYSTEMS.map((s) => <Chip key={s.name} {...s} />)}
+          </div>
+        </div>
       </div>
     </section>
   );

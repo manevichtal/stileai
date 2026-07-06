@@ -38,6 +38,22 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
       return <svg {...common}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></svg>;
     case "bolt":
       return <svg {...common}><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" /></svg>;
+    case "plug":
+      return <svg {...common}><path d="M12 22v-5" /><path d="M9 7V2M15 7V2" /><path d="M7 7h10v4a5 5 0 0 1-10 0z" /></svg>;
+    case "spark":
+      return <svg {...common}><path d="M12 3v4M12 17v4M3 12h4M17 12h4" /><path d="m6.3 6.3 2.4 2.4M15.3 15.3l2.4 2.4M17.7 6.3l-2.4 2.4M8.7 15.3l-2.4 2.4" /></svg>;
+    case "cloud":
+      return <svg {...common}><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.98A6 6 0 0 0 6.3 11 4 4 0 0 0 7 19h10.5Z" /></svg>;
+    case "chat":
+      return <svg {...common}><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z" /></svg>;
+    case "server":
+      return <svg {...common}><rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="13" width="18" height="7" rx="2" /><path d="M7 7.5h.01M7 16.5h.01" /></svg>;
+    case "code":
+      return <svg {...common}><path d="m16 18 4-4-4-4M8 6l-4 4 4 4M13 4l-2 16" /></svg>;
+    case "copy":
+      return <svg {...common}><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
+    case "check":
+      return <svg {...common}><path d="M20 6 9 17l-5-5" /></svg>;
     default:
       return <svg {...common}><circle cx="12" cy="12" r="9" /></svg>;
   }
