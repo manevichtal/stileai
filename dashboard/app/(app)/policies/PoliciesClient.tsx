@@ -7,9 +7,11 @@ import {
   savePolicy,
   deletePolicy,
   updateDefaults,
+  addPack,
   type PolicyInput,
   type Condition,
 } from "./actions";
+import { POLICY_PACKS, type PolicyPack } from "@/lib/policyTemplates";
 
 const OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "regex", "exists"];
 const EFFECTS = ["allow", "deny", "require_approval"];
@@ -31,16 +33,68 @@ export function PoliciesClient({
   policies,
   defaultEffect,
   defaultReason,
+  existingIds,
+  initialTab = "rules",
 }: {
   policies: PolicyInput[];
   defaultEffect: string;
   defaultReason: string;
+  existingIds: string[];
+  initialTab?: "rules" | "library";
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<PolicyInput | null>(null);
+  const [tab, setTab] = useState<"rules" | "library">(initialTab);
 
   return (
-    <div className="p-7 flex flex-col gap-6 max-w-[960px]">
+    <div className="px-8 pb-8 flex flex-col gap-5 max-w-[1000px]">
+      <div className="flex gap-6 border-b border-line">
+        {([["rules", "Your policies"], ["library", "Policy library"]] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setTab(k)}
+            className={`pb-2.5 -mb-px font-sans text-[13px] border-b-2 transition-colors ${
+              tab === k ? "text-ink font-semibold border-blue" : "text-ink3 border-transparent hover:text-ink2"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "library" ? (
+        <PolicyLibrary existingIds={new Set(existingIds)} onChanged={() => router.refresh()} />
+      ) : (
+        <RulesTab
+          policies={policies}
+          defaultEffect={defaultEffect}
+          defaultReason={defaultReason}
+          editing={editing}
+          setEditing={setEditing}
+          router={router}
+        />
+      )}
+    </div>
+  );
+}
+
+function RulesTab({
+  policies,
+  defaultEffect,
+  defaultReason,
+  editing,
+  setEditing,
+  router,
+}: {
+  policies: PolicyInput[];
+  defaultEffect: string;
+  defaultReason: string;
+  editing: PolicyInput | null;
+  setEditing: (p: PolicyInput | null) => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
       <DefaultsBar
         defaultEffect={defaultEffect}
         defaultReason={defaultReason}
@@ -253,5 +307,88 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
       <span className={labelCls()}>{label}{hint && <span className="text-ink4 font-normal"> — {hint}</span>}</span>
       {children}
     </label>
+  );
+}
+
+function PolicyLibrary({ existingIds, onChanged }: { existingIds: Set<string>; onChanged: () => void }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="font-mono text-[12px] text-ink3 max-w-[640px]">
+        Turn on a ready-made set of rules. Each pack maps to real controls; enabling one adds its
+        policies to yours, which you can then edit or disable individually under <span className="text-ink2">Your policies</span>.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {POLICY_PACKS.map((pack) => (
+          <PackCard key={pack.key} pack={pack} existingIds={existingIds} onChanged={onChanged} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existingIds: Set<string>; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const addedCount = pack.templates.filter((t) => existingIds.has(t.policy_id)).length;
+  const fullyAdded = addedCount === pack.templates.length;
+
+  async function add() {
+    setBusy(true);
+    await addPack(pack.key);
+    setBusy(false);
+    onChanged();
+  }
+
+  return (
+    <div className={`border rounded-2xl bg-card p-5 flex flex-col ${pack.recommended ? "border-blue/40" : "border-line"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-sans font-bold text-[15px] text-ink">{pack.name}</h3>
+            {pack.recommended && (
+              <span className="font-mono text-[9.5px] uppercase tracking-wide text-blue bg-bluedim border border-blue/30 rounded px-1.5 py-0.5">
+                Recommended
+              </span>
+            )}
+          </div>
+          <div className="font-mono text-[10.5px] text-ink3 mt-0.5">{pack.framework}</div>
+        </div>
+        <span className="font-mono text-[10.5px] text-ink3 whitespace-nowrap">{pack.templates.length} rules</span>
+      </div>
+
+      <p className="font-mono text-[11.5px] text-ink2 leading-relaxed mt-2.5">{pack.blurb}</p>
+
+      <button onClick={() => setOpen((o) => !o)} className="self-start font-mono text-[11px] text-blue hover:underline mt-2.5">
+        {open ? "Hide rules" : "What it adds"}
+      </button>
+      {open && (
+        <ul className="mt-2 flex flex-col gap-1.5 border-t border-line pt-2.5">
+          {pack.templates.map((t) => (
+            <li key={t.policy_id} className="flex items-start gap-2">
+              <span className="mt-[3px]"><EffectBadge effect={t.effect} /></span>
+              <div className="min-w-0">
+                <div className="font-mono text-[11px] text-ink2">{t.description}</div>
+                {t.control && <div className="font-mono text-[10px] text-ink4">{t.control}</div>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
+        <span className="font-mono text-[10.5px] text-ink3">
+          {addedCount > 0 ? `${addedCount}/${pack.templates.length} enabled` : "not enabled"}
+        </span>
+        <button
+          onClick={add}
+          disabled={busy}
+          className={`font-sans font-semibold text-[12px] rounded-xl px-4 py-2 transition-colors disabled:opacity-50 ${
+            fullyAdded ? "bg-bg2 border border-line text-ink2 hover:bg-bg3" : "bg-blue text-white hover:opacity-90"
+          }`}
+        >
+          {busy ? "Adding…" : fullyAdded ? "Re-apply" : addedCount > 0 ? "Add the rest" : "Add pack"}
+        </button>
+      </div>
+    </div>
   );
 }

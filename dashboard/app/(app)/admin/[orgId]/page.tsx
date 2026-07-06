@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { EffectBadge, StatusBadge } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +35,7 @@ export default async function AdminOrgPage({
     ]);
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin>
+    <>
       <PageHeader
         title={org.name}
         subtitle={`Tenant detail (read-only) · default effect: ${settings?.default_effect ?? "require_approval"}`}
@@ -120,7 +120,7 @@ export default async function AdminOrgPage({
           </div>
         </Section>
       </div>
-    </AppShell>
+    </>
   );
 }
 

@@ -20,6 +20,12 @@
   --ok: #1953f0;
   --warn: #9197a1;
   --bad: #181b1e;
+  /* dark sidebar rail */
+  --rail: #0e1013;
+  --railink: #c7cbd1;
+  --railhov: rgba(255, 255, 255, 0.07);
+  --railicon: #868d97;
+  --railmut: #6b7280;
 }
 
 @theme inline {
@@ -36,6 +42,11 @@
   --color-blue: var(--blue);
   --color-blue2: var(--blue2);
   --color-bluedim: var(--bluedim);
+  --color-rail: var(--rail);
+  --color-railink: var(--railink);
+  --color-railhov: var(--railhov);
+  --color-railicon: var(--railicon);
+  --color-railmut: var(--railmut);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }

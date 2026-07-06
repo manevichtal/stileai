@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +54,7 @@ export default async function AdminOverviewPage() {
   const totalPending = [...pending.values()].reduce((a, b) => a + b, 0);
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin>
+    <>
       <PageHeader
         title="All tenants"
         subtitle="Platform-owner view across every organization. Read-only."
@@ -101,7 +101,7 @@ export default async function AdminOverviewPage() {
           This view is limited to the {platformNote()}. Tenant admins never see other tenants — only you, the platform owner, see this page.
         </p>
       </div>
-    </AppShell>
+    </>
   );
 }
 

@@ -1,6 +1,6 @@
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { ApprovalsClient, type Approval } from "./ApprovalsClient";
 
 export const dynamic = "force-dynamic";
@@ -26,12 +26,12 @@ export default async function ApprovalsPage() {
   ]);
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
+    <>
       <PageHeader title="Approvals" subtitle="Decisions your policies routed to a human." />
       <ApprovalsClient
         pending={(pending ?? []) as Approval[]}
         recent={(recent ?? []) as Approval[]}
       />
-    </AppShell>
+    </>
   );
 }

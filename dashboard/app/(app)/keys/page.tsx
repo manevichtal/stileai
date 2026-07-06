@@ -1,6 +1,6 @@
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { KeysClient, type KeyRow } from "./KeysClient";
 
 export const dynamic = "force-dynamic";
@@ -16,12 +16,12 @@ export default async function KeysPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
+    <>
       <PageHeader
         title="API keys"
         subtitle="Keys your checkpoint uses to authenticate to this dashboard."
       />
       <KeysClient keys={(keys ?? []) as KeyRow[]} />
-    </AppShell>
+    </>
   );
 }

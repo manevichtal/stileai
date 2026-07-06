@@ -3,7 +3,13 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export function SignOutButton() {
+export function SignOutButton({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: React.ReactNode;
+}) {
   const router = useRouter();
   async function signOut() {
     await createClient().auth.signOut();
@@ -13,9 +19,12 @@ export function SignOutButton() {
   return (
     <button
       onClick={signOut}
-      className="font-mono text-[11.5px] text-ink3 hover:text-slate transition-colors"
+      className={
+        className ??
+        "font-mono text-[11.5px] text-ink3 hover:text-slate transition-colors"
+      }
     >
-      Sign out
+      {children ?? "Sign out"}
     </button>
   );
 }

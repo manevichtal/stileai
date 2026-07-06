@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileContext } from "@/lib/getProfile";
+import { packByKey } from "@/lib/policyTemplates";
 
 export type Condition = { field: string; op: string; value: unknown };
 export type PolicyInput = {
@@ -90,6 +91,39 @@ export async function deletePolicy(id: string): Promise<Result> {
   if (error) return { ok: false, error: error.message };
   revalidatePath("/policies");
   return { ok: true };
+}
+
+// Enable a whole policy pack (compliance or recommended). Upserts every template
+// in the pack for the org, so it's idempotent and re-adding just refreshes them.
+export async function addPack(packKey: string): Promise<Result & { added?: number }> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const pack = packByKey(packKey);
+  if (!pack) return { ok: false, error: "Unknown pack." };
+
+  const supabase = await createClient();
+  const rows = pack.templates.map((t) => ({
+    org_id: ctx.orgId,
+    policy_id: t.policy_id,
+    effect: t.effect,
+    priority: t.priority,
+    actor: t.actor ?? "*",
+    action: t.action,
+    resource: t.resource ?? "*",
+    conditions: t.conditions ?? [],
+    approvals_required: t.approvals_required ?? 1,
+    description: t.description,
+    enabled: true,
+  }));
+
+  const { error } = await supabase
+    .from("policies")
+    .upsert(rows, { onConflict: "org_id,policy_id" });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/policies");
+  revalidatePath("/");
+  return { ok: true, added: rows.length };
 }
 
 export async function updateDefaults(

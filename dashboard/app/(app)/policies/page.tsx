@@ -1,13 +1,18 @@
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { PoliciesClient } from "./PoliciesClient";
 import type { PolicyInput } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function PoliciesPage() {
+export default async function PoliciesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const ctx = await requireProfileContext();
+  const { tab } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: rows }, { data: settings }] = await Promise.all([
@@ -38,7 +43,7 @@ export default async function PoliciesPage() {
   }));
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
+    <>
       <PageHeader
         title="Policies"
         subtitle="The rules your AI agents must clear before acting."
@@ -47,7 +52,9 @@ export default async function PoliciesPage() {
         policies={policies}
         defaultEffect={settings?.default_effect ?? "require_approval"}
         defaultReason={settings?.default_reason ?? "No policy matched — defaulting to human approval."}
+        existingIds={policies.map((p) => p.policy_id)}
+        initialTab={tab === "library" ? "library" : "rules"}
       />
-    </AppShell>
+    </>
   );
 }

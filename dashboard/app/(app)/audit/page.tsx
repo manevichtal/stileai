@@ -1,6 +1,6 @@
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { EffectBadge, StatusBadge, Empty } from "@/components/ui";
 import { AuditFilters } from "./AuditFilters";
 
@@ -28,7 +28,7 @@ export default async function AuditPage({
   const { data: rows } = await q;
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
+    <>
       <PageHeader title="Audit log" subtitle="Every decision the checkpoint has made. Secrets are redacted." />
       <div className="p-7 flex flex-col gap-4 max-w-[1000px]">
         <AuditFilters />
@@ -63,6 +63,6 @@ export default async function AuditPage({
           <p className="font-mono text-[11px] text-ink4">Showing the most recent 200 entries. Narrow with the filters above.</p>
         )}
       </div>
-    </AppShell>
+    </>
   );
 }
