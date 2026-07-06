@@ -57,10 +57,10 @@ export default async function OverviewPage() {
   const name = greetName(ctx.email, ctx.orgName);
 
   return (
-    <div className="p-6 lg:p-7">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-5 lg:gap-6">
+    <div className="p-5 lg:p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-4 lg:gap-5">
         {/* Left column */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           <Hero name={name} orgName={ctx.orgName} />
           <StatusCard pending={pendingCount ?? 0} policies={policyCount ?? 0} />
           <RecentActivity decisions={(recent ?? []) as Decision[]} />
@@ -68,7 +68,7 @@ export default async function OverviewPage() {
         </div>
 
         {/* Right column */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
             <StatTile value={todayCount ?? 0} label="Decisions today" />
             <StatTile value={pendingCount ?? 0} label="Awaiting approval" accent={(pendingCount ?? 0) > 0} />
@@ -92,19 +92,19 @@ function greetName(email: string | null, org: string): string {
 
 function Hero({ name, orgName }: { name: string; orgName: string }) {
   return (
-    <section className="relative overflow-hidden bg-card border border-line rounded-2xl px-6 py-6 flex items-center gap-5">
+    <section className="relative overflow-hidden bg-card border border-line rounded-2xl px-5 py-4 flex items-center gap-5">
       <div className="flex-1 min-w-0">
-        <h1 className="font-sans font-extrabold text-[26px] tracking-[-0.03em] text-ink leading-tight">
+        <h1 className="font-sans font-extrabold text-[23px] tracking-[-0.03em] text-ink leading-tight">
           Welcome back, {name}
         </h1>
-        <p className="font-mono text-[12.5px] text-ink3 mt-1.5">
+        <p className="font-mono text-[12px] text-ink3 mt-1">
           Here&apos;s what your checkpoint has been guarding at{" "}
           <span className="text-ink2 font-medium">{orgName || "your organization"}</span>.
         </p>
       </div>
       {/* branded tile using the StileAI wordmark */}
-      <div className="hidden sm:flex flex-none items-center justify-center w-[168px] h-[92px] rounded-xl bg-rail">
-        <Image src="/brandmark.png" alt="StileAI" width={116} height={33} className="h-[26px] w-auto opacity-95" />
+      <div className="hidden sm:flex flex-none items-center justify-center w-[150px] h-[68px] rounded-xl bg-rail">
+        <Image src="/brandmark.png" alt="StileAI" width={104} height={30} className="h-[23px] w-auto opacity-95" />
       </div>
     </section>
   );
@@ -156,12 +156,12 @@ function StatsCard({ days, deniedToday, policies }: { days: { label: string; val
   const area = `${padL},${padT + innerH} ${line} ${padL + innerW},${padT + innerH}`;
 
   return (
-    <section className="bg-card border border-line rounded-2xl p-5">
+    <section className="bg-card border border-line rounded-2xl p-4">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Decisions this week</h2>
-        <span className="font-mono text-[10.5px] text-ink3 bg-bg2 border border-line rounded-md px-2 py-0.5">7 days</span>
+        <h2 className="font-sans font-bold text-[14px] text-ink tracking-[-0.01em]">Decisions this week</h2>
+        <span className="font-mono text-[10px] text-ink3 bg-bg2 border border-line rounded-md px-2 py-0.5">7 days</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[118px]" preserveAspectRatio="none" role="img" aria-label="Decisions per day">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[92px]" preserveAspectRatio="none" role="img" aria-label="Decisions per day">
         <polygon points={area} fill="var(--bluedim)" />
         <polyline points={line} fill="none" stroke="var(--blue)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
         {pts.map((p, i) => (
@@ -171,7 +171,7 @@ function StatsCard({ days, deniedToday, policies }: { days: { label: string; val
           </g>
         ))}
       </svg>
-      <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-line">
+      <div className="grid grid-cols-2 gap-3 mt-2 pt-2.5 border-t border-line">
         <MiniStat value={days.reduce((a, b) => a + b.value, 0)} label="this week" />
         <MiniStat value={deniedToday} label="denied today" />
       </div>
@@ -190,7 +190,7 @@ function MiniStat({ value, label }: { value: number; label: string }) {
 
 function PromoCard() {
   return (
-    <section className="rounded-2xl bg-rail text-white p-5 overflow-hidden relative">
+    <section className="rounded-2xl bg-rail text-white p-4 overflow-hidden relative">
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2 text-blue2">
           <Icon name="policies" size={18} />
@@ -227,8 +227,8 @@ const SYSTEMS = [
 
 function Chip({ name, icon }: { name: string; icon: string }) {
   return (
-    <span className="flex items-center gap-2 bg-bg2 border border-line rounded-xl px-3 py-2 font-sans text-[12.5px] text-ink2">
-      <span className="text-ink3"><Icon name={icon} size={16} /></span>
+    <span className="flex items-center gap-1.5 bg-bg2 border border-line rounded-lg px-2.5 py-1.5 font-sans text-[11.5px] text-ink2">
+      <span className="text-ink3"><Icon name={icon} size={14} /></span>
       {name}
     </span>
   );
@@ -236,24 +236,21 @@ function Chip({ name, icon }: { name: string; icon: string }) {
 
 function Integrations() {
   return (
-    <section className="bg-card border border-line rounded-2xl p-6">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-blue"><Icon name="spark" size={18} /></span>
-        <h2 className="font-sans font-bold text-[16px] text-ink tracking-[-0.01em]">Works with your stack</h2>
+    <section className="bg-card border border-line rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-blue"><Icon name="spark" size={16} /></span>
+        <h2 className="font-sans font-bold text-[14px] text-ink tracking-[-0.01em]">Works with your stack</h2>
       </div>
-      <p className="font-mono text-[12px] text-ink3 mb-5">
-        StileAI speaks the Model Context Protocol, so it drops in front of any agent — and governs whatever those agents reach.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-col gap-3">
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink4 mb-2.5">Any AI agent</div>
-          <div className="flex flex-wrap gap-2">
+          <div className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink4 mb-2">Any AI agent</div>
+          <div className="flex flex-wrap gap-1.5">
             {AGENTS.map((a) => <Chip key={a.name} {...a} />)}
           </div>
         </div>
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink4 mb-2.5">Any system they touch</div>
-          <div className="flex flex-wrap gap-2">
+          <div className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink4 mb-2">Any system they touch</div>
+          <div className="flex flex-wrap gap-1.5">
             {SYSTEMS.map((s) => <Chip key={s.name} {...s} />)}
           </div>
         </div>

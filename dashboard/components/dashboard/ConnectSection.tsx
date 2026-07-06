@@ -10,7 +10,7 @@ function CodeBlock({ code, caption }: { code: string; caption?: string }) {
     <div>
       {caption && <div className="font-mono text-[10px] text-ink4 mb-1.5">{caption}</div>}
       <div className="relative">
-        <pre className="font-mono text-[11px] leading-relaxed text-railink bg-rail rounded-xl p-3.5 pr-16 overflow-x-auto whitespace-pre">{code}</pre>
+        <pre className="font-mono text-[11px] leading-relaxed text-railink bg-rail rounded-xl p-3.5 pr-16 overflow-auto max-h-[164px] whitespace-pre">{code}</pre>
         <button
           onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
           className="absolute top-2.5 right-2.5 flex items-center gap-1.5 font-mono text-[10px] text-railink bg-railhov hover:bg-white/10 rounded-md px-2 py-1"
@@ -105,17 +105,14 @@ INTERLOCK_MCP_AUTH_TOKEN=<a long random secret>`;
   const cur = steps[step];
 
   return (
-    <section className="bg-card border border-line rounded-2xl p-6">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-blue"><Icon name="plug" size={18} /></span>
-        <h2 className="font-sans font-bold text-[16px] text-ink tracking-[-0.01em]">Connect your checkpoint</h2>
+    <section className="bg-card border border-line rounded-2xl p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-blue"><Icon name="plug" size={17} /></span>
+        <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Connect your checkpoint</h2>
       </div>
-      <p className="font-mono text-[12px] text-ink3 mb-5">
-        StileAI runs as a small server your agents call before acting. Three steps.
-      </p>
 
       {/* stepper */}
-      <div className="flex items-center gap-1 mb-5">
+      <div className="flex items-center gap-1 mb-4">
         {steps.map((s, i) => {
           const done = i < step;
           const active = i === step;
@@ -149,7 +146,7 @@ INTERLOCK_MCP_AUTH_TOKEN=<a long random secret>`;
       </div>
 
       {/* nav */}
-      <div className="flex items-center justify-between mt-5 pt-4 border-t border-line">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-line">
         <button
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}

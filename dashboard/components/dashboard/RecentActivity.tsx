@@ -44,9 +44,9 @@ export function RecentActivity({ decisions }: { decisions: Decision[] }) {
   const rows = decisions.filter((d) => (tab === "all" ? true : d.effect === tab));
 
   return (
-    <section className="bg-card border border-line rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-sans font-bold text-[16px] text-ink tracking-[-0.01em]">Recent activity</h2>
+    <section className="bg-card border border-line rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Recent activity</h2>
         <Link href="/audit" className="font-mono text-[11.5px] text-blue hover:underline">View all →</Link>
       </div>
 
@@ -72,8 +72,8 @@ export function RecentActivity({ decisions }: { decisions: Decision[] }) {
             No activity here yet. Decisions from your checkpoint will appear as they happen.
           </div>
         )}
-        {rows.slice(0, 7).map((d) => (
-          <div key={d.decision_id + d.ts} className="flex items-center gap-3.5 py-3 border-b border-line last:border-0">
+        {rows.slice(0, 4).map((d) => (
+          <div key={d.decision_id + d.ts} className="flex items-center gap-3.5 py-2.5 border-b border-line last:border-0">
             <div className="w-9 h-9 flex-none rounded-xl bg-bg2 border border-line flex items-center justify-center text-ink2">
               <Icon name={actionIcon(d.action)} size={17} />
             </div>
