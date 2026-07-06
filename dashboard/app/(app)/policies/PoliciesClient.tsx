@@ -47,7 +47,7 @@ export function PoliciesClient({
   const [tab, setTab] = useState<"rules" | "library">(initialTab);
 
   return (
-    <div className={`px-8 pb-8 flex flex-col gap-5 ${tab === "library" ? "max-w-[1460px]" : "max-w-[1000px]"}`}>
+    <div className={`px-8 pb-8 flex flex-col gap-5 ${tab === "library" ? "w-full" : "max-w-[1000px]"}`}>
       <div className="flex gap-6 border-b border-line">
         {([["rules", "Your policies"], ["library", "Policy library"]] as const).map(([k, label]) => (
           <button
@@ -340,7 +340,7 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
   }
 
   return (
-    <div className={`border rounded-2xl bg-card p-5 flex flex-col ${pack.recommended ? "border-blue/40" : "border-line"}`}>
+    <div className={`border rounded-2xl bg-card p-5 flex flex-col h-full ${pack.recommended ? "border-blue/40" : "border-line"}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -375,7 +375,7 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
         </ul>
       )}
 
-      <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
+      <div className="mt-auto pt-4 border-t border-line flex items-center justify-between">
         <span className="font-mono text-[10.5px] text-ink3">
           {addedCount > 0 ? `${addedCount}/${pack.templates.length} enabled` : "not enabled"}
         </span>
