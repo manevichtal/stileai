@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/AppShell";
+import { DeployCard } from "@/components/dashboard/DeployCard";
 import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +95,9 @@ export default async function GuidePage() {
             <Piece icon="approvals" title="Approvals" body="Decisions that need a human wait here for your yes or no." href="/approvals" />
           </div>
         </section>
+
+        {/* Deploy */}
+        <DeployCard />
 
         {/* Checklist */}
         <section className="bg-card border border-line rounded-2xl p-6">

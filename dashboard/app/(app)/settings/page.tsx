@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" subtitle="Your organization and how to connect a checkpoint." />
-      <SettingsClient orgName={ctx.orgName} origin={origin} />
+      <SettingsClient orgName={ctx.orgName} origin={origin} checkpointUrl={ctx.checkpointUrl} />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
 import { RecentActivity, type Decision } from "@/components/dashboard/RecentActivity";
@@ -12,11 +11,6 @@ export const dynamic = "force-dynamic";
 export default async function OverviewPage() {
   const ctx = await requireProfileContext();
   const supabase = await createClient();
-
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const origin = `${proto}://${host}`;
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -64,7 +58,7 @@ export default async function OverviewPage() {
           <Hero name={name} orgName={ctx.orgName} />
           <StatusCard pending={pendingCount ?? 0} policies={policyCount ?? 0} />
           <RecentActivity decisions={(recent ?? []) as Decision[]} />
-          <ConnectSection origin={origin} />
+          <ConnectSection checkpointUrl={ctx.checkpointUrl} />
         </div>
 
         {/* Right column */}

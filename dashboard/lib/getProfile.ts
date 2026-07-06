@@ -9,6 +9,7 @@ export type ProfileContext = {
   role: string;
   orgId: string;
   orgName: string;
+  checkpointUrl: string | null;
   isPlatformAdmin: boolean;
 };
 
@@ -24,7 +25,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("org_id, role, email, organizations(name)")
+    .select("org_id, role, email, organizations(name, checkpoint_url)")
     .eq("id", user.id)
     .single();
 
@@ -35,11 +36,12 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
       role: "admin",
       orgId: "",
       orgName: "",
+      checkpointUrl: null,
       isPlatformAdmin: isPlatformAdmin(user.email),
     };
   }
 
-  const org = profile.organizations as unknown as { name: string } | null;
+  const org = profile.organizations as unknown as { name: string; checkpoint_url: string | null } | null;
   const email = profile.email ?? user.email ?? null;
   return {
     userId: user.id,
@@ -47,6 +49,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
     role: profile.role,
     orgId: profile.org_id,
     orgName: org?.name ?? "",
+    checkpointUrl: org?.checkpoint_url ?? null,
     isPlatformAdmin: isPlatformAdmin(email),
   };
 });

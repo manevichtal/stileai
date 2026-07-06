@@ -38,12 +38,17 @@ class Config:
     verify_tls: bool
     unavailable_effect: str  # what to do if the dashboard can't be reached
 
+    # this checkpoint's own public URL (for self-registration with the dashboard,
+    # so each tenant sees its own connect URL). Render sets RENDER_EXTERNAL_URL.
+    public_url: str
+
     # endpoint paths (override to match your dashboard)
     ep_policies: str
     ep_policies_version: str
     ep_audit: str
     ep_approvals: str
     ep_approval_resolve: str  # may contain "{id}"
+    ep_register: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -60,12 +65,14 @@ class Config:
             request_timeout=float(_env("INTERLOCK_HTTP_TIMEOUT", "10")),
             verify_tls=_env("INTERLOCK_VERIFY_TLS", "true").lower() != "false",
             unavailable_effect=_env("INTERLOCK_UNAVAILABLE_EFFECT", "deny").lower(),
+            public_url=_env("INTERLOCK_PUBLIC_URL", _env("RENDER_EXTERNAL_URL")).rstrip("/"),
             ep_policies=_env("INTERLOCK_EP_POLICIES", "/api/policies"),
             ep_policies_version=_env("INTERLOCK_EP_POLICIES_VERSION", "/api/policies/version"),
             ep_audit=_env("INTERLOCK_EP_AUDIT", "/api/audit"),
             ep_approvals=_env("INTERLOCK_EP_APPROVALS", "/api/approvals"),
             ep_approval_resolve=_env("INTERLOCK_EP_APPROVAL_RESOLVE",
                                      "/api/approvals/{id}/resolve"),
+            ep_register=_env("INTERLOCK_EP_REGISTER", "/api/checkpoint"),
         )
 
     def auth_headers(self) -> dict[str, str]:

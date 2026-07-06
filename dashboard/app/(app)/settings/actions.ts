@@ -22,3 +22,25 @@ export async function updateOrgName(
   revalidatePath("/");
   return { ok: true };
 }
+
+export async function updateCheckpointUrl(
+  url: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  url = url.trim();
+  if (url && !/^https?:\/\/.+/i.test(url)) {
+    return { ok: false, error: "Enter a full URL, e.g. https://your-checkpoint.onrender.com/mcp" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("organizations")
+    .update({ checkpoint_url: url || null })
+    .eq("id", ctx.orgId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/settings");
+  revalidatePath("/");
+  return { ok: true };
+}

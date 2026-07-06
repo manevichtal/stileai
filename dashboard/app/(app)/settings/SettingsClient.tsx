@@ -3,14 +3,34 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { inputCls } from "@/components/ui";
-import { updateOrgName } from "./actions";
+import { updateOrgName, updateCheckpointUrl } from "./actions";
 
-export function SettingsClient({ orgName, origin }: { orgName: string; origin: string }) {
+export function SettingsClient({
+  orgName,
+  origin,
+  checkpointUrl,
+}: {
+  orgName: string;
+  origin: string;
+  checkpointUrl: string | null;
+}) {
   const router = useRouter();
   const [name, setName] = useState(orgName);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [cp, setCp] = useState(checkpointUrl ?? "");
+  const [cpBusy, setCpBusy] = useState(false);
+  const [cpSaved, setCpSaved] = useState(false);
+  const [cpError, setCpError] = useState<string | null>(null);
+  async function saveCp() {
+    setCpBusy(true); setCpError(null); setCpSaved(false);
+    const res = await updateCheckpointUrl(cp);
+    setCpBusy(false);
+    if (res.ok) { setCpSaved(true); router.refresh(); setTimeout(() => setCpSaved(false), 1500); }
+    else setCpError(res.error);
+  }
 
   const snippet = `INTERLOCK_STORE=api
 INTERLOCK_TRANSPORT=http
@@ -44,7 +64,22 @@ INTERLOCK_API_KEY=<paste a key from the API keys page>`;
       </div>
 
       <div className="border border-line rounded-[14px] bg-card p-5">
-        <h2 className="font-sans font-semibold text-[13px] text-ink mb-1">Connect your checkpoint</h2>
+        <h2 className="font-sans font-semibold text-[13px] text-ink mb-1">Checkpoint URL</h2>
+        <p className="font-mono text-[11.5px] text-ink3 mb-3 leading-relaxed">
+          The public URL of your deployed checkpoint (ends in <span className="text-ink2">/mcp</span>). Your checkpoint
+          fills this in automatically on startup — or set it here. It&apos;s what your agents connect to.
+        </p>
+        <div className="flex gap-2 max-w-[520px]">
+          <input value={cp} onChange={(e) => setCp(e.target.value)} placeholder="https://your-checkpoint.onrender.com/mcp" className={inputCls("flex-1")} />
+          <button onClick={saveCp} disabled={cpBusy || cp === (checkpointUrl ?? "")} className="bg-blue text-white font-sans font-semibold text-[12px] rounded-lg px-4 py-2 hover:opacity-90 disabled:opacity-50">
+            {cpBusy ? "…" : cpSaved ? "Saved" : "Save"}
+          </button>
+        </div>
+        {cpError && <div className="font-mono text-[11px] text-slate mt-2">{cpError}</div>}
+      </div>
+
+      <div className="border border-line rounded-[14px] bg-card p-5">
+        <h2 className="font-sans font-semibold text-[13px] text-ink mb-1">Self-host the checkpoint</h2>
         <p className="font-mono text-[11.5px] text-ink3 mb-3 leading-relaxed">
           Set these environment variables on the machine or host running the
           Interlock MCP server. It will pull your policies from this dashboard and

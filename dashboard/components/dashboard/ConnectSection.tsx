@@ -4,8 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 
-const DEFAULT_CHECKPOINT = "https://stileai-mcp.onrender.com/mcp";
-
 const CLIENTS = [
   { key: "claude", name: "Claude", loc: "Settings → Connectors", how: "Click Add custom connector, name it StileAI, and paste the URL." },
   { key: "chatgpt", name: "ChatGPT", loc: "Settings → Connectors", how: "Add a new connector (or a GPT Action) and paste the URL." },
@@ -32,10 +30,9 @@ function CopyField({ value, mono = true }: { value: string; mono?: boolean }) {
   );
 }
 
-export function ConnectSection({ origin }: { origin: string }) {
-  void origin;
+export function ConnectSection({ checkpointUrl }: { checkpointUrl: string | null }) {
   const [client, setClient] = useState(CLIENTS[0]);
-  const [url, setUrl] = useState(DEFAULT_CHECKPOINT);
+  const [url, setUrl] = useState(checkpointUrl ?? "");
 
   return (
     <section className="bg-card border border-line rounded-2xl p-5">
@@ -62,13 +59,22 @@ export function ConnectSection({ origin }: { origin: string }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <Step n={1} title="Copy your checkpoint URL" body="Paste it into your AI client in the next step.">
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full font-mono text-[11px] text-ink2 bg-transparent border-b border-line focus:border-blue outline-none pb-1 mb-2"
-            aria-label="Checkpoint URL"
-          />
-          <CopyField value={url} />
+          {url ? (
+            <CopyField value={url} />
+          ) : (
+            <>
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://your-checkpoint.onrender.com/mcp"
+                className="w-full font-mono text-[11px] text-ink2 bg-bg2 border border-line rounded-lg px-2.5 py-2 focus:border-blue outline-none"
+                aria-label="Checkpoint URL"
+              />
+              <p className="font-mono text-[10px] text-ink4 mt-1.5">
+                No checkpoint yet? <Link href="/guide" className="text-blue hover:underline">Deploy one in a click</Link> — it fills in here automatically.
+              </p>
+            </>
+          )}
         </Step>
 
         <Step n={2} title={`Open ${client.name}`} body={client.how}>

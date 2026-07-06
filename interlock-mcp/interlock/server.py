@@ -345,8 +345,27 @@ def _build_http_app():
     return gated
 
 
+def _register_checkpoint() -> None:
+    """Best-effort: tell the dashboard this checkpoint's public URL, so each tenant
+    sees its own ready-to-paste connect URL. No-op unless api store + public URL set."""
+    if cfg.store != "api" or not cfg.public_url or not cfg.dashboard_url:
+        return
+    try:
+        import httpx
+        httpx.post(
+            cfg.dashboard_url + cfg.ep_register,
+            json={"url": cfg.public_url.rstrip("/") + "/mcp"},
+            headers=cfg.auth_headers(),
+            timeout=cfg.request_timeout,
+            verify=cfg.verify_tls,
+        )
+    except Exception:
+        pass
+
+
 def main() -> None:
     if cfg.transport in ("http", "streamable-http", "streamable_http"):
+        _register_checkpoint()
         # Bind to the host/port the hosting platform provides. Render, Railway,
         # and Fly.io inject $PORT and expect the service to listen on 0.0.0.0.
         # (This only affects where the HTTP server binds — not policy logic.)
