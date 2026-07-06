@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* StileAI — flat, light "operator console" aesthetic.
+   Palette + type mirror the interlock_20.html reference. */
+:root {
+  --bg: #ffffff;
+  --bg2: #f9fafa;
+  --bg3: #f4f5f6;
+  --card: #ffffff;
+  --line: #e6e8ec;
+  --line2: #d6dade;
+  --ink: #181b1e;
+  --ink2: #5e656e;
+  --ink3: #9197a1;
+  --ink4: #c0c4cb;
+  --blue: #1953f0;
+  --blue2: #4c7cf5;
+  --bluedim: #f3f6ff;
+  --slate: #181b1e;
+  --ok: #1953f0;
+  --warn: #9197a1;
+  --bad: #181b1e;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg2);
+  --color-bg3: var(--bg3);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-ink3: var(--ink3);
+  --color-ink4: var(--ink4);
+  --color-blue: var(--blue);
+  --color-blue2: var(--blue2);
+  --color-bluedim: var(--bluedim);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background: radial-gradient(120% 90% at 50% 25%, #ffffff 0%, #f4f5f6 100%);
+}
+
+::selection {
+  background: rgba(25, 83, 240, 0.14);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line2);
+  border-radius: 8px;
+  border: 2px solid var(--card);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

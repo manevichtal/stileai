@@ -1,0 +1,17 @@
+{
+  "//": "Copy the 'interlock' block into your Claude Desktop config's mcpServers.",
+  "//_config_location_macos": "~/Library/Application Support/Claude/claude_desktop_config.json",
+  "//_config_location_windows": "%APPDATA%\\Claude\\claude_desktop_config.json",
+  "//_note": "Use an ABSOLUTE path to python and to the project directory.",
+  "mcpServers": {
+    "interlock": {
+      "command": "/ABSOLUTE/PATH/TO/interlock-mcp/.venv/bin/python",
+      "args": ["-m", "interlock.server"],
+      "env": {
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/interlock-mcp",
+        "INTERLOCK_POLICIES": "/ABSOLUTE/PATH/TO/interlock-mcp/policies.yaml",
+        "INTERLOCK_AUDIT_LOG": "/ABSOLUTE/PATH/TO/interlock-mcp/data/audit.log"
+      }
+    }
+  }
+}

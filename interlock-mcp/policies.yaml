@@ -1,0 +1,96 @@
+# Interlock policy file
+# ---------------------
+# Rules are evaluated in ascending `priority` order (lower number = checked
+# first). The FIRST rule that matches wins. If nothing matches, `default_effect`
+# applies. Matching uses shell-style globs on actor / action / resource:
+#   *        matches anything
+#   db.*     matches db.read, db.delete, ...
+#   customer:*  matches customer:1234, ...
+#
+# effect is one of: allow | deny | require_approval
+#
+# Optional `conditions` inspect the action's params. Each condition is:
+#   { field: <param name>, op: <operator>, value: <value> }
+# operators: eq ne gt gte lt lte in not_in contains regex exists
+
+default_effect: require_approval
+default_reason: "No policy matched — defaulting to human approval (fail-safe)."
+
+policies:
+  # 1. Hard denies come first (lowest priority number = highest precedence).
+  - id: deny-prod-db-drop
+    effect: deny
+    priority: 10
+    action: "db.drop*"
+    description: "Dropping tables/databases is never allowed via an agent."
+
+  - id: deny-mass-delete
+    effect: deny
+    priority: 15
+    action: "db.delete"
+    resource: "table:*"          # deleting a whole table (no specific record)
+    description: "Table-level deletes are blocked; delete specific records only."
+
+  # 2. Read-only operations are freely allowed.
+  - id: allow-reads
+    effect: allow
+    priority: 30
+    action: "*.read"
+    description: "Read-only actions are permitted for any actor."
+
+  - id: allow-search
+    effect: allow
+    priority: 30
+    action: "*.search"
+    description: "Search/list actions are permitted."
+
+  # 3. Money movement: small amounts allowed, large amounts need a human.
+  - id: allow-small-payments
+    effect: allow
+    priority: 40
+    action: "payment.charge"
+    conditions:
+      - { field: amount, op: lte, value: 100 }
+    description: "Charges of $100 or less are auto-approved."
+
+  - id: approve-large-payments
+    effect: require_approval
+    priority: 41
+    action: "payment.charge"
+    approvals_required: 1
+    conditions:
+      - { field: amount, op: gt, value: 100 }
+    description: "Charges over $100 require one human approval."
+
+  # 4. Outbound email: internal domain is fine, external needs approval.
+  - id: allow-internal-email
+    effect: allow
+    priority: 50
+    action: "email.send"
+    resource: "email:*@yourcompany.com"
+    description: "Email to internal addresses is allowed."
+
+  - id: approve-external-email
+    effect: require_approval
+    priority: 51
+    action: "email.send"
+    approvals_required: 1
+    description: "Email to external addresses requires approval."
+
+  # 5. Record deletes for a specific record require approval.
+  - id: approve-record-delete
+    effect: require_approval
+    priority: 60
+    action: "db.delete"
+    approvals_required: 1
+    description: "Deleting a specific record requires human approval."
+
+  # 6. A trusted admin actor can do more (example of actor-scoped rule).
+  #    Priority 20 puts it just after the hard denies (10, 15) but ahead of the
+  #    approval rules, so admins bypass approval — but never the absolute denies.
+  - id: allow-admin-writes
+    effect: allow
+    priority: 20
+    actor: "user:admin*"
+    action: "db.*"
+    description: "Admin users may perform database writes (except hard-denied)."

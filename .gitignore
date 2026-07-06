@@ -1,0 +1,28 @@
+# --- dependencies ---
+**/node_modules/
+
+# --- Next.js build output ---
+**/.next/
+**/out/
+
+# --- Python ---
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# --- secrets: NEVER commit real env files (keep the *.example templates) ---
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- logs & local runtime files ---
+*.log
+**/.devserver.log
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
+
+# --- editor ---
+.vscode/
+.idea/
