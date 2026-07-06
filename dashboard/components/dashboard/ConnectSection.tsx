@@ -4,170 +4,102 @@ import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 
-function CodeBlock({ code, caption }: { code: string; caption?: string }) {
+const DEFAULT_CHECKPOINT = "https://stileai-mcp.onrender.com/mcp";
+
+const CLIENTS = [
+  { key: "claude", name: "Claude", loc: "Settings → Connectors", how: "Click Add custom connector, name it StileAI, and paste the URL." },
+  { key: "chatgpt", name: "ChatGPT", loc: "Settings → Connectors", how: "Add a new connector (or a GPT Action) and paste the URL." },
+  { key: "cursor", name: "Cursor", loc: "Settings → MCP", how: "Click Add new MCP server and paste the URL." },
+  { key: "gemini", name: "Gemini", loc: "Gemini CLI / settings", how: "Run gemini mcp add stileai <url>, or add it under mcpServers in settings.json." },
+  { key: "copilot", name: "Copilot", loc: "VS Code → mcp.json", how: "Command Palette → “MCP: Add Server” → paste the URL." },
+  { key: "custom", name: "Any client", loc: "Your MCP client", how: "Add an MCP server with this URL and an Authorization: Bearer header." },
+];
+
+function CopyField({ value, mono = true }: { value: string; mono?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div>
-      {caption && <div className="font-mono text-[10px] text-ink4 mb-1.5">{caption}</div>}
-      <div className="relative">
-        <pre className="font-mono text-[11px] leading-relaxed text-railink bg-rail rounded-xl p-3.5 pr-16 overflow-auto max-h-[164px] whitespace-pre">{code}</pre>
-        <button
-          onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-          className="absolute top-2.5 right-2.5 flex items-center gap-1.5 font-mono text-[10px] text-railink bg-railhov hover:bg-white/10 rounded-md px-2 py-1"
-        >
-          <Icon name={copied ? "check" : "copy"} size={12} /> {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
+    <div className="flex items-center gap-1.5">
+      <code className={`flex-1 min-w-0 truncate ${mono ? "font-mono" : "font-sans"} text-[11.5px] text-ink bg-bg2 border border-line rounded-lg px-2.5 py-2`}>
+        {value}
+      </code>
+      <button
+        onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+        className="flex-none flex items-center gap-1 font-mono text-[10.5px] text-blue border border-blue/40 rounded-lg px-2.5 py-2 hover:bg-bluedim"
+      >
+        <Icon name={copied ? "check" : "copy"} size={12} /> {copied ? "Copied" : "Copy"}
+      </button>
     </div>
   );
 }
 
-const RUN = `pip install -r requirements.txt
-python -m interlock.server   # serves the checkpoint at /mcp`;
-
-const MCP_CONFIG = `{
-  "mcpServers": {
-    "stileai": {
-      "url": "https://your-checkpoint-host/mcp",
-      "headers": {
-        "Authorization": "Bearer <INTERLOCK_MCP_AUTH_TOKEN>"
-      }
-    }
-  }
-}`;
-
-const USAGE = `# Ask BEFORE doing anything sensitive
-decision = request_action(
-    actor="agent:support-bot",
-    action="payment.charge",
-    resource="customer:1234",
-    params={"amount": 5000},
-)
-
-if decision["effect"] == "allow":
-    charge(...)                         # proceed
-elif decision["effect"] == "deny":
-    raise Blocked(decision["reason"])   # never happens
-else:                                   # "require_approval"
-    wait_for_human(decision["decision_id"])  # poll check_status`;
-
 export function ConnectSection({ origin }: { origin: string }) {
-  const env = `# HTTP mode + point it at StileAI
-INTERLOCK_STORE=api
-INTERLOCK_TRANSPORT=http
-INTERLOCK_DASHBOARD_URL=${origin}
-INTERLOCK_API_KEY=<key from the API keys page>
-INTERLOCK_MCP_AUTH_TOKEN=<a long random secret>`;
-
-  const steps = [
-    {
-      title: "Run the checkpoint",
-      where: "on your infrastructure or a host (Render, Railway, Fly)",
-      body: (
-        <>
-          The checkpoint pulls your policies from this dashboard and pushes its audit trail back — automatically, no
-          restarts when you edit rules. <Link href="/keys" className="text-blue hover:underline">Generate the API key →</Link>
-        </>
-      ),
-      code: (
-        <div className="flex flex-col gap-3">
-          <CodeBlock caption="start it in HTTP mode" code={RUN} />
-          <CodeBlock caption="configure it — add to a .env file beside the server, or your host's Environment settings" code={env} />
-        </div>
-      ),
-    },
-    {
-      title: "Point your agent at it",
-      where: "in your agent's MCP client config",
-      body: (
-        <>
-          Register the checkpoint URL and the bearer token your agents send. StileAI speaks the Model Context Protocol,
-          so Claude, Claude Code, or any MCP-compatible agent connects the same way.
-        </>
-      ),
-      code: <CodeBlock caption="e.g. claude_desktop_config.json — any MCP client takes the same URL + header" code={MCP_CONFIG} />,
-    },
-    {
-      title: "Ask before acting",
-      where: "in your agent's code / tool logic",
-      body: (
-        <>
-          Before any sensitive step, your agent calls <span className="text-ink font-medium">request_action</span> and gets
-          back <span className="text-blue">allow</span>, <span className="text-slate">deny</span>, or{" "}
-          <span className="text-ink3">require_approval</span> — every call is logged, and approvals wait for a human here.
-        </>
-      ),
-      code: <CodeBlock caption="call request_action, then honor the answer" code={USAGE} />,
-    },
-  ];
-
-  const [step, setStep] = useState(0);
-  const cur = steps[step];
+  void origin;
+  const [client, setClient] = useState(CLIENTS[0]);
+  const [url, setUrl] = useState(DEFAULT_CHECKPOINT);
 
   return (
     <section className="bg-card border border-line rounded-2xl p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-blue"><Icon name="plug" size={17} /></span>
-        <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Connect your checkpoint</h2>
-      </div>
-
-      {/* stepper */}
-      <div className="flex items-center gap-1 mb-4">
-        {steps.map((s, i) => {
-          const done = i < step;
-          const active = i === step;
-          return (
-            <div key={i} className="flex items-center gap-1 flex-1 last:flex-none">
-              <button onClick={() => setStep(i)} className="flex items-center gap-2 group">
-                <span
-                  className={`flex-none w-6 h-6 rounded-full flex items-center justify-center font-sans font-bold text-[11px] transition-colors ${
-                    active ? "bg-blue text-white" : done ? "bg-bluedim text-blue" : "bg-bg2 border border-line text-ink3 group-hover:text-ink"
-                  }`}
-                >
-                  {done ? <Icon name="check" size={13} /> : i + 1}
-                </span>
-                <span className={`font-sans text-[12px] whitespace-nowrap ${active ? "text-ink font-semibold" : "text-ink3 group-hover:text-ink2"}`}>
-                  {s.title}
-                </span>
-              </button>
-              {i < steps.length - 1 && <span className={`flex-1 h-px mx-2 ${done ? "bg-blue/40" : "bg-line"}`} />}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* active step */}
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 lg:gap-6 items-start">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-blue">{cur.where}</div>
-          <p className="font-mono text-[12px] text-ink2 leading-relaxed mt-2">{cur.body}</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-blue"><Icon name="plug" size={17} /></span>
+          <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Connect your checkpoint</h2>
         </div>
-        <div>{cur.code}</div>
+        {/* client picker */}
+        <div className="flex items-center gap-1 bg-bg2 border border-line rounded-xl p-0.5 flex-wrap">
+          {CLIENTS.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => setClient(c)}
+              className={`font-sans text-[12px] rounded-lg px-2.5 py-1.5 transition-colors ${
+                client.key === c.key ? "bg-card text-ink font-semibold shadow-[0_1px_2px_rgba(16,24,40,.06)]" : "text-ink3 hover:text-ink"
+              }`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* nav */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-line">
-        <button
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          disabled={step === 0}
-          className="font-mono text-[11.5px] text-ink3 hover:text-ink disabled:opacity-40 disabled:hover:text-ink3"
-        >
-          ← Back
-        </button>
-        <span className="font-mono text-[10.5px] text-ink4">Step {step + 1} of {steps.length}</span>
-        {step < steps.length - 1 ? (
-          <button
-            onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
-            className="bg-blue text-white font-sans font-semibold text-[12px] rounded-xl px-4 py-2 hover:opacity-90"
-          >
-            Next →
-          </button>
-        ) : (
-          <Link href="/keys" className="bg-blue text-white font-sans font-semibold text-[12px] rounded-xl px-4 py-2 hover:opacity-90">
-            Get your API key →
-          </Link>
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Step n={1} title="Copy your checkpoint URL" body="Paste it into your AI client in the next step.">
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="w-full font-mono text-[11px] text-ink2 bg-transparent border-b border-line focus:border-blue outline-none pb-1 mb-2"
+            aria-label="Checkpoint URL"
+          />
+          <CopyField value={url} />
+        </Step>
+
+        <Step n={2} title={`Open ${client.name}`} body={client.how}>
+          <div className="font-mono text-[11px] text-blue bg-bluedim border border-blue/25 rounded-lg px-2.5 py-2">
+            {client.loc}
+          </div>
+        </Step>
+
+        <Step n={3} title="Connect & authorize" body="When asked for auth, use your access token (as an Authorization: Bearer header). Then connect.">
+          <CopyField value="Authorization: Bearer <your access token>" />
+          <Link href="/settings" className="inline-block font-mono text-[10.5px] text-blue hover:underline mt-2">Where's my token? →</Link>
+        </Step>
       </div>
+
+      <p className="font-mono text-[10.5px] text-ink4 mt-4 pt-3 border-t border-line">
+        Running your own checkpoint instead of the hosted one?{" "}
+        <Link href="/guide" className="text-blue hover:underline">See the self-host steps in the guide</Link>.
+      </p>
     </section>
+  );
+}
+
+function Step({ n, title, body, children }: { n: number; title: string; body: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="flex-none w-6 h-6 rounded-full bg-bg2 border border-line text-ink3 font-sans font-bold text-[11px] flex items-center justify-center">{n}</span>
+        <span className="font-sans font-semibold text-[13px] text-ink">{title}</span>
+      </div>
+      <p className="font-mono text-[11px] text-ink2 leading-relaxed mb-2.5 min-h-[32px]">{body}</p>
+      {children}
+    </div>
   );
 }
