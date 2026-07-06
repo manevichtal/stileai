@@ -54,6 +54,14 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
       return <svg {...common}><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
     case "check":
       return <svg {...common}><path d="M20 6 9 17l-5-5" /></svg>;
+    case "book":
+      return <svg {...common}><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" /><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z" /></svg>;
+    case "arrowRight":
+      return <svg {...common}><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
+    case "agent":
+      return <svg {...common}><rect x="5" y="8" width="14" height="11" rx="3" /><path d="M12 8V4M9 3h6" /><circle cx="9.5" cy="13" r="1" /><circle cx="14.5" cy="13" r="1" /></svg>;
+    case "circle":
+      return <svg {...common}><circle cx="12" cy="12" r="9" /></svg>;
     default:
       return <svg {...common}><circle cx="12" cy="12" r="9" /></svg>;
   }
