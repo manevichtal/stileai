@@ -7,7 +7,7 @@ export default async function OverviewPage() {
   if (!ctx) redirect("/login");
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email}>
+    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
       <PageHeader
         title="Overview"
         subtitle={`Signed in to ${ctx.orgName || "your organization"}.`}

@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   const origin = `${proto}://${host}`;
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email}>
+    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
       <PageHeader title="Settings" subtitle="Your organization and how to connect a checkpoint." />
       <SettingsClient orgName={ctx.orgName} origin={origin} />
     </AppShell>

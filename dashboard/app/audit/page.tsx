@@ -28,7 +28,7 @@ export default async function AuditPage({
   const { data: rows } = await q;
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email}>
+    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
       <PageHeader title="Audit log" subtitle="Every decision the checkpoint has made. Secrets are redacted." />
       <div className="p-7 flex flex-col gap-4 max-w-[1000px]">
         <AuditFilters />

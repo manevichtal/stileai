@@ -16,7 +16,7 @@ export default async function KeysPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email}>
+    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
       <PageHeader
         title="API keys"
         subtitle="Keys your checkpoint uses to authenticate to this dashboard."

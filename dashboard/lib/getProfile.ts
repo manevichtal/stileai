@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isPlatformAdmin } from "@/lib/platformAdmin";
 
 export type ProfileContext = {
   userId: string;
@@ -7,6 +8,7 @@ export type ProfileContext = {
   role: string;
   orgId: string;
   orgName: string;
+  isPlatformAdmin: boolean;
 };
 
 // Loads the logged-in admin's profile + organization. Returns null if there is
@@ -31,16 +33,19 @@ export async function getProfileContext(): Promise<ProfileContext | null> {
       role: "admin",
       orgId: "",
       orgName: "",
+      isPlatformAdmin: isPlatformAdmin(user.email),
     };
   }
 
   const org = profile.organizations as unknown as { name: string } | null;
+  const email = profile.email ?? user.email ?? null;
   return {
     userId: user.id,
-    email: profile.email ?? user.email ?? null,
+    email,
     role: profile.role,
     orgId: profile.org_id,
     orgName: org?.name ?? "",
+    isPlatformAdmin: isPlatformAdmin(email),
   };
 }
 
@@ -48,5 +53,14 @@ export async function getProfileContext(): Promise<ProfileContext | null> {
 export async function requireProfileContext(): Promise<ProfileContext> {
   const ctx = await getProfileContext();
   if (!ctx) redirect("/login");
+  return ctx;
+}
+
+// For the platform-owner /admin area: returns the context only if the caller is
+// a platform admin, otherwise sends them back to their own dashboard.
+export async function requirePlatformAdmin(): Promise<ProfileContext> {
+  const ctx = await getProfileContext();
+  if (!ctx) redirect("/login");
+  if (!ctx.isPlatformAdmin) redirect("/");
   return ctx;
 }

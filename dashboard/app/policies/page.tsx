@@ -38,7 +38,7 @@ export default async function PoliciesPage() {
   }));
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email}>
+    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
       <PageHeader
         title="Policies"
         subtitle="The rules your AI agents must clear before acting."

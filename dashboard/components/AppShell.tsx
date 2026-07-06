@@ -17,10 +17,12 @@ const NAV = [
 export function AppShell({
   orgName,
   email,
+  isPlatformAdmin = false,
   children,
 }: {
   orgName: string;
   email: string | null;
+  isPlatformAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -56,6 +58,24 @@ export function AppShell({
               </Link>
             );
           })}
+
+          {isPlatformAdmin && (
+            <>
+              <div className="mt-3 mb-1 px-3 font-mono text-[9.5px] text-ink4 uppercase tracking-wider">
+                Platform owner
+              </div>
+              <Link
+                href="/admin"
+                className={`font-mono text-[12.5px] rounded-lg px-3 py-2 transition-colors flex items-center gap-1.5 ${
+                  pathname.startsWith("/admin")
+                    ? "bg-bluedim text-blue font-semibold"
+                    : "text-ink2 hover:bg-bg3 hover:text-ink"
+                }`}
+              >
+                <span className="text-blue">◆</span> All tenants
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="p-3.5 border-t border-line">

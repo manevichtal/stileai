@@ -20,5 +20,7 @@ services:
         value: deny                  # fail-safe: never allow when the dashboard is unreachable
       - key: INTERLOCK_API_KEY
         sync: false                  # secret — set in the Render dashboard, not in git
+      - key: INTERLOCK_MCP_AUTH_TOKEN
+        generateValue: true          # caller auth: agents must send this as `Authorization: Bearer <token>`
       - key: PYTHON_VERSION
         value: "3.12.6"

@@ -26,7 +26,7 @@ export default async function ApprovalsPage() {
   ]);
 
   return (
-    <AppShell orgName={ctx.orgName} email={ctx.email}>
+    <AppShell orgName={ctx.orgName} email={ctx.email} isPlatformAdmin={ctx.isPlatformAdmin}>
       <PageHeader title="Approvals" subtitle="Decisions your policies routed to a human." />
       <ApprovalsClient
         pending={(pending ?? []) as Approval[]}
