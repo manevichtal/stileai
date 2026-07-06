@@ -57,8 +57,8 @@ export default async function OverviewPage() {
   const name = greetName(ctx.email, ctx.orgName);
 
   return (
-    <div className="p-6 lg:p-7 max-w-[1280px]">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 lg:gap-6">
+    <div className="p-6 lg:p-7">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-5 lg:gap-6">
         {/* Left column */}
         <div className="flex flex-col gap-5">
           <Hero name={name} orgName={ctx.orgName} />
