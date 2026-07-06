@@ -285,36 +285,44 @@ def guarded_delete_record(actor: str, table: str, record_id: str
 def _build_http_app():
     """Build the streamable-HTTP ASGI app, gated by a shared bearer token.
 
-    When INTERLOCK_MCP_AUTH_TOKEN is set, every request must present
+    When INTERLOCK_MCP_AUTH_TOKEN is set, every HTTP request must present
     `Authorization: Bearer <token>` (constant-time compared). This is the caller
     authentication the README calls for before exposing the server publicly —
     without it, anyone who finds the URL could approve decisions or read the
     audit log. If the token is unset (e.g. local stdio dev), no gate is added.
+
+    Implemented as PURE ASGI middleware (not BaseHTTPMiddleware) so it never
+    buffers the transport's streaming/SSE responses — wrapping those in
+    BaseHTTPMiddleware corrupts the stream (proxies then return 421).
     """
     import hmac
     import os
 
-    from starlette.middleware.base import BaseHTTPMiddleware
-    from starlette.responses import JSONResponse
-
     app = mcp.streamable_http_app()
-
     token = os.environ.get("INTERLOCK_MCP_AUTH_TOKEN", "").strip()
-    if token:
-        class _TokenAuth(BaseHTTPMiddleware):
-            async def dispatch(self, request, call_next):
-                provided = request.headers.get("authorization", "")
-                if provided.lower().startswith("bearer "):
-                    provided = provided[7:]
-                provided = provided.strip()
-                if not (provided and hmac.compare_digest(provided, token)):
-                    return JSONResponse(
-                        {"error": "unauthorized"}, status_code=401
-                    )
-                return await call_next(request)
+    if not token:
+        return app
 
-        app.add_middleware(_TokenAuth)
-    return app
+    async def gated(scope, receive, send):
+        if scope.get("type") == "http":
+            headers = dict(scope.get("headers") or [])
+            auth = headers.get(b"authorization", b"").decode("latin-1")
+            provided = auth[7:].strip() if auth[:7].lower() == "bearer " else auth.strip()
+            if not (provided and hmac.compare_digest(provided, token)):
+                await send({
+                    "type": "http.response.start",
+                    "status": 401,
+                    "headers": [(b"content-type", b"application/json")],
+                })
+                await send({
+                    "type": "http.response.body",
+                    "body": b'{"error":"unauthorized"}',
+                })
+                return
+        # non-http scopes (lifespan/websocket) and authenticated http pass through
+        await app(scope, receive, send)
+
+    return gated
 
 
 def main() -> None:
