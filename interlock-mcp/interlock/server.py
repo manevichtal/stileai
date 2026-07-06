@@ -18,11 +18,13 @@ Run for cloud (HTTP):                       INTERLOCK_TRANSPORT=http python -m i
 
 from __future__ import annotations
 
+import os
 import threading
 import time
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from .audit import PendingDecision
 from .config import Config
@@ -30,7 +32,25 @@ from .engine import Effect, PolicyEngine, load_policies_from_dict
 from .stores import build_stores
 
 cfg = Config.from_env()
-mcp = FastMCP("interlock")
+
+# Streamable-HTTP DNS-rebinding protection. The MCP transport otherwise only
+# allows localhost Host headers, which 421s ("Invalid Host header") any hosted
+# deployment reached via its public domain. Behind a proxy and our own
+# bearer-token gate: pin to explicit hosts if INTERLOCK_MCP_ALLOWED_HOSTS is set,
+# otherwise disable host pinning (the token is the real access control).
+_allowed_hosts = [
+    h.strip() for h in os.environ.get("INTERLOCK_MCP_ALLOWED_HOSTS", "").split(",") if h.strip()
+]
+if _allowed_hosts:
+    _transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=_allowed_hosts,
+        allowed_origins=_allowed_hosts,
+    )
+else:
+    _transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+mcp = FastMCP("interlock", transport_security=_transport_security)
 policy_store, audit = build_stores(cfg)
 
 
