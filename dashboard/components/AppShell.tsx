@@ -31,9 +31,9 @@ export function AppShell({
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <div className="flex-1 flex min-h-full">
-      {/* Dark rail */}
-      <aside className="w-[228px] flex-none bg-rail flex flex-col text-railink">
+    <div className="flex h-dvh overflow-hidden">
+      {/* Dark rail — fixed full height; only the content column scrolls */}
+      <aside className="w-[228px] flex-none bg-rail flex flex-col text-railink h-dvh">
         <div className="px-5 pt-6 pb-5">
           <Image
             src="/brandmark.png"
@@ -45,7 +45,7 @@ export function AppShell({
           />
         </div>
 
-        <nav className="flex-1 px-3 flex flex-col gap-0.5">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 flex flex-col gap-0.5">
           {NAV.map((item) => {
             const active = isActive(item.href);
             return (
@@ -97,8 +97,8 @@ export function AppShell({
         </div>
       </aside>
 
-      {/* Content */}
-      <main className="flex-1 min-w-0 flex flex-col bg-bg3">{children}</main>
+      {/* Content — the only scrollable column */}
+      <main className="flex-1 min-w-0 overflow-y-auto bg-bg3">{children}</main>
     </div>
   );
 }

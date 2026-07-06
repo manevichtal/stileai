@@ -9,7 +9,7 @@ for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
   if (m) process.env[m[1]] = m[2];
 }
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL, ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, SVC = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const BASE = "http://localhost:3000";
+const BASE = process.argv[2] || "http://localhost:3000";
 const admin = createClient(URL, SVC, { auth: { persistSession: false } });
 const email = `redesign-${Date.now()}@stileai-verify.local`;
 let userId, orgId, failed = false;
