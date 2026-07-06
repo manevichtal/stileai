@@ -88,11 +88,25 @@ export function AppShell({
           )}
         </nav>
 
-        <div className="p-3 m-3 mt-0 rounded-xl bg-railhov">
-          <div className="font-sans text-[12.5px] text-white truncate">{orgName || "Your org"}</div>
-          <div className="font-mono text-[10.5px] text-railmut truncate mb-2.5">{email}</div>
-          <SignOutButton className="flex items-center gap-1.5 font-mono text-[11px] text-railicon hover:text-white transition-colors">
-            <Icon name="signout" size={14} /> Sign out
+        <div className="m-3 mt-0 flex flex-col gap-1">
+          <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-railhov">
+            <div className="w-8 h-8 flex-none rounded-full bg-gradient-to-br from-blue to-blue2 flex items-center justify-center font-sans font-bold text-[13px] text-white">
+              {(orgName || email || "?").trim().charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-sans text-[12.5px] text-white font-semibold truncate">{orgName || "Your org"}</span>
+                {isPlatformAdmin && (
+                  <span className="flex-none font-mono text-[8px] uppercase tracking-[0.08em] text-blue2 border border-blue2/40 rounded px-1 py-px leading-none">
+                    Owner
+                  </span>
+                )}
+              </div>
+              <div className="font-mono text-[10px] text-railmut truncate">{email}</div>
+            </div>
+          </div>
+          <SignOutButton className="flex items-center gap-2 px-2.5 py-2 rounded-xl font-sans text-[12.5px] text-railicon hover:text-white hover:bg-railhov transition-colors">
+            <Icon name="signout" size={15} /> Sign out
           </SignOutButton>
         </div>
       </aside>
