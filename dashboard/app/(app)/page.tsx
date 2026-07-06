@@ -57,13 +57,14 @@ export default async function OverviewPage() {
   const name = greetName(ctx.email, ctx.orgName);
 
   return (
-    <div className="p-6 lg:p-7 flex flex-col gap-5 lg:gap-6 max-w-[1280px]">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 lg:gap-6">
+    <div className="p-6 lg:p-7 max-w-[1280px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 lg:gap-6">
         {/* Left column */}
         <div className="flex flex-col gap-5">
           <Hero name={name} orgName={ctx.orgName} />
           <StatusCard pending={pendingCount ?? 0} policies={policyCount ?? 0} />
           <RecentActivity decisions={(recent ?? []) as Decision[]} />
+          <ConnectSection origin={origin} />
         </div>
 
         {/* Right column */}
@@ -73,13 +74,10 @@ export default async function OverviewPage() {
             <StatTile value={pendingCount ?? 0} label="Awaiting approval" accent={(pendingCount ?? 0) > 0} />
           </div>
           <StatsCard days={days} deniedToday={deniedToday ?? 0} policies={policyCount ?? 0} />
+          <Integrations />
           <PromoCard />
         </div>
       </div>
-
-      {/* Full-width guidance */}
-      <ConnectSection origin={origin} />
-      <Integrations />
     </div>
   );
 }
