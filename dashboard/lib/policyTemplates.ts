@@ -201,6 +201,23 @@ export const POLICY_PACKS: PolicyPack[] = [
       { policy_id: "trust-tiers-deny-unknown-create", effect: "deny", priority: 35, actor: "*", action: "*.create", description: "Default-deny-on-writes backstop for create actions: sits just above the catch-all so any actor without an explicit allow/approval at a lower priority number is blocked. Narrow the actor glob to exempt specific known agents.", control: "Unknown-actor write backstop" },
     ],
   },
+  {
+    key: "velocity",
+    name: "Velocity & context",
+    framework: "Runaway-agent & context controls",
+    blurb: "Catches the things a single-action policy can't see: mass or external email blasts, deletes with no filter, deploys during a freeze or off-hours, spend that adds up over a day, and an actor firing off an unusually high rate of actions.",
+    templates: [
+      { policy_id: "velocity-deny-freeze-window", effect: "deny", priority: 11, action: "deploy.*", conditions: [{ field: "freeze", op: "eq", value: true }], description: "Deploys are blocked during an active change freeze window.", control: "Change-freeze guard" },
+      { policy_id: "velocity-deny-freeze-migrate", effect: "deny", priority: 11, action: "db.migrate", conditions: [{ field: "freeze", op: "eq", value: true }], description: "Database migrations are blocked during an active change freeze window.", control: "Change-freeze guard" },
+      { policy_id: "velocity-deny-delete-no-filter", effect: "deny", priority: 12, action: "db.delete", conditions: [{ field: "has_where", op: "eq", value: false }], description: "Blocks a delete that has no WHERE filter, which would wipe an entire table's rows.", control: "Destructive-action guard" },
+      { policy_id: "velocity-approve-prod-deploy", effect: "require_approval", priority: 24, action: "deploy.*", approvals_required: 1, conditions: [{ field: "env", op: "eq", value: "prod" }], description: "Deploys to the production environment require human approval.", control: "Change-management control" },
+      { policy_id: "velocity-approve-external-email", effect: "require_approval", priority: 26, action: "email.send", approvals_required: 1, conditions: [{ field: "recipient_domain", op: "not_in", value: ["yourcompany.com"] }], description: "Emails going to a domain outside the company require approval before sending. Admins: edit the allowed-domain list for your org.", control: "Data-egress control" },
+      { policy_id: "velocity-approve-mass-email", effect: "require_approval", priority: 26, action: "email.send", approvals_required: 1, conditions: [{ field: "recipient_count", op: "gt", value: 25 }], description: "Emails going to more than 25 recipients at once require approval, to catch accidental or runaway mass sends.", control: "Mass-action guard" },
+      { policy_id: "velocity-approve-daily-spend-cap", effect: "require_approval", priority: 26, action: "payment.*", approvals_required: 1, conditions: [{ field: "daily_total", op: "gt", value: 5000 }], description: "Once an actor's payment activity for the day totals more than $5,000, further payment actions require approval.", control: "Money-movement control" },
+      { policy_id: "velocity-approve-off-hours", effect: "require_approval", priority: 27, action: "deploy.*", approvals_required: 1, conditions: [{ field: "off_hours", op: "eq", value: true }], description: "Deploys initiated outside normal business hours require human approval.", control: "Off-hours control" },
+      { policy_id: "velocity-approve-high-frequency", effect: "require_approval", priority: 28, action: "*", approvals_required: 1, conditions: [{ field: "actor_action_count_1h", op: "gt", value: 100 }], description: "If an actor has taken more than 100 actions in the last hour, further actions require approval — catches a runaway or looping agent.", control: "Runaway-agent guard" },
+    ],
+  },
 ];
 
 export function packByKey(key: string): PolicyPack | undefined {
