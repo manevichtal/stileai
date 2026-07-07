@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfileContext } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptSecret } from "@/lib/crypto";
 
 const DEMO_TOOL = {
   name: "sample",
@@ -19,6 +20,7 @@ export async function addWebTool(
 
   const name = String(formData.get("name") ?? "").trim();
   const url = String(formData.get("url") ?? "").trim();
+  const token = String(formData.get("token") ?? "").trim();
 
   if (!name) return { ok: false, error: "Name is required." };
   if (!/^https?:\/\//i.test(url)) return { ok: false, error: "Tool web address must start with http:// or https://." };
@@ -29,6 +31,7 @@ export async function addWebTool(
     name,
     transport: "http",
     target: url,
+    auth: token ? encryptSecret(token) : null,
     enabled: true,
   });
   if (error) return { ok: false, error: error.message };

@@ -18,6 +18,7 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
   const router = useRouter();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [token, setToken] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [command, setCommand] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,9 +31,10 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
     const fd = new FormData();
     fd.set("name", name);
     fd.set("url", url);
+    fd.set("token", token);
     const res = await addWebTool(fd);
     setBusy(false);
-    if (res.ok) { setName(""); setUrl(""); router.refresh(); }
+    if (res.ok) { setName(""); setUrl(""); setToken(""); router.refresh(); }
     else setError(res.error);
   }
 
@@ -83,8 +85,12 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
             {busy ? "Adding…" : "Add tool"}
           </button>
         </div>
+        <label className="flex flex-col gap-1 max-w-[320px]">
+          <span className="font-mono text-[10.5px] text-ink3">Access token (optional)</span>
+          <input type="password" value={token} onChange={(e) => setToken(e.target.value)} className={inputCls("w-full")} placeholder="••••••••" />
+        </label>
         <p className="font-mono text-[10.5px] text-ink4">
-          Paste the web address your tool provider gave you.
+          Paste the web address your tool provider gave you. If your tool needs an API key or bearer token, paste it here — it&apos;s stored encrypted.
         </p>
 
         <div className="flex items-center gap-3 pt-1">
