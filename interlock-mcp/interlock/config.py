@@ -35,6 +35,7 @@ class Config:
     auth_scheme: str
     poll_interval: int
     request_timeout: float
+    hold_timeout: float
     verify_tls: bool
     unavailable_effect: str  # what to do if the dashboard can't be reached
 
@@ -63,6 +64,7 @@ class Config:
             auth_scheme=_env("INTERLOCK_AUTH_SCHEME", "Bearer"),
             poll_interval=int(_env("INTERLOCK_POLL_INTERVAL", "30")),
             request_timeout=float(_env("INTERLOCK_HTTP_TIMEOUT", "10")),
+            hold_timeout=float(_env("INTERLOCK_HOLD_TIMEOUT", "300")),
             verify_tls=_env("INTERLOCK_VERIFY_TLS", "true").lower() != "false",
             unavailable_effect=_env("INTERLOCK_UNAVAILABLE_EFFECT", "deny").lower(),
             public_url=_env("INTERLOCK_PUBLIC_URL", _env("RENDER_EXTERNAL_URL")).rstrip("/"),

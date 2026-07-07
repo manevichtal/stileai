@@ -1,12 +1,30 @@
 # interlock/gateway.py
 from __future__ import annotations
+import asyncio
 import json
+import time
 from typing import Any
 
 import mcp.types as types
 from mcp.server.lowlevel import Server
 
+from .audit import PendingDecision
 from .engine import Decision, Effect, PolicyEngine
+
+
+async def wait_for_approval(audit, decision_id: str, poll: float, timeout: float) -> str:
+    """Poll `audit.get_pending(decision_id).status` until it leaves "pending".
+
+    Returns "approved" or "denied". A timeout (or a pending record that never
+    resolves) returns "denied" — fail-safe: silence from a human is not consent.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        p = audit.get_pending(decision_id)
+        if p is not None and getattr(p, "status", "pending") != "pending":
+            return "approved" if p.status == "approved" else "denied"
+        await asyncio.sleep(poll)
+    return "denied"
 
 
 def _decide(engine: PolicyEngine, actor: str, action: str, resource: str, params: dict[str, Any]) -> Decision:
@@ -18,10 +36,28 @@ def _decide(engine: PolicyEngine, actor: str, action: str, resource: str, params
     return engine.evaluate(actor, action, resource, params)
 
 
-def build_gateway_server(downstreams, provider, audit, actor: str = "agent:default") -> Server:
+def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:default") -> Server:
     # map exposed tool name -> (downstream, real tool name)
     routing: dict[str, tuple[Any, str]] = {}
     server = Server("stileai-gateway")
+    hold_poll = max(1.0, cfg.poll_interval / 10)
+    hold_timeout = cfg.hold_timeout
+
+    async def _forward(d, real: str, args: dict[str, Any], *, decision_id: str,
+                       resource: str) -> list[types.ContentBlock]:
+        """Call the downstream tool; on failure, record a follow-up audit entry
+        (same decision_id, status="error") and return a generic envelope — the
+        raw exception text is never handed back to the agent (error hygiene)."""
+        try:
+            res = await d.call(real, args)
+            return list(res.content)
+        except Exception as exc:
+            audit.record(actor=actor, action=real, resource=resource, params=args,
+                        effect="error", matched_policy=None, reason=str(exc),
+                        status="error", decision_id=decision_id)
+            return [types.TextContent(type="text",
+                    text=json.dumps({"performed": False, "error": "downstream call failed",
+                                     "decision_id": decision_id}))]
 
     async def _refresh_routing():
         routing.clear()
@@ -68,15 +104,23 @@ def build_gateway_server(downstreams, provider, audit, actor: str = "agent:defau
                                    matched_policy=decision.matched_policy, reason=decision.reason,
                                    status=status)
         if decision.effect == Effect.ALLOW:
-            res = await d.call(real, args)
-            return list(res.content)
+            return await _forward(d, real, args, decision_id=decision_id, resource=resource)
         if decision.effect == Effect.DENY:
             return [types.TextContent(type="text",
                     text=json.dumps({"performed": False, "blocked_by": "stileai",
                                      "reason": decision.reason}))]
-        # REQUIRE_APPROVAL handled in Task 6
+        # REQUIRE_APPROVAL: create the pending approval and wait for a human.
+        audit.add_pending(PendingDecision(
+            decision_id=decision_id, actor=actor, action=real,
+            resource=resource, params=args, reason=decision.reason,
+            matched_policy=decision.matched_policy,
+            approvals_required=decision.approvals_required))
+        outcome = await wait_for_approval(audit, decision_id,
+                                          poll=hold_poll, timeout=hold_timeout)
+        if outcome == "approved":
+            return await _forward(d, real, args, decision_id=decision_id, resource=resource)
         return [types.TextContent(type="text",
-                text=json.dumps({"performed": False, "pending": True,
-                                 "decision_id": decision_id, "reason": decision.reason}))]
+                text=json.dumps({"performed": False, "blocked_by": "stileai",
+                                 "reason": "not approved", "decision_id": decision_id}))]
 
     return server
