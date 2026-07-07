@@ -83,15 +83,17 @@ export function ConnectSection({ checkpointUrl }: { checkpointUrl: string | null
           </div>
         </Step>
 
-        <Step n={3} title="Connect & authorize" body="When asked for auth, use your access token (as an Authorization: Bearer header). Then connect.">
-          <CopyField value="Authorization: Bearer <your access token>" />
-          <Link href="/settings" className="inline-block font-mono text-[10.5px] text-blue hover:underline mt-2">Where's my token? →</Link>
+        <Step n={3} title="Connect — that's it" body="Nothing else to enter. Your URL already includes your access key, so the connector signs in on its own. Keep the URL private — anyone with it can reach your checkpoint.">
+          <div className="font-mono text-[11px] text-ink3 bg-bg2 border border-line rounded-lg px-2.5 py-2">
+            No token field, no OAuth — just the URL.
+          </div>
         </Step>
       </div>
 
       <p className="font-mono text-[10.5px] text-ink4 mt-4 pt-3 border-t border-line">
-        Running your own checkpoint instead of the hosted one?{" "}
-        <Link href="/guide" className="text-blue hover:underline">See the self-host steps in the guide</Link>.
+        Prefer a header instead of the key in the URL? Use{" "}
+        <span className="text-ink3">Authorization: Bearer &lt;token&gt;</span> with the base <span className="text-ink3">/mcp</span> URL.
+        Running your own checkpoint? <Link href="/guide" className="text-blue hover:underline">See the self-host steps</Link>.
       </p>
     </section>
   );

@@ -303,13 +303,14 @@ def guarded_delete_record(actor: str, table: str, record_id: str
 # --- entrypoint --------------------------------------------------------------
 
 def _build_http_app():
-    """Build the streamable-HTTP ASGI app, gated by a shared bearer token.
+    """Build the streamable-HTTP ASGI app, gated by a shared token.
 
-    When INTERLOCK_MCP_AUTH_TOKEN is set, every HTTP request must present
-    `Authorization: Bearer <token>` (constant-time compared). This is the caller
-    authentication the README calls for before exposing the server publicly —
-    without it, anyone who finds the URL could approve decisions or read the
-    audit log. If the token is unset (e.g. local stdio dev), no gate is added.
+    When INTERLOCK_MCP_AUTH_TOKEN is set, every HTTP request must present the
+    token, either way (constant-time compared):
+      - in the URL:   ...?key=<token>   ← lets non-technical users connect by
+        pasting ONE URL into a client's connector UI (no header, no OAuth).
+      - or a header:  Authorization: Bearer <token>   ← for MCP configs / code.
+    If the token is unset (e.g. local stdio dev), no gate is added.
 
     Implemented as PURE ASGI middleware (not BaseHTTPMiddleware) so it never
     buffers the transport's streaming/SSE responses — wrapping those in
@@ -317,18 +318,29 @@ def _build_http_app():
     """
     import hmac
     import os
+    from urllib.parse import parse_qs
 
     app = mcp.streamable_http_app()
     token = os.environ.get("INTERLOCK_MCP_AUTH_TOKEN", "").strip()
     if not token:
         return app
 
+    def _ok(provided: str) -> bool:
+        return bool(provided) and hmac.compare_digest(provided, token)
+
     async def gated(scope, receive, send):
         if scope.get("type") == "http":
-            headers = dict(scope.get("headers") or [])
-            auth = headers.get(b"authorization", b"").decode("latin-1")
-            provided = auth[7:].strip() if auth[:7].lower() == "bearer " else auth.strip()
-            if not (provided and hmac.compare_digest(provided, token)):
+            # 1) token in the URL query (?key=...)
+            qs = parse_qs(scope.get("query_string", b"").decode("latin-1"))
+            key = (qs.get("key") or qs.get("token") or [""])[0].strip()
+            authorized = _ok(key)
+            # 2) or the Authorization header
+            if not authorized:
+                headers = dict(scope.get("headers") or [])
+                auth = headers.get(b"authorization", b"").decode("latin-1")
+                provided = auth[7:].strip() if auth[:7].lower() == "bearer " else auth.strip()
+                authorized = _ok(provided)
+            if not authorized:
                 await send({
                     "type": "http.response.start",
                     "status": 401,
@@ -346,15 +358,24 @@ def _build_http_app():
 
 
 def _register_checkpoint() -> None:
-    """Best-effort: tell the dashboard this checkpoint's public URL, so each tenant
-    sees its own ready-to-paste connect URL. No-op unless api store + public URL set."""
+    """Best-effort: tell the dashboard this checkpoint's public connect URL, so each
+    tenant sees its own ready-to-paste URL. If a token is set, the token is baked
+    into the URL (?key=...) so the URL alone authorizes — one paste, no header.
+    No-op unless api store + public URL set."""
+    import os
+
     if cfg.store != "api" or not cfg.public_url or not cfg.dashboard_url:
         return
+    url = cfg.public_url.rstrip("/") + "/mcp"
+    token = os.environ.get("INTERLOCK_MCP_AUTH_TOKEN", "").strip()
+    if token:
+        from urllib.parse import quote
+        url += "?key=" + quote(token, safe="")
     try:
         import httpx
         httpx.post(
             cfg.dashboard_url + cfg.ep_register,
-            json={"url": cfg.public_url.rstrip("/") + "/mcp"},
+            json={"url": url},
             headers=cfg.auth_headers(),
             timeout=cfg.request_timeout,
             verify=cfg.verify_tls,
