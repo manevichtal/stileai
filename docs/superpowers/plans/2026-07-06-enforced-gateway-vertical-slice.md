@@ -244,80 +244,103 @@ git commit -m "feat(sample): demo downstream tools server (read/email/charge/del
 
 **Interfaces:**
 - Produces:
-  - `class Downstream` with `async def start()` (connect + `list_tools`), `async def list_tools() -> list[Tool]`, `async def call(tool: str, args: dict) -> CallToolResult`, `async def close()`.
-  - Constructed from a config dict `{name, transport, target, auth}`. For `stdio`, `target` is a JSON list `[command, *args]`; for `http`, `target` is a URL and `auth` (decrypted) becomes `Authorization: Bearer <auth>`.
+  - `class Downstream` constructed from a config dict `{name, transport, target, auth}`, with `name` property and two **per-call** async methods: `async def list_tools() -> list[types.Tool]` and `async def call(tool: str, args: dict) -> types.CallToolResult`. Each opens a fresh downstream connection, uses it, and closes it — all within the caller's own task.
+  - For `stdio`, `target` is a JSON list `[command, *args]`; for `http`, `target` is a URL and `auth` (already decrypted by the caller) becomes `Authorization: Bearer <auth>`.
+
+**Design note (why per-call, not a persistent session):** `stdio_client`/`streamablehttp_client` are anyio context managers that spawn task groups/subprocesses. A session opened in one task (e.g. an app lifespan) and used from another (a request handler) raises anyio "cancel scope entered in a different task" errors. Opening and closing the connection inside the same task that uses it sidesteps this entirely. Per-call connect costs a subprocess spawn (~200-500ms) for stdio — acceptable for Phase 1 / demo; http is cheap. Do **not** cache the session across calls.
+
+**Env note (this machine):** the `mcp` SDK's stdio client on Windows needs the child to find the package. Tests set `cwd`/`PYTHONPATH` to the `interlock-mcp` dir and invoke the venv Python. `pytest` + `pytest-asyncio` are already installed in `.venv`. This task must also add to `pyproject.toml`:
+```toml
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+```
+so `async def test_*` run without a per-test `@pytest.mark.asyncio` marker.
 
 - [ ] **Step 1: Write a failing test (stdio against the sample server)**
 
 ```python
 # tests/test_downstream.py
-import pytest
+import sys
 from interlock.downstream import Downstream
 
-@pytest.mark.asyncio
+# Launch the sample server with THIS interpreter so it's found on any machine.
+def _sample_cfg():
+    target = json.dumps([sys.executable, "-m", "sample_tools.server"])
+    return {"name": "sample", "transport": "stdio", "target": target, "auth": None}
+
+import json
+
 async def test_downstream_lists_and_calls_sample_tools():
-    d = Downstream({"name": "sample", "transport": "stdio",
-                    "target": '["python", "-m", "sample_tools.server"]', "auth": None})
-    await d.start()
+    d = Downstream(_sample_cfg())
     names = {t.name for t in await d.list_tools()}
     assert {"charge_card", "read_data"} <= names
     res = await d.call("read_data", {"query": "x"})
     assert res.content  # got a result back
-    await d.close()
+    assert d.name == "sample"
 ```
 
 - [ ] **Step 2: Run it, verify it fails**
 
 Run: `./.venv/Scripts/python.exe -m pytest tests/test_downstream.py -q`
-Expected: FAIL (module missing). (Add `pytest-asyncio` to the dev venv: `uv pip install --python .venv pytest pytest-asyncio` and set `asyncio_mode=auto` in `pyproject.toml [tool.pytest.ini_options]`.)
+Expected: FAIL (`interlock.downstream` module missing). If `asyncio_mode` isn't set yet the test may report "async def not natively supported" — add the `pyproject.toml` block from the Env note above, then it should FAIL on the missing module.
 
-- [ ] **Step 3: Implement `Downstream`**
+- [ ] **Step 3: Implement `Downstream` (per-call sessions)**
 
 ```python
 # interlock/downstream.py
+"""Connect to ONE downstream MCP server (stdio or http) and list/call its tools.
+
+Per-call connections: each method opens a fresh session, uses it, and closes it
+within the caller's own task. This avoids anyio cross-task cancel-scope errors
+that arise when a session opened in one task is used from another.
+"""
 from __future__ import annotations
+
 import json
-from contextlib import AsyncExitStack
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator
 
 from mcp import ClientSession, types
-from mcp.client.stdio import stdio_client, StdioServerParameters
+from mcp.client.stdio import StdioServerParameters, stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 
 
 class Downstream:
     def __init__(self, cfg: dict[str, Any]):
         self._cfg = cfg
-        self._stack = AsyncExitStack()
-        self._session: ClientSession | None = None
 
-    async def start(self) -> None:
-        transport = self._cfg["transport"]
-        if transport == "stdio":
+    @property
+    def name(self) -> str:
+        return self._cfg["name"]
+
+    @asynccontextmanager
+    async def _session(self) -> AsyncIterator[ClientSession]:
+        if self._cfg["transport"] == "stdio":
             parts = json.loads(self._cfg["target"])
             params = StdioServerParameters(command=parts[0], args=parts[1:])
-            read, write = await self._stack.enter_async_context(stdio_client(params))
+            async with stdio_client(params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    yield session
         else:  # http
-            headers = {}
+            headers: dict[str, str] = {}
             auth = self._cfg.get("auth")
             if auth:
                 headers["Authorization"] = f"Bearer {auth}"
-            read, write, _ = await self._stack.enter_async_context(
-                streamablehttp_client(self._cfg["target"], headers=headers)
-            )
-        self._session = await self._stack.enter_async_context(ClientSession(read, write))
-        await self._session.initialize()
+            async with streamablehttp_client(self._cfg["target"], headers=headers) as (
+                read, write, _,
+            ):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    yield session
 
     async def list_tools(self) -> list[types.Tool]:
-        assert self._session
-        return (await self._session.list_tools()).tools
+        async with self._session() as session:
+            return (await session.list_tools()).tools
 
     async def call(self, tool: str, args: dict[str, Any]) -> types.CallToolResult:
-        assert self._session
-        return await self._session.call_tool(tool, args)
-
-    async def close(self) -> None:
-        await self._stack.aclose()
+        async with self._session() as session:
+            return await session.call_tool(tool, args)
 ```
 
 - [ ] **Step 4: Run the test, verify it passes**
@@ -329,7 +352,7 @@ Expected: PASS.
 
 ```bash
 git add interlock-mcp/interlock/downstream.py interlock-mcp/tests/test_downstream.py interlock-mcp/pyproject.toml
-git commit -m "feat(gateway): Downstream connector (stdio + http MCP clients)"
+git commit -m "feat(gateway): Downstream connector (per-call stdio + http MCP clients)"
 ```
 
 ---
@@ -341,10 +364,13 @@ git commit -m "feat(gateway): Downstream connector (stdio + http MCP clients)"
 - Test: `interlock-mcp/tests/test_gateway.py`
 
 **Interfaces:**
-- Consumes: `PolicyProvider.engine()` (from `server.py`, exposes `.evaluate(actor, action, resource, params) -> Decision`), `AuditSink.record(**entry)`, `Downstream`.
+- Consumes: a `provider` object exposing `.engine() -> PolicyEngine` (the existing `PolicyProvider` in `server.py`; `PolicyEngine.evaluate(actor, action, resource, params) -> Decision`), an `audit` object implementing the `AuditSink` protocol from `stores.py` (`record(**entry) -> str`, `add_pending`, `get_pending`), and `Downstream` (Task 4, per-call).
 - Produces:
-  - `def build_gateway_server(downstreams: list[Downstream], provider, audit, actor: str) -> mcp.server.Server` — a low-level MCP `Server` whose `list_tools` returns the union of downstream tools (namespaced `name__tool`), and whose `call_tool` evaluates policy then forwards on **allow**, returns a refusal on **deny**. (Hold handled in Task 6.)
-  - Action mapping: `action = <tool>` (the bare downstream tool name), `params = args`, `resource = args.get("resource") or "*"`, `actor` = configured.
+  - `def build_gateway_server(downstreams: list[Downstream], provider, audit, actor: str = "agent:default") -> Server` — a low-level MCP `Server` (`mcp.server.lowlevel.Server`) whose `list_tools` returns the union of downstream tools (namespaced `<downstream>__<tool>`), and whose `call_tool` evaluates policy then forwards on **allow**, returns a refusal on **deny**. (Hold handled in Task 6.)
+  - `def _decide(engine, actor, tool, args) -> Decision` — the pure policy step (unit-tested without any MCP wiring).
+  - Action mapping: `action = <tool>` (the bare downstream tool name, not the namespaced exposed name), `params = args`, `resource = str(args.get("resource") or "*")`, `actor` = configured.
+
+**SDK note (verify against mcp 1.28.1):** confirm the low-level `@server.call_tool()` handler's expected return type in this version — it may be `list[ContentBlock]` or a `(content, structured)` tuple. Match whatever `mcp.server.lowlevel` expects; if the signature differs from the code below, adapt the return shape (the policy/forward/refuse logic is unchanged). Keep `import mcp.types as types` for `TextContent`/`Tool`.
 
 - [ ] **Step 1: Write a failing test (deny a drop, allow a read)**
 
@@ -402,7 +428,7 @@ def build_gateway_server(downstreams, provider, audit, actor: str = "agent:defau
         routing.clear()
         for d in downstreams:
             for t in await d.list_tools():
-                routing[f"{d._cfg['name']}__{t.name}"] = (d, t)
+                routing[f"{d.name}__{t.name}"] = (d, t)
 
     @server.list_tools()
     async def list_tools() -> list[types.Tool]:
@@ -466,7 +492,10 @@ git commit -m "feat(gateway): aggregate downstream tools; gate allow/deny; audit
 
 **Interfaces:**
 - Consumes: `audit.add_pending(PendingDecision)`, `audit.get_pending(decision_id) -> PendingDecision | None` (status: pending|approved|denied). Poll settings from `cfg.poll_interval` and a hold timeout `cfg.hold_timeout` (new, default 300s).
-- Produces: on hold → create pending, poll `get_pending` until `status != pending` or timeout; **approved** → forward to downstream + return result; **denied/timeout** → return refusal. Behavior parameterized so Task 7 can inject a fast fake clock/sink.
+- Produces: `async def wait_for_approval(audit, decision_id, poll, timeout) -> str` returning `"approved"` or `"denied"`; plus the wired hold branch in `call_tool`.
+- **Signature change:** `build_gateway_server` gains a `cfg` parameter → `build_gateway_server(downstreams, provider, audit, cfg, actor="agent:default")`. Inside, compute `hold_poll = max(1.0, cfg.poll_interval / 10)` and `hold_timeout = cfg.hold_timeout` once (closed over by `call_tool`). This threads config without reaching into `provider`'s privates.
+
+**Note:** `audit.get_pending` is a synchronous call (httpx sync client in api mode); calling it from the async poll loop briefly blocks the event loop per poll (~once/sec). Acceptable for Phase 1's single-agent demo. If it becomes a bottleneck, wrap in `asyncio.to_thread` (out of scope now).
 
 - [ ] **Step 1: Write a failing test (hold → approve → forwards)**
 
@@ -520,6 +549,14 @@ async def wait_for_approval(audit, decision_id: str, poll: float, timeout: float
     return "denied"
 ```
 
+Change the `build_gateway_server` signature to accept `cfg`:
+`def build_gateway_server(downstreams, provider, audit, cfg, actor="agent:default")`, and near the top of its body (before the handlers) compute the hold timings the `call_tool` closure will use:
+
+```python
+    hold_poll = max(1.0, cfg.poll_interval / 10)
+    hold_timeout = cfg.hold_timeout
+```
+
 Replace the `REQUIRE_APPROVAL` branch in `call_tool` with:
 
 ```python
@@ -531,8 +568,7 @@ Replace the `REQUIRE_APPROVAL` branch in `call_tool` with:
             reason=decision.reason, matched_policy=decision.matched_policy,
             approvals_required=decision.approvals_required))
         outcome = await wait_for_approval(audit, decision_id,
-                                          poll=max(1.0, provider._cfg.poll_interval / 10),
-                                          timeout=provider._cfg.hold_timeout)
+                                          poll=hold_poll, timeout=hold_timeout)
         if outcome == "approved":
             res = await d.call(real, args)
             return list(res.content)
@@ -564,35 +600,230 @@ git commit -m "feat(gateway): hold = create approval and wait; approve->forward,
 - Test: `interlock-mcp/tests/test_tools_config.py`
 
 **Interfaces:**
-- Consumes: the shared `_Http` helper pattern from `stores.py` (or a fresh httpx client with `cfg.auth_headers()`), `cfg.ep_tools` (new, default `/api/tools`).
-- Produces: `class ApiToolsStore` with `def get_tools(self) -> list[dict]` returning the org's connected tools, last-known-good cache on failure, `[]` if never loaded.
+- Consumes: `Config` (`cfg.dashboard_url`, `cfg.auth_headers()`, `cfg.request_timeout`, `cfg.verify_tls`, and new `cfg.ep_tools`).
+- Produces: `class ApiToolsStore` constructed as `ApiToolsStore(cfg)` (builds its own httpx client, self-contained so `server.py` wiring is one line) with `def get_tools(self) -> list[dict]` returning the org's connected tools (`[{name, transport, target, auth, enabled}, ...]`), last-known-good cache on failure, `[]` if never loaded.
 
-- [ ] **Step 1–5:** Mirror `ApiPolicyStore` in `stores.py`: fetch `cfg.ep_tools`, return `data["tools"]`, cache; on exception return cache or `[]`. Test with a mock (reuse `test_api_store.py`'s mock-dashboard approach). Add `ep_tools=_env("INTERLOCK_EP_TOOLS","/api/tools")` to `config.py`. Commit `feat(gateway): load connected-tools config from the dashboard`.
+First add to `config.py` `Config` (field + in `from_env`): `ep_tools: str` = `_env("INTERLOCK_EP_TOOLS", "/api/tools")`.
+
+- [ ] **Step 1: Write a failing test (mock dashboard)**
+
+```python
+# tests/test_tools_config.py
+import httpx
+from interlock.config import Config
+from interlock.tools_config import ApiToolsStore
+
+def _cfg(monkeypatch, url):
+    monkeypatch.setenv("INTERLOCK_STORE", "api")
+    monkeypatch.setenv("INTERLOCK_DASHBOARD_URL", url)
+    monkeypatch.setenv("INTERLOCK_API_KEY", "sk_test")
+    return Config.from_env()
+
+def test_get_tools_returns_list_and_caches(monkeypatch):
+    calls = {"n": 0}
+    def handler(request):
+        calls["n"] += 1
+        assert request.headers.get("authorization") == "Bearer sk_test"
+        return httpx.Response(200, json={"tools": [
+            {"name": "sample", "transport": "stdio", "target": "[]",
+             "auth": None, "enabled": True}]})
+    cfg = _cfg(monkeypatch, "http://dash.test")
+    store = ApiToolsStore(cfg, transport=httpx.MockTransport(handler))
+    tools = store.get_tools()
+    assert tools[0]["name"] == "sample"
+
+def test_get_tools_empty_when_unreachable(monkeypatch):
+    def handler(request):
+        raise httpx.ConnectError("down")
+    cfg = _cfg(monkeypatch, "http://dash.test")
+    store = ApiToolsStore(cfg, transport=httpx.MockTransport(handler))
+    assert store.get_tools() == []   # never-loaded -> empty, never raises
+```
+
+- [ ] **Step 2: Run it, verify it fails**
+
+Run: `./.venv/Scripts/python.exe -m pytest tests/test_tools_config.py -q`
+Expected: FAIL (module missing).
+
+- [ ] **Step 3: Implement `ApiToolsStore`**
+
+```python
+# interlock/tools_config.py
+"""Loads the org's connected downstream tools from the dashboard (GET /api/tools).
+
+Mirrors ApiPolicyStore: caches last-known-good; on any failure returns the cache,
+or [] if nothing has ever loaded. Never raises to the caller and never fails open.
+"""
+from __future__ import annotations
+
+import threading
+from typing import Any
+
+import httpx
+
+from .config import Config
+
+
+class ApiToolsStore:
+    def __init__(self, cfg: Config, transport: httpx.BaseTransport | None = None):
+        self._cfg = cfg
+        self._client = httpx.Client(
+            base_url=cfg.dashboard_url,
+            headers=cfg.auth_headers(),
+            timeout=cfg.request_timeout,
+            verify=cfg.verify_tls,
+            transport=transport,  # None in prod; MockTransport in tests
+        )
+        self._cache: list[dict[str, Any]] | None = None
+        self._lock = threading.Lock()
+
+    def get_tools(self) -> list[dict[str, Any]]:
+        try:
+            r = self._client.get(self._cfg.ep_tools)
+            r.raise_for_status()
+            tools = r.json().get("tools", [])
+            with self._lock:
+                self._cache = tools
+            return tools
+        except Exception:
+            with self._lock:
+                return self._cache if self._cache is not None else []
+```
+
+- [ ] **Step 4: Run the tests, verify they pass**
+
+Run: `./.venv/Scripts/python.exe -m pytest tests/test_tools_config.py -q`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add interlock-mcp/interlock/tools_config.py interlock-mcp/interlock/config.py interlock-mcp/tests/test_tools_config.py
+git commit -m "feat(gateway): load connected-tools config from the dashboard (/api/tools)"
+```
 
 ---
 
-## Task 8: Mount the gateway at `/gw` in `server.py`
+## Task 8: Serve the gateway as its own app (`INTERLOCK_MODE=gateway`)
 
 **Files:**
-- Modify: `interlock-mcp/interlock/server.py` (`_build_http_app`, `main`)
+- Modify: `interlock-mcp/interlock/gateway.py` (add `build_gateway_app`)
+- Modify: `interlock-mcp/interlock/server.py` (factor `_token_gate`, add `_build_gateway_http_app`, wire `main`)
+- Test: `interlock-mcp/tests/test_gateway_app.py`
 
 **Interfaces:**
-- Consumes: `build_gateway_server`, `Downstream`, `ApiToolsStore`, the existing auth middleware.
-- Produces: when `INTERLOCK_TRANSPORT=http` and store=`api`, the ASGI app also serves the gateway's streamable-HTTP at `/gw` (same `?key=`/header auth). On startup: load tools config, construct one `Downstream` per tool, `start()` them, build the gateway server, mount its streamable app under `/gw`.
+- Consumes: `build_gateway_server` (Task 5/6), `Downstream` (Task 4), `ApiToolsStore` (Task 7), the module-level `policies` (a `PolicyProvider`) and `audit` (an `AuditSink`) already built in `server.py`, and `StreamableHTTPSessionManager` from `mcp.server.streamable_http_manager`.
+- Produces:
+  - `gateway.build_gateway_app(downstreams, provider, audit, cfg) -> Starlette` — an ASGI app serving the gateway MCP server over streamable-HTTP at path `/gw`, with a lifespan that runs the session manager.
+  - `server._token_gate(app)` — factored from the existing `_build_http_app` gate (token via `?key=`/`token=` query or `Authorization: Bearer`, constant-time compare, 401 otherwise; pass-through when no token set). `_build_http_app` is refactored to call it.
+  - `server._build_gateway_http_app()` — loads connected tools via `ApiToolsStore`, builds `Downstream`s, wraps `build_gateway_app(...)` in `_token_gate`.
+  - `main()` selects the app by `INTERLOCK_MODE` (`gateway` → gateway app; anything else → the existing checkpoint app). Same uvicorn bind.
 
-- [ ] **Step 1: Add a session-manager + mount for the gateway**
+**Design decision (standalone app, not co-mounted):** the gateway runs as a *mode* of the same service/image via `INTERLOCK_MODE=gateway`, on its own process/port — NOT co-mounted with the `/mcp` checkpoint in one app. Co-mounting two `StreamableHTTPSessionManager`s under one ASGI app means running two independent session-manager lifespans and is fragile; a single-purpose app per process is simpler and robust. The connect URL is `https://<gateway-host>/gw?key=<token>`. Connected tools are loaded at startup (add the `connected_tools` row, then start the gateway); hot-add of a new downstream needs a restart — acceptable for Phase 1.
 
-Build the low-level server's streamable app via `mcp.server.streamable_http_manager` (create a `StreamableHTTPSessionManager(app=gateway_server, ...)`) and mount it in the Starlette app returned by `_build_http_app` under path `/gw`, wrapped by the same token gate. Manage downstream lifecycles in the app lifespan (start on startup, close on shutdown).
+- [ ] **Step 1: Write failing tests**
 
-- [ ] **Step 2: Manual smoke (local)**
+```python
+# tests/test_gateway_app.py
+import httpx
+from starlette.routing import Mount
+from interlock.gateway import build_gateway_app
 
-Start: `INTERLOCK_STORE=api INTERLOCK_TRANSPORT=http PORT=8030 INTERLOCK_MCP_AUTH_TOKEN=t INTERLOCK_DASHBOARD_URL=http://localhost:3000 INTERLOCK_API_KEY=<seeded> python -m interlock.server` (with a `connected_tools` row pointing at the sample server via stdio).
-Then connect an MCP client to `http://localhost:8030/gw?key=t`, `list_tools` → see `sample__charge_card` etc.
 
-- [ ] **Step 3: Commit**
+class _Cfg:  # minimal cfg stand-in
+    poll_interval = 30
+    hold_timeout = 300
+
+
+def test_gateway_app_mounts_gw():
+    app = build_gateway_app([], provider=None, audit=None, cfg=_Cfg())
+    assert any(isinstance(r, Mount) and r.path == "/gw" for r in app.routes)
+
+
+async def test_token_gate_rejects_without_key():
+    from interlock import server
+    # Wrap a trivial ASGI app so we test the gate, not the gateway internals.
+    async def ok(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200,
+                    "headers": [(b"content-type", b"text/plain")]})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    import os
+    os.environ["INTERLOCK_MCP_AUTH_TOKEN"] = "secret-t"
+    gated = server._token_gate(ok)
+    transport = httpx.ASGITransport(app=gated)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        assert (await c.get("/gw")).status_code == 401              # no key
+        assert (await c.get("/gw?key=secret-t")).status_code == 200  # good key
+    del os.environ["INTERLOCK_MCP_AUTH_TOKEN"]
+```
+
+- [ ] **Step 2: Run it, verify it fails**
+
+Run: `./.venv/Scripts/python.exe -m pytest tests/test_gateway_app.py -q`
+Expected: FAIL (`build_gateway_app` / `_token_gate` missing).
+
+- [ ] **Step 3: Add `build_gateway_app` to `gateway.py`**
+
+```python
+# add to interlock/gateway.py
+import contextlib
+
+from starlette.applications import Starlette
+from starlette.routing import Mount
+from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+
+
+def build_gateway_app(downstreams, provider, audit, cfg) -> Starlette:
+    """ASGI app serving the gateway MCP server over streamable-HTTP at /gw."""
+    server = build_gateway_server(downstreams, provider, audit, cfg)
+    session_manager = StreamableHTTPSessionManager(app=server)
+
+    async def handle_gw(scope, receive, send):
+        await session_manager.handle_request(scope, receive, send)
+
+    @contextlib.asynccontextmanager
+    async def lifespan(app):
+        async with session_manager.run():
+            yield
+
+    return Starlette(routes=[Mount("/gw", app=handle_gw)], lifespan=lifespan)
+```
+
+- [ ] **Step 4: Factor `_token_gate` + add `_build_gateway_http_app` in `server.py`**
+
+Extract the existing gate logic from `_build_http_app` into a reusable `_token_gate(app)` (the exact `gated` closure already in `_build_http_app` — move it, and have `_build_http_app` return `_token_gate(mcp.streamable_http_app())`). Then add:
+
+```python
+def _build_gateway_http_app():
+    """The enforced-gateway app (INTERLOCK_MODE=gateway), token-gated."""
+    from .tools_config import ApiToolsStore
+    from .downstream import Downstream
+    from .gateway import build_gateway_app
+
+    tools = ApiToolsStore(cfg).get_tools()
+    downstreams = [Downstream(t) for t in tools]
+    return _token_gate(build_gateway_app(downstreams, policies, audit, cfg))
+```
+
+In `main()`, select the app:
+
+```python
+        mode = os.environ.get("INTERLOCK_MODE", "checkpoint").lower()
+        app = _build_gateway_http_app() if mode == "gateway" else _build_http_app()
+        uvicorn.run(app, host=host, port=port)
+```
+
+- [ ] **Step 5: Run the tests, verify they pass**
+
+Run: `./.venv/Scripts/python.exe -m pytest tests/test_gateway_app.py -q`
+Expected: PASS. Also run the full suite: `./.venv/Scripts/python.exe -m pytest -q` → all green.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git commit -am "feat(gateway): serve the gateway at /gw (token-gated), wire downstream lifecycles"
+git add interlock-mcp/interlock/gateway.py interlock-mcp/interlock/server.py interlock-mcp/tests/test_gateway_app.py
+git commit -m "feat(gateway): standalone gateway app served at /gw via INTERLOCK_MODE=gateway"
 ```
 
 ---
@@ -603,11 +834,13 @@ git commit -am "feat(gateway): serve the gateway at /gw (token-gated), wire down
 - Create: `dashboard/scripts/verify-gateway.mjs` + a small Python client `interlock-mcp/gateway_e2e.py`
 
 **Interfaces:**
-- Produces: a test that seeds an org + api key + policies (allow read, deny delete, approve charge) + a `connected_tools` row (stdio → sample server), runs the gateway locally, drives an MCP client at `/gw?key=`, and asserts: `read_data`→result, `delete_records`→blocked JSON, `charge_card`→hold→(auto-approve via dashboard resolve)→forwarded result. Confirms audit rows appear for the org. Cleans up.
+- Produces: a test that seeds (against live Supabase, service role) an org + api key + policies (allow `read_data`, deny `delete_records`, require_approval `charge_card`) + one `connected_tools` row (stdio → sample server via `[sys.executable, "-m", "sample_tools.server"]`), starts the gateway locally with `INTERLOCK_MODE=gateway INTERLOCK_STORE=api`, drives an MCP client at `http://localhost:<port>/gw?key=<token>`, and asserts: `sample__read_data`→result JSON with `performed:true`; `sample__delete_records`→`blocked_by:"stileai"`; `sample__charge_card`→held, then approved out-of-band → forwarded result `performed:true`. Confirms audit rows for the org via `/api/audit`. Cleans up all seeded rows.
 
-- [ ] **Step 1:** Write `gateway_e2e.py` (truststore + streamablehttp client to `/gw?key=`, call the three tools; for the charge, spawn a task that approves via the dashboard `/api/approvals/{id}/resolve` with the api key after 1s).
-- [ ] **Step 2:** Write `verify-gateway.mjs` to seed/orchestrate/assert/cleanup (mirror `phase4-seed.mjs` + `phase4-verify.mjs`).
-- [ ] **Step 3:** Run end-to-end; expected: `GATEWAY E2E: ALL CHECKS PASSED` and audit rows present.
+**Prereq:** this task requires the `connected_tools` table applied (Task 1) and the dashboard running (Vercel prod or local `npm run dev`). The controller will confirm the migration is applied before this task runs.
+
+- [ ] **Step 1:** Write `interlock-mcp/gateway_e2e.py` — `truststore.inject_into_ssl()`, a streamablehttp client to `/gw?key=<token>`; call the three namespaced tools; for the charge, `asyncio.create_task` that waits ~1.5s then POSTs the dashboard `POST /api/approvals/{decision_id}/resolve` (api-key auth, body `{"approver":"e2e","approved":true}`) to approve it; assert the three outcomes. The `decision_id` for the held charge is read from the pending list via `GET /api/approvals?status=pending` (api-key auth) — or parsed from the gateway's pending response if surfaced.
+- [ ] **Step 2:** Write `dashboard/scripts/verify-gateway.mjs` to seed org/key/policies/connected_tools (service role, mirror `scripts/verify-api.mjs` / `phase9_*`), spawn the gateway process (`INTERLOCK_MODE=gateway`, env with the seeded key + a test token + `INTERLOCK_DASHBOARD_URL`), run `gateway_e2e.py`, assert its exit 0, then delete all seeded rows.
+- [ ] **Step 3:** Run end-to-end; expected: `GATEWAY E2E: ALL CHECKS PASSED` and audit rows present. If live-infra flakiness blocks it, capture the failure and report DONE_WITH_CONCERNS rather than weakening asserts.
 - [ ] **Step 4:** Commit `test(gateway): end-to-end allow/deny/hold through the gateway`.
 
 ---
@@ -626,7 +859,7 @@ git commit -am "feat(gateway): serve the gateway at /gw (token-gated), wire down
 
 - **Spec coverage:** gateway proxy (T4/5/8) ✅; connected-tools config (T1/2/7) ✅; allow/deny/hold-wait (T5/6) ✅; audit every call (T5) ✅; approve→forward, deny/timeout→block (T6) ✅; sample server (T3) ✅; one-URL `?key=` auth reused (T8) ✅; demo (T9/10) ✅. Deferred to Plan 2/3 (explicitly): security hardenings (fail-closed token, append-only audit, admin-role RLS already in T1, error hygiene, cred encryption enforcement — CHECK is in T1 but the encrypt/decrypt helper + dashboard write path are Plan 3), detailed approval UI, queue mode. Downstream credential **encryption helper** + dashboard "Connected tools" CRUD UI are Plan 3; Plan 1 seeds `connected_tools` rows directly for the demo.
 - **Placeholders:** none — code shown for every implementing step; T7/T9/T10 reference concrete existing files to mirror.
-- **Type consistency:** `_decide`, `wait_for_approval`, `build_gateway_server`, `Downstream.{start,list_tools,call,close}`, `ApiToolsStore.get_tools`, `resolveOrgId`, `/api/tools` shape used consistently across tasks.
+- **Type consistency:** `_decide(engine, actor, tool, args)`, `wait_for_approval(audit, decision_id, poll, timeout)`, `build_gateway_server(downstreams, provider, audit, cfg, actor=...)`, `build_gateway_app(downstreams, provider, audit, cfg)`, `Downstream.{name, list_tools, call}` (per-call), `ApiToolsStore(cfg).get_tools()`, `_token_gate(app)`, `resolveOrgId`, `/api/tools` shape `{tools:[{name,transport,target,auth,enabled}]}` — used consistently across tasks. Signature evolution: `build_gateway_server` gains `cfg` in Task 6 (declared there); Task 8 is its first caller.
 
 ---
 
