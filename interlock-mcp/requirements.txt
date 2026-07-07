@@ -3,3 +3,4 @@
 mcp>=1.27,<2
 PyYAML>=6.0
 httpx>=0.27          # used by the api (dashboard) store; also an MCP SDK dep
+cryptography>=42
