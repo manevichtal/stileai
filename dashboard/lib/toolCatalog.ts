@@ -188,6 +188,36 @@ export const CATALOG: CatalogTool[] = [
     ],
     blurb: "Manage Cloudflare — DNS, Workers, and more.", official: true,
   },
+  // — CRM (more) —
+  {
+    id: "salesforce", name: "Salesforce", category: "crm", transport: "stdio",
+    target: ["npx", "-y", "mcp-server-salesforce"],
+    credentials: [
+      { key: "SALESFORCE_USERNAME", label: "Salesforce Username", where: "The login username of your integration user." },
+      { key: "SALESFORCE_PASSWORD", label: "Salesforce Password", where: "The password for that user." },
+      { key: "SALESFORCE_TOKEN", label: "Security Token", where: "Salesforce → Settings → My Personal Information → Reset My Security Token (emailed to you)." },
+      { key: "SALESFORCE_INSTANCE_URL", label: "Instance URL", where: "e.g. https://your-company.my.salesforce.com" },
+    ],
+    blurb: "Read and update leads, contacts, and opportunities in Salesforce.", official: false,
+  },
+  // — Developer Tools (more) —
+  {
+    id: "gitlab", name: "GitLab", category: "dev-tools", transport: "stdio",
+    target: ["npx", "-y", "@zereight/mcp-gitlab"],
+    credentials: [
+      { key: "GITLAB_PERSONAL_ACCESS_TOKEN", label: "GitLab Personal Access Token", where: "GitLab → User Settings → Access Tokens." },
+    ],
+    blurb: "Manage GitLab projects, issues, and merge requests.", official: false,
+  },
+  // — Docs & Productivity (more) —
+  {
+    id: "google-maps", name: "Google Maps", category: "docs-productivity", transport: "stdio",
+    target: ["npx", "-y", "@cablate/mcp-google-map"],
+    credentials: [
+      { key: "GOOGLE_MAPS_API_KEY", label: "Google Maps API Key", where: "Google Cloud Console → APIs & Services → Credentials → create an API key (enable Places/Directions/Geocoding)." },
+    ],
+    blurb: "Places, directions, and geocoding via Google Maps.", official: false,
+  },
 
   // — Reuse-existing-connection (OAuth): no pasteable key; point StileAI at the
   //   connector you already set up. Shown as advanced. —
