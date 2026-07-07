@@ -383,7 +383,10 @@ def _register_checkpoint() -> None:
 
     if cfg.store != "api" or not cfg.public_url or not cfg.dashboard_url:
         return
-    url = cfg.public_url.rstrip("/") + "/mcp"
+    # Register the surface this service actually serves: /gw in gateway mode,
+    # /mcp for the classic checkpoint — so the dashboard shows a URL that works.
+    path = "/gw" if os.environ.get("INTERLOCK_MODE", "checkpoint").lower() == "gateway" else "/mcp"
+    url = cfg.public_url.rstrip("/") + path
     token = os.environ.get("INTERLOCK_MCP_AUTH_TOKEN", "").strip()
     if token:
         from urllib.parse import quote
