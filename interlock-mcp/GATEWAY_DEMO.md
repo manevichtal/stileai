@@ -20,20 +20,8 @@ The demo proves:
 
 In [Supabase](https://supabase.com):
 1. Go to the **SQL Editor**.
-2. Paste and run:
-   ```sql
-   -- Apply migration if not already present
-   CREATE TABLE IF NOT EXISTS connected_tools (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     org_id UUID NOT NULL REFERENCES organizations(id),
-     name TEXT NOT NULL,
-     transport TEXT NOT NULL,
-     target JSONB NOT NULL,
-     enabled BOOLEAN DEFAULT true,
-     created_at TIMESTAMP DEFAULT now(),
-     UNIQUE(org_id, name)
-   );
-   ```
+2. Open the file `supabase/migration_connected_tools.sql` from this repo, copy its entire contents, paste into the SQL Editor, and click **Run**. (This creates the `connected_tools` table with row-level security, admin-only access, and an encrypted-credentials constraint — do not hand-write your own version; the columns must match exactly, e.g. `target` is `text` holding a JSON string.)
+3. You should see "Success. No rows returned."
 
 ### 2. Add the Sample Server as a Connected Tool
 
@@ -51,15 +39,13 @@ In Supabase **Table Editor** (or via INSERT):
 
 ### 3. Add Three Policies
 
-In the [StileAI Dashboard](https://dashboard.stileai.com):
+In the [StileAI Dashboard](https://stileai.vercel.app):
 1. Go to **Policies**.
-2. Add three rules (one per tool):
-   - **Name:** `Allow Read`  
-     **Rule:** `tool_name == "read_data"` → **Allow**
-   - **Name:** `Deny Delete`  
-     **Rule:** `tool_name == "delete_records"` → **Deny**
-   - **Name:** `Approve Charge`  
-     **Rule:** `tool_name == "charge_card"` → **Require Approval**
+2. Add three rules. Each rule's **Action** is the tool's name (StileAI matches the policy `action` against the tool being called); set the **Effect** accordingly:
+   - **Action** `read_data` → Effect **Allow**
+   - **Action** `delete_records` → Effect **Deny**
+   - **Action** `charge_card` → Effect **Require approval**
+3. (Recommended) Set your org's **default effect** to **Deny** so any tool call that matches no rule is blocked rather than allowed — a default-deny posture for the agent guardrail.
 
 ### 4. Start the Gateway Server
 
@@ -70,7 +56,7 @@ From the `interlock-mcp/` directory:
 export INTERLOCK_MODE=gateway
 export INTERLOCK_STORE=api
 export INTERLOCK_TRANSPORT=http
-export INTERLOCK_DASHBOARD_URL=https://dashboard.stileai.com
+export INTERLOCK_DASHBOARD_URL=https://stileai.vercel.app
 export INTERLOCK_API_KEY=<your org API key>
 export INTERLOCK_MCP_AUTH_TOKEN=my_secret_demo_token
 export PORT=8791
@@ -165,7 +151,7 @@ Say these to the agent — never mention "StileAI" or "policies":
 |-------|----------|
 | "Connection refused" | Check `PORT=8791` is not in use; restart gateway with `python -m interlock.server` |
 | Agent doesn't see tools | Verify `connected_tools` row exists and `enabled = true` in Supabase |
-| Policy doesn't trigger | Confirm rule syntax in Dashboard → Policies (e.g., `tool_name == "charge_card"`) |
+| Policy doesn't trigger | Confirm the rule's **Action** exactly matches the tool name in Dashboard → Policies (e.g. `charge_card`) |
 | Approval never appears | Check Dashboard → Approvals tab; verify `INTERLOCK_DASHBOARD_URL` is correct |
 
 ---
