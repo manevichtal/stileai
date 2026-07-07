@@ -19,7 +19,7 @@ export async function updateOrgName(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/settings");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -41,6 +41,6 @@ export async function updateCheckpointUrl(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/settings");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

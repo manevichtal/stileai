@@ -34,6 +34,8 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isPublic =
+    path === "/" ||
+    path.startsWith("/landing") ||
     path.startsWith("/login") ||
     path.startsWith("/api") ||
     path.startsWith("/auth");
@@ -48,7 +50,7 @@ export async function updateSession(request: NextRequest) {
   // "Log in" button)? Send them straight to the portal.
   if (user && path.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

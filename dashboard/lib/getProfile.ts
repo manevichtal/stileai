@@ -66,6 +66,6 @@ export async function requireProfileContext(): Promise<ProfileContext> {
 export async function requirePlatformAdmin(): Promise<ProfileContext> {
   const ctx = await getProfileContext();
   if (!ctx) redirect("/login");
-  if (!ctx.isPlatformAdmin) redirect("/");
+  if (!ctx.isPlatformAdmin) redirect("/dashboard");
   return ctx;
 }

@@ -40,7 +40,7 @@ export default async function GuidePage() {
       done: anyKeyUsed || audits > 0,
       title: "Connect your checkpoint",
       body: "Run the checkpoint on your infrastructure and point it here. Route your agents through it.",
-      href: "/",
+      href: "/dashboard",
       cta: "See the steps",
     },
     {
@@ -90,7 +90,7 @@ export default async function GuidePage() {
           <h3 className="font-sans font-bold text-[14px] text-ink mb-3">The four pieces</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Piece icon="policies" title="Policies" body="The rules agents must clear. Write your own or enable a compliance pack." href="/policies" />
-            <Piece icon="plug" title="Checkpoint" body="The small server your agents call before acting. You run it, pointed here." href="/" />
+            <Piece icon="plug" title="Checkpoint" body="The small server your agents call before acting. You run it, pointed here." href="/dashboard" />
             <Piece icon="audit" title="Audit log" body="Every decision, recorded — with sensitive values redacted." href="/audit" />
             <Piece icon="approvals" title="Approvals" body="Decisions that need a human wait here for your yes or no." href="/approvals" />
           </div>

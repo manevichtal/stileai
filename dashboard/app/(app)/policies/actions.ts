@@ -122,7 +122,7 @@ export async function addPack(packKey: string): Promise<Result & { added?: numbe
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/policies");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, added: rows.length };
 }
 

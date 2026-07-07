@@ -7,7 +7,7 @@ import { Icon } from "@/components/icons";
 import { SignOutButton } from "@/components/SignOutButton";
 
 const NAV = [
-  { href: "/", label: "Overview", icon: "home" },
+  { href: "/dashboard", label: "Overview", icon: "home" },
   { href: "/guide", label: "Getting started", icon: "book" },
   { href: "/policies", label: "Policies", icon: "policies" },
   { href: "/audit", label: "Audit log", icon: "audit" },
@@ -29,7 +29,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+    pathname === href || pathname.startsWith(href + "/");
 
   return (
     <div className="flex h-dvh overflow-hidden">

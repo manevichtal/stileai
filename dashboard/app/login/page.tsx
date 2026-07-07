@@ -38,7 +38,7 @@ export default function LoginPage() {
         setError(signInErr.message);
         return;
       }
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     } finally {
       setBusy(false);
