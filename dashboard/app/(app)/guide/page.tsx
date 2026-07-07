@@ -23,30 +23,37 @@ export default async function GuidePage() {
 
   const steps = [
     {
-      done: (policyCount ?? 0) > 0,
-      title: "Set your policies",
-      body: "Define the rules your agents must clear — or enable a ready-made compliance pack in one click.",
-      href: "/policies?tab=library",
-      cta: "Browse the library",
-    },
-    {
-      done: keysCount > 0,
-      title: "Create an API key",
-      body: "Generate a key so your checkpoint can authenticate to this dashboard.",
-      href: "/keys",
-      cta: "Create a key",
+      done: (policyCount ?? 0) > 0 || keysCount > 0 || audits > 0,
+      title: "Choose your AI tools",
+      body: "Decide which AI assistants your team uses — ChatGPT, Claude, Gemini, Copilot, or any other.",
+      href: "/dashboard",
+      cta: "See connectors",
     },
     {
       done: anyKeyUsed || audits > 0,
-      title: "Connect your checkpoint",
-      body: "Run the checkpoint on your infrastructure and point it here. Route your agents through it.",
+      title: "Deploy the agent",
+      body: "Put StileAI in the path between your team and the AI tools, so every request passes through it first.",
       href: "/dashboard",
       cta: "See the steps",
     },
     {
+      done: (policyCount ?? 0) > 0,
+      title: "Choose your policies",
+      body: "Turn on the rules you want: block sensitive company data, block customer PII, block source-code sharing, require admin approval for risky requests, allow safe general AI use.",
+      href: "/policies?tab=library",
+      cta: "Choose policies",
+    },
+    {
       done: audits > 0,
-      title: "Watch your first decision",
-      body: "Once an agent asks the checkpoint, every decision shows up in your audit trail.",
+      title: "Test a request",
+      body: "Type a sample employee prompt and see whether it's approved, denied, or sent for admin approval — with the reason.",
+      href: "/test",
+      cta: "Open the tester",
+    },
+    {
+      done: audits > 0,
+      title: "Go live",
+      body: "Once configured, StileAI enforces your policies automatically on every AI request — and records each decision.",
       href: "/audit",
       cta: "Open the audit log",
     },
@@ -55,32 +62,32 @@ export default async function GuidePage() {
 
   return (
     <>
-      <PageHeader title="Getting started" subtitle="What StileAI does, and how to go live." />
+      <PageHeader title="Getting started" subtitle="How StileAI protects your team's AI use — set up in five steps." />
       <div className="px-6 lg:px-8 pb-10 flex flex-col gap-6 max-w-[980px]">
         {/* What it is */}
         <section className="bg-card border border-line rounded-2xl p-6">
           <h2 className="font-sans font-bold text-[17px] text-ink tracking-[-0.01em]">
-            StileAI is the checkpoint between your AI agents and the systems they can touch.
+            StileAI sits between your employees and the AI tools they already use.
           </h2>
-          <p className="font-mono text-[12.5px] text-ink2 leading-relaxed mt-2 max-w-[720px]">
-            Before an agent does something sensitive — move money, delete records, email a customer — it asks StileAI.
-            StileAI checks your policies and answers <span className="text-blue font-medium">allow</span>,{" "}
-            <span className="text-slate font-medium">deny</span>, or{" "}
-            <span className="text-ink font-medium">needs a human</span>, and records every decision. You manage the
-            rules and review activity right here.
+          <p className="font-mono text-[12.5px] text-ink2 leading-relaxed mt-2 max-w-[740px]">
+            Every AI request is checked against your company policies before it reaches ChatGPT, Claude, Gemini,
+            Copilot, or any other AI tool. Safe requests are <span className="text-blue font-medium">approved</span>.
+            Risky ones are <span className="text-slate font-medium">blocked</span> or{" "}
+            <span className="text-ink font-medium">routed to admin approval</span> — and every decision is recorded.
+            You manage the rules and review activity right here.
           </p>
 
           {/* How it works — flow */}
           <div className="mt-5 bg-bg2 border border-line rounded-xl p-4 overflow-x-auto">
             <div className="flex items-center gap-3 min-w-[560px]">
-              <FlowNode icon="agent" title="Your AI agent" sub="about to act" />
-              <Arrow label="asks" />
-              <FlowNode icon="policies" title="StileAI checkpoint" sub="checks your policies" highlight />
-              <Arrow label="allow / deny / approve" />
-              <FlowNode icon="server" title="Your systems" sub="acts only if allowed" />
+              <FlowNode icon="agent" title="Your employee" sub="sends an AI request" />
+              <Arrow label="checked by" />
+              <FlowNode icon="policies" title="StileAI" sub="checks your policies" highlight />
+              <Arrow label="approve / deny / admin" />
+              <FlowNode icon="server" title="AI tool" sub="ChatGPT · Claude · Gemini" />
             </div>
             <p className="font-mono text-[10.5px] text-ink4 mt-3">
-              This dashboard is the control plane — your policies feed the checkpoint, and its audit trail flows back here.
+              This dashboard is where you set the policies and review every decision.
             </p>
           </div>
         </section>
@@ -89,8 +96,8 @@ export default async function GuidePage() {
         <section>
           <h3 className="font-sans font-bold text-[14px] text-ink mb-3">The four pieces</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Piece icon="policies" title="Policies" body="The rules agents must clear. Write your own or enable a compliance pack." href="/policies" />
-            <Piece icon="plug" title="Checkpoint" body="The small server your agents call before acting. You run it, pointed here." href="/dashboard" />
+            <Piece icon="policies" title="Policies" body="The rules every AI request must clear. Write your own or enable a ready-made pack." href="/policies" />
+            <Piece icon="plug" title="The agent" body="Sits between your team and the AI tools, checking each request. You deploy it, pointed here." href="/dashboard" />
             <Piece icon="audit" title="Audit log" body="Every decision, recorded — with sensitive values redacted." href="/audit" />
             <Piece icon="approvals" title="Approvals" body="Decisions that need a human wait here for your yes or no." href="/approvals" />
           </div>
@@ -134,7 +141,7 @@ export default async function GuidePage() {
 
           {completed === steps.length && (
             <div className="mt-4 flex items-center gap-2 font-mono text-[12px] text-blue">
-              <Icon name="check" size={16} /> You&apos;re live — StileAI is guarding your agents.
+              <Icon name="check" size={16} /> You&apos;re live — StileAI is checking every AI request.
             </div>
           )}
         </section>

@@ -91,9 +91,11 @@ function Hero({ name, orgName }: { name: string; orgName: string }) {
         <h1 className="font-sans font-extrabold text-[23px] tracking-[-0.03em] text-ink leading-tight">
           Welcome back, {name}
         </h1>
-        <p className="font-mono text-[12px] text-ink3 mt-1">
-          Here&apos;s what your checkpoint has been guarding at{" "}
-          <span className="text-ink2 font-medium">{orgName || "your organization"}</span>.
+        <p className="font-mono text-[12px] text-ink3 mt-1 leading-relaxed">
+          StileAI sits between your team and the AI tools they use. Every request from{" "}
+          <span className="text-ink2 font-medium">{orgName || "your organization"}</span> is checked
+          against your policies before it reaches ChatGPT, Claude, Gemini, or Copilot — safe requests
+          approved, risky ones blocked or sent for admin approval.
         </p>
       </div>
       {/* branded tile using the StileAI wordmark */}
