@@ -142,10 +142,27 @@ def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:
     return server
 
 
+def _transport_security():
+    """DNS-rebinding policy for the gateway's streamable-HTTP surface, matching the
+    checkpoint: pin to INTERLOCK_MCP_ALLOWED_HOSTS if set, otherwise disable host
+    pinning (the ?key= token is the real access control). Without this, a gateway
+    hosted on a public domain (e.g. Render) 421s 'Invalid Host header'."""
+    import os
+
+    from mcp.server.transport_security import TransportSecuritySettings
+
+    hosts = [h.strip() for h in os.environ.get("INTERLOCK_MCP_ALLOWED_HOSTS", "").split(",") if h.strip()]
+    if hosts:
+        return TransportSecuritySettings(
+            enable_dns_rebinding_protection=True, allowed_hosts=hosts, allowed_origins=hosts,
+        )
+    return TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+
 def build_gateway_app(downstreams, provider, audit, cfg, usage_store=None) -> Starlette:
     """ASGI app serving the gateway MCP server over streamable-HTTP at /gw."""
     server = build_gateway_server(downstreams, provider, audit, cfg, usage_store=usage_store)
-    session_manager = StreamableHTTPSessionManager(app=server)
+    session_manager = StreamableHTTPSessionManager(app=server, security_settings=_transport_security())
 
     async def handle_gw(scope, receive, send):
         await session_manager.handle_request(scope, receive, send)
