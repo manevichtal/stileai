@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveOrgId, unauthorized } from "@/lib/apiAuth";
+import { apiError } from "@/lib/apiError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
   return NextResponse.json({ ok: true }, { status: 201 });
 }
@@ -67,7 +68,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await q;
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 
   const rows = (data ?? []).map((r) => ({
