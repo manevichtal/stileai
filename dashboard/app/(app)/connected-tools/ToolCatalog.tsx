@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { inputCls } from "@/components/ui";
 import { CATALOG, CATEGORIES, type CatalogTool } from "@/lib/toolCatalog";
-import { addFromCatalog, addDemoTool } from "./actions";
+import { addFromCatalog } from "./actions";
 
 export type CustomPrefill = { url?: string; command?: string };
 
@@ -12,9 +12,6 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [openTool, setOpenTool] = useState<CatalogTool | null>(null);
-  const [demoBusy, setDemoBusy] = useState(false);
-  const [demoMessage, setDemoMessage] = useState<string | null>(null);
-  const [demoError, setDemoError] = useState<string | null>(null);
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -25,31 +22,9 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
     })).filter((g) => g.tools.length > 0);
   }, [query]);
 
-  async function addDemo() {
-    setDemoBusy(true); setDemoError(null); setDemoMessage(null);
-    const res = await addDemoTool();
-    setDemoBusy(false);
-    if (res.ok) { setDemoMessage("Demo tool added."); router.refresh(); }
-    else setDemoError(res.error);
-  }
-
   return (
     <div className="bg-bg2 border border-line rounded-[14px] p-4 flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <span className="font-mono text-[11px] text-ink2 font-medium">Add a tool from the catalog</span>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={addDemo}
-            disabled={demoBusy}
-            className="font-mono text-[11.5px] text-blue border border-blue/40 bg-bluedim rounded-lg px-3 py-1.5 hover:opacity-90 disabled:opacity-50"
-          >
-            {demoBusy ? "Adding…" : "Add the demo tool"}
-          </button>
-          <span className="font-mono text-[10.5px] text-ink4">Try it instantly — no setup needed.</span>
-        </div>
-      </div>
-      {demoMessage && <div className="font-mono text-[11.5px] text-blue">{demoMessage}</div>}
-      {demoError && <div className="font-mono text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{demoError}</div>}
+      <span className="font-mono text-[11px] text-ink2 font-medium">Add a tool from the catalog</span>
 
       <input
         value={query}
