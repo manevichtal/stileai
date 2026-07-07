@@ -39,29 +39,33 @@ def _business_hours(spec: str) -> tuple[int, int] | None:
 
 
 def enrich(args: dict[str, Any], cfg, usage: dict[str, Any], now_hour: int) -> dict[str, Any]:
+    """Return a copy of args with the reserved policy fields ALWAYS set.
+
+    Security-critical: every reserved field below is assigned unconditionally,
+    so a value the agent injected into `args` is always overwritten — even when
+    there is no signal to derive from (then a safe default of None/0/False is
+    used, which does not trip a rule). Conditional assignment would let an agent
+    smuggle a field (e.g. has_where=true, env="dev", daily_total=0) whenever the
+    trigger data is absent; never do that.
+    """
     out = dict(args)  # copy — never mutate the caller's args
+    usage = usage or {}
 
     rcpt = _first_recipient(args)
-    if rcpt and "@" in rcpt:
-        out["recipient_domain"] = rcpt.split("@", 1)[1].lower()
+    out["recipient_domain"] = rcpt.split("@", 1)[1].lower() if (rcpt and "@" in rcpt) else None
+
     count = _recipient_count(args)
-    if count is not None:
-        out["recipient_count"] = count
+    out["recipient_count"] = count if count is not None else 0
 
-    if any(k in args for k in ("where", "filter", "table")):
-        out["has_where"] = bool(args.get("where") or args.get("filter"))
+    out["has_where"] = bool(args.get("where") or args.get("filter"))
 
-    if getattr(cfg, "env", ""):
-        out["env"] = cfg.env
+    out["env"] = cfg.env if getattr(cfg, "env", "") else None
 
     bh = _business_hours(getattr(cfg, "business_hours", "") or "")
-    if bh:
-        start, end = bh
-        out["off_hours"] = now_hour < start or now_hour >= end
+    out["off_hours"] = (now_hour < bh[0] or now_hour >= bh[1]) if bh else None
 
     out["freeze"] = bool(getattr(cfg, "freeze", False))
 
-    for k in ("actor_action_count_1h", "daily_total"):
-        if k in (usage or {}):
-            out[k] = usage[k]
+    out["actor_action_count_1h"] = usage.get("actor_action_count_1h", 0)
+    out["daily_total"] = usage.get("daily_total", 0)
     return out
