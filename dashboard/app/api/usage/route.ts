@@ -26,18 +26,14 @@ export async function GET(req: Request) {
   if (actor) countQ = countQ.eq("actor", actor);
   const { count } = await countQ;
 
-  // sum of amount over the org's last 24h (money velocity)
-  const { data: rows } = await admin
-    .from("audit_log")
-    .select("params")
-    .eq("org_id", orgId)
-    .gte("ts", dayAgo)
-    .limit(5000);
-  let dailyTotal = 0;
-  for (const r of rows ?? []) {
-    const amt = Number((r.params as Record<string, unknown> | null)?.amount);
-    if (Number.isFinite(amt)) dailyTotal += amt;
-  }
+  // sum of amount over the org's last 24h (money velocity), computed SERVER-SIDE
+  // so it can never be truncated by a row cap — otherwise an agent could flood
+  // the audit log with cheap calls to hide a large charge under a spend cap.
+  const { data: dt } = await admin.rpc("sum_recent_amount", {
+    p_org: orgId,
+    p_since: dayAgo,
+  });
+  const dailyTotal = Number(dt) || 0;
 
   return NextResponse.json({
     actor_action_count_1h: count ?? 0,
