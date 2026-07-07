@@ -401,8 +401,21 @@ def _register_checkpoint() -> None:
         pass
 
 
+def _require_http_token() -> None:
+    """Fail CLOSED: an HTTP-transport deployment MUST require the shared auth token.
+    Refuse to start rather than serve an unauthenticated endpoint. (stdio/local
+    dev is unaffected — it has no network surface.)"""
+    if not os.environ.get("INTERLOCK_MCP_AUTH_TOKEN", "").strip():
+        raise SystemExit(
+            "INTERLOCK_MCP_AUTH_TOKEN is required in HTTP transport — refusing to "
+            "start an unauthenticated endpoint. Set it to a long random secret and "
+            "restart."
+        )
+
+
 def main() -> None:
     if cfg.transport in ("http", "streamable-http", "streamable_http"):
+        _require_http_token()
         _register_checkpoint()
         # Bind to the host/port the hosting platform provides. Render, Railway,
         # and Fly.io inject $PORT and expect the service to listen on 0.0.0.0.

@@ -30,10 +30,13 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
     .single();
 
   if (!profile) {
+    // A signed-in user with no profile row yet (e.g. mid-onboarding). Fail CLOSED:
+    // NOT an admin, no org — so admin-gated actions deny them and no org's data
+    // is reachable. They can still land on onboarding/empty pages.
     return {
       userId: user.id,
       email: user.email ?? null,
-      role: "admin",
+      role: "none",
       orgId: "",
       orgName: "",
       checkpointUrl: null,
