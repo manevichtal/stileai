@@ -58,14 +58,14 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
         placeholder="Search tools — Slack, GitHub, Stripe…"
       />
 
-      <div className="flex flex-col gap-5 max-h-[520px] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-5">
         {groups.length === 0 && (
           <div className="font-mono text-[12px] text-ink3 py-6 text-center">No tools match &quot;{query}&quot;.</div>
         )}
         {groups.map(({ cat, tools }) => (
           <div key={cat.key} className="flex flex-col gap-2">
             <span className="font-mono text-[10.5px] text-ink3 uppercase tracking-wide">{cat.label}</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {tools.map((tool) => (
                 <button
                   key={tool.id}

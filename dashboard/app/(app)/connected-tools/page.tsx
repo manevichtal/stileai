@@ -19,7 +19,7 @@ export default async function ConnectedToolsPage() {
     <>
       <PageHeader
         title="Connected tools"
-        subtitle="The downstream tools your checkpoint guards."
+        subtitle="The tools your AI can act on — StileAI checks every action before it runs."
       />
       <ConnectedToolsClient tools={(tools ?? []) as ToolRow[]} isAdmin={ctx.role === "admin"} />
     </>

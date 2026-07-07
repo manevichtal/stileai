@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { inputCls } from "@/components/ui";
 import { addWebTool, addLocalTool, setToolEnabled, deleteTool } from "./actions";
 import { ToolCatalog, type CustomPrefill } from "./ToolCatalog";
@@ -71,7 +72,32 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
   }
 
   return (
-    <div className="p-7 flex flex-col gap-6 max-w-[820px]">
+    <div className="p-7 flex flex-col gap-6">
+      {/* Which side of StileAI you're on — makes 'connect a tool' vs 'connect your AI' explicit. */}
+      <div className="rounded-[14px] border border-line bg-bg2 p-4">
+        <div className="flex flex-col items-stretch gap-2 text-center sm:flex-row sm:items-center sm:justify-center">
+          <div className="flex-1 rounded-[10px] border border-line bg-card px-3 py-2">
+            <div className="font-sans font-semibold text-[12.5px] text-ink">Your AI assistant</div>
+            <div className="font-mono text-[10px] text-ink3">Claude · Copilot · Gemini</div>
+          </div>
+          <div className="text-ink3" aria-hidden>→</div>
+          <div className="flex-1 rounded-[10px] border border-line bg-card px-3 py-2">
+            <div className="font-sans font-semibold text-[12.5px] text-ink">StileAI</div>
+            <div className="font-mono text-[10px] text-ink3">checks every action</div>
+          </div>
+          <div className="text-ink3" aria-hidden>→</div>
+          <div className="flex-1 rounded-[10px] border border-blue bg-bluedim px-3 py-2">
+            <div className="font-sans font-semibold text-[12.5px] text-ink">Your tools</div>
+            <div className="font-mono text-[10px] text-blue">you&apos;re here</div>
+          </div>
+        </div>
+        <p className="mt-3 text-center font-mono text-[11px] text-ink3">
+          This page is for the <span className="font-medium text-ink">tools</span> your AI can act on — Slack, your database, Stripe…{" "}
+          Connecting the AI assistant itself is a different step:{" "}
+          <Link href="/dashboard" className="text-blue hover:underline">Connect your AI →</Link>
+        </p>
+      </div>
+
       <ToolCatalog onUseCustomForm={useCustomForm} />
 
       <div ref={customFormRef} className="bg-bg2 border border-line rounded-[14px] p-4 flex flex-col gap-3">

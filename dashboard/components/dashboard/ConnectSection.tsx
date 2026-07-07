@@ -39,9 +39,9 @@ export function ConnectSection({ checkpointUrl }: { checkpointUrl: string | null
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <div className="flex items-center gap-2">
           <span className="text-blue"><Icon name="plug" size={17} /></span>
-          <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Connect your checkpoint</h2>
+          <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Connect your AI</h2>
         </div>
-        {/* client picker */}
+        {/* client picker — which AI assistant to point at StileAI */}
         <div className="flex items-center gap-1 bg-bg2 border border-line rounded-xl p-0.5 flex-wrap">
           {CLIENTS.map((c) => (
             <button
