@@ -12,8 +12,35 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 
 from mcp import ClientSession, types
-from mcp.client.stdio import StdioServerParameters, stdio_client
+from mcp.client.stdio import StdioServerParameters, get_default_environment, stdio_client
 from mcp.client.streamable_http import streamablehttp_client
+
+
+def _credentials(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Decode the credential bundle stored (encrypted) in cfg['auth'].
+
+    Returns a dict that may contain:
+      - 'env'     : {VAR: value} passed to a stdio server's process environment
+      - 'bearer'  : a token sent as `Authorization: Bearer <token>` (http)
+      - 'headers' : extra HTTP headers (http)
+    Back-compat: a plain (non-JSON) decrypted string is treated as a bearer token.
+    Empty/absent auth → {}.
+    """
+    auth = cfg.get("auth")
+    if not auth:
+        return {}
+    if isinstance(auth, str) and auth.startswith("enc:"):
+        from .crypto import decrypt_secret
+        auth = decrypt_secret(auth)  # raises (fail closed) if the key is missing
+    try:
+        data = json.loads(auth)
+    except (ValueError, TypeError):
+        return {"bearer": auth}  # legacy single-token
+    if isinstance(data, dict):
+        return data
+    if isinstance(data, str):
+        return {"bearer": data}
+    return {}
 
 
 class Downstream:
@@ -26,24 +53,24 @@ class Downstream:
 
     @asynccontextmanager
     async def _session(self) -> AsyncIterator[ClientSession]:
+        creds = _credentials(self._cfg)
         if self._cfg["transport"] == "stdio":
             parts = json.loads(self._cfg["target"])
-            params = StdioServerParameters(command=parts[0], args=parts[1:])
+            # Pass the tool's credentials as process env vars, on top of a SAFE
+            # minimal base (PATH etc.) — NOT the gateway's own os.environ, so the
+            # downstream process never sees StileAI's secrets (INTERLOCK_ENC_KEY, …).
+            cred_env = creds.get("env") or {}
+            env = {**get_default_environment(), **cred_env} if cred_env else None
+            params = StdioServerParameters(command=parts[0], args=parts[1:], env=env)
             async with stdio_client(params) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     yield session
         else:  # http
-            headers: dict[str, str] = {}
-            auth = self._cfg.get("auth")
-            if auth:
-                # Credentials are stored encrypted (enc:...). Decrypt just-in-time
-                # before sending; fail closed if the key is unavailable rather than
-                # sending a broken token.
-                if auth.startswith("enc:"):
-                    from .crypto import decrypt_secret
-                    auth = decrypt_secret(auth)
-                headers["Authorization"] = f"Bearer {auth}"
+            headers: dict[str, str] = dict(creds.get("headers") or {})
+            bearer = creds.get("bearer")
+            if bearer:
+                headers["Authorization"] = f"Bearer {bearer}"
             async with streamablehttp_client(self._cfg["target"], headers=headers) as (
                 read, write, _,
             ):
