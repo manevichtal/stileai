@@ -108,21 +108,60 @@ Every call — allowed, denied, or held — is written to the audit trail (redac
 
 ## 6. Security requirements
 
+Core (gateway):
+
 - **Fail-safe:** unreachable control plane → **deny**, never allow (existing engine).
 - **Unbypassable:** tools are reachable only through the gateway. Deployment guidance:
   do not also expose the raw tools directly to the agent. Enforcement is real, not
   advisory — a jailbroken agent still cannot exceed policy.
-- **Connect URL is a secret:** the `?key=` URL grants access; treat like a password,
-  support rotation, and offer a header-only (no-key-in-URL) option for sensitive
-  deployments.
-- **Downstream credentials encrypted at rest.** The keys the gateway uses to call the
-  real tools must be encrypted in storage and, preferably, kept in the customer's
-  self-hosted gateway so they never leave their environment.
 - **Data residency:** self-host keeps tool payloads in the customer's environment
   (best for regulated buyers); a hosted option exists but transits StileAI. Lead with
   self-host for sensitive tools.
 - **Redaction:** sensitive params stripped before audit **and** before display in the
-  approval view.
+  detailed approval view.
+
+Hardenings adopted from the security review (kept only what fits our stack — Next.js
+API routes + Supabase, tenant = org; NXSCRM-specific items excluded):
+
+- **Fail closed on the auth token.** In HTTP transport the gateway/checkpoint MUST
+  require `INTERLOCK_MCP_AUTH_TOKEN` and refuse to start if it's missing — never run
+  an open endpoint. Generalize: a missing security-relevant env var is a hard failure,
+  not a silent skip.
+- **Connect URL key is a secret.** The `?key=` grants access; treat like a password,
+  support rotation, offer a header-only (no-key-in-URL) option, and **never log the
+  key** — suppress query strings/tokens in checkpoint logs.
+- **Tenant isolation from identity only.** `org_id` is always derived from the
+  authenticated identity (user session → profile, or API-key → org), never from a
+  request body; if a body carries `org_id`, verify it matches or return 403. Every
+  tenant table has a real `org_id = current_org_id()` RLS policy (never `USING(true)`);
+  `org_id` stays `uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE`.
+- **Admin-only tables check role AND org.** `api_keys`, `org_policy_settings`, and the
+  new `connected_tools` require `role = 'admin'`, not just org membership. Add
+  `CHECK (role IN ('admin','approver','viewer'))` to `profiles`.
+- **Downstream tool credentials encrypted at rest**, enforced by a DB `CHECK`
+  (e.g. `auth LIKE 'enc:%'`), and kept in the self-hosted gateway where possible. Any
+  generated tokens use a server-side crypto RNG.
+- **Audit trail is append-only.** Only the service role (the checkpoint/gateway) may
+  INSERT `audit_log`; tenants are **read-only** (revoke UPDATE/DELETE). Audit-write
+  failures are **logged and retried**, never silently swallowed — the gateway's audit
+  row is the compliance record of what the agent did.
+- **Error hygiene.** API responses return a generic error + a request id; the real
+  error is logged server-side only. Never leak raw DB error strings; never log tokens
+  or credentials.
+- **Platform-admin from an explicit allowlist** (env `PLATFORM_ADMIN_EMAILS` or a
+  dedicated table), never a name/pattern match; the platform-owner area stays
+  read-only.
+- **`SECURITY DEFINER` hygiene** (for any such function we add): `SET search_path`,
+  `REVOKE EXECUTE … FROM PUBLIC, anon, authenticated`, and an in-body auth check.
+- **Schema discipline.** One source-of-truth definition per object; apply changes as
+  ordered migrations; new tenant tables ship **with** RLS and go into the audit path.
+- **Verification.** Prove RLS as a real authenticated/anon user via REST (not Studio,
+  which bypasses RLS); assert actual row counts, not just a 2xx/204.
+
+Not adopted (NXSCRM-specific): Supabase edge functions/Deno, `guard/validate/dbWrite`
+helpers, Stripe/invoice token endpoints, Turnstile, VITE_ specifics, Sentry, and
+per-tenant paid-API quotas (StileAI makes no LLM/paid calls; gateway rate-limiting is
+the analog, deferred to Phase 2).
 
 ## 7. Deployment & multi-tenancy
 
