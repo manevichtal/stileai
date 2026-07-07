@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { inputCls } from "@/components/ui";
-import { addWebTool, addLocalTool, addDemoTool, setToolEnabled, deleteTool } from "./actions";
+import { addWebTool, addLocalTool, setToolEnabled, deleteTool } from "./actions";
+import { ToolCatalog, type CustomPrefill } from "./ToolCatalog";
 
 export type ToolRow = {
   id: string;
@@ -19,12 +20,12 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [token, setToken] = useState("");
+  const [customOpen, setCustomOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [command, setCommand] = useState("");
   const [busy, setBusy] = useState(false);
-  const [demoBusy, setDemoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [demoMessage, setDemoMessage] = useState<string | null>(null);
+  const customFormRef = useRef<HTMLDivElement>(null);
 
   async function addWeb() {
     setBusy(true); setError(null);
@@ -49,12 +50,13 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
     else setError(res.error);
   }
 
-  async function addDemo() {
-    setDemoBusy(true); setError(null); setDemoMessage(null);
-    const res = await addDemoTool();
-    setDemoBusy(false);
-    if (res.ok) { setDemoMessage("Demo tool added."); router.refresh(); }
-    else setError(res.error);
+  // Bridge from the catalog's "reuse existing" info panel: reveal this form,
+  // pre-fill whatever we know (URL or local command), and scroll it into view.
+  function useCustomForm(prefill: CustomPrefill) {
+    setCustomOpen(true);
+    if (prefill.url) setUrl(prefill.url);
+    if (prefill.command) { setCommand(prefill.command); setAdvancedOpen(true); }
+    requestAnimationFrame(() => customFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   if (!isAdmin) {
@@ -70,65 +72,64 @@ export function ConnectedToolsClient({ tools, isAdmin }: { tools: ToolRow[]; isA
 
   return (
     <div className="p-7 flex flex-col gap-6 max-w-[820px]">
-      <div className="bg-bg2 border border-line rounded-[14px] p-4 flex flex-col gap-3">
-        <span className="font-mono text-[11px] text-ink2 font-medium">Add a tool</span>
-        <div className="flex items-end gap-3 flex-wrap">
-          <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10.5px] text-ink3">Name</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls("w-[180px]")} placeholder="my-tool" />
-          </label>
-          <label className="flex-1 flex flex-col gap-1 min-w-[280px]">
-            <span className="font-mono text-[10.5px] text-ink3">Tool web address</span>
-            <input value={url} onChange={(e) => setUrl(e.target.value)} className={inputCls("w-full")} placeholder="https://tools.example.com/mcp" />
-          </label>
-          <button onClick={addWeb} disabled={busy} className="bg-blue text-white font-sans font-semibold text-[12.5px] rounded-lg px-4 py-2 hover:opacity-90 disabled:opacity-50">
-            {busy ? "Adding…" : "Add tool"}
-          </button>
-        </div>
-        <label className="flex flex-col gap-1 max-w-[320px]">
-          <span className="font-mono text-[10.5px] text-ink3">Access token (optional)</span>
-          <input type="password" value={token} onChange={(e) => setToken(e.target.value)} className={inputCls("w-full")} placeholder="••••••••" />
-        </label>
-        <p className="font-mono text-[10.5px] text-ink4">
-          Paste the web address your tool provider gave you. If your tool needs an API key or bearer token, paste it here — it&apos;s stored encrypted.
-        </p>
+      <ToolCatalog onUseCustomForm={useCustomForm} />
 
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            onClick={addDemo}
-            disabled={demoBusy}
-            className="font-mono text-[11.5px] text-blue border border-blue/40 bg-bluedim rounded-lg px-3 py-1.5 hover:opacity-90 disabled:opacity-50"
-          >
-            {demoBusy ? "Adding…" : "Add the demo tool"}
-          </button>
-          <span className="font-mono text-[10.5px] text-ink4">Try it instantly — no setup needed.</span>
-        </div>
-        {demoMessage && <div className="font-mono text-[11.5px] text-blue">{demoMessage}</div>}
-
-        {error && <div className="font-mono text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{error}</div>}
-
-        <div className="pt-1 border-t border-line">
-          <button
-            onClick={() => setAdvancedOpen((v) => !v)}
-            className="font-mono text-[10.5px] text-ink3 hover:text-ink2 pt-2"
-          >
-            {advancedOpen ? "▾ Advanced (local command)" : "▸ Advanced (local command)"}
-          </button>
-          {advancedOpen && (
-            <div className="flex items-end gap-3 flex-wrap pt-3">
-              <label className="flex-1 flex flex-col gap-1 min-w-[280px]">
-                <span className="font-mono text-[10.5px] text-ink3">Command</span>
-                <input value={command} onChange={(e) => setCommand(e.target.value)} className={inputCls("w-full")} placeholder="python -m sample_tools.server" />
+      <div ref={customFormRef} className="bg-bg2 border border-line rounded-[14px] p-4 flex flex-col gap-3">
+        <button
+          onClick={() => setCustomOpen((v) => !v)}
+          className="font-mono text-[11px] text-ink2 font-medium text-left"
+        >
+          {customOpen ? "▾" : "▸"} Add a custom tool
+        </button>
+        {customOpen && (
+          <>
+            <div className="flex items-end gap-3 flex-wrap">
+              <label className="flex flex-col gap-1">
+                <span className="font-mono text-[10.5px] text-ink3">Name</span>
+                <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls("w-[180px]")} placeholder="my-tool" />
               </label>
-              <button onClick={addLocal} disabled={busy} className="bg-ink text-white font-sans font-semibold text-[12.5px] rounded-lg px-4 py-2 hover:opacity-90 disabled:opacity-50">
-                {busy ? "Adding…" : "Add local tool"}
+              <label className="flex-1 flex flex-col gap-1 min-w-[280px]">
+                <span className="font-mono text-[10.5px] text-ink3">Tool web address</span>
+                <input value={url} onChange={(e) => setUrl(e.target.value)} className={inputCls("w-full")} placeholder="https://tools.example.com/mcp" />
+              </label>
+              <button onClick={addWeb} disabled={busy} className="bg-blue text-white font-sans font-semibold text-[12.5px] rounded-lg px-4 py-2 hover:opacity-90 disabled:opacity-50">
+                {busy ? "Adding…" : "Add tool"}
               </button>
-              <p className="font-mono text-[10.5px] text-ink4 w-full">
-                Type the command as you&apos;d run it, e.g. <code>python -m sample_tools.server</code>. Quotes and complex arguments aren&apos;t supported yet.
-              </p>
             </div>
-          )}
-        </div>
+            <label className="flex flex-col gap-1 max-w-[320px]">
+              <span className="font-mono text-[10.5px] text-ink3">Access token (optional)</span>
+              <input type="password" value={token} onChange={(e) => setToken(e.target.value)} className={inputCls("w-full")} placeholder="••••••••" />
+            </label>
+            <p className="font-mono text-[10.5px] text-ink4">
+              Paste the web address your tool provider gave you. If your tool needs an API key or bearer token, paste it here — it&apos;s stored encrypted.
+            </p>
+
+            {error && <div className="font-mono text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{error}</div>}
+
+            <div className="pt-1 border-t border-line">
+              <button
+                onClick={() => setAdvancedOpen((v) => !v)}
+                className="font-mono text-[10.5px] text-ink3 hover:text-ink2 pt-2"
+              >
+                {advancedOpen ? "▾ Advanced (local command)" : "▸ Advanced (local command)"}
+              </button>
+              {advancedOpen && (
+                <div className="flex items-end gap-3 flex-wrap pt-3">
+                  <label className="flex-1 flex flex-col gap-1 min-w-[280px]">
+                    <span className="font-mono text-[10.5px] text-ink3">Command</span>
+                    <input value={command} onChange={(e) => setCommand(e.target.value)} className={inputCls("w-full")} placeholder="python -m sample_tools.server" />
+                  </label>
+                  <button onClick={addLocal} disabled={busy} className="bg-ink text-white font-sans font-semibold text-[12.5px] rounded-lg px-4 py-2 hover:opacity-90 disabled:opacity-50">
+                    {busy ? "Adding…" : "Add local tool"}
+                  </button>
+                  <p className="font-mono text-[10.5px] text-ink4 w-full">
+                    Type the command as you&apos;d run it, e.g. <code>python -m sample_tools.server</code>. Quotes and complex arguments aren&apos;t supported yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <ToolsTable tools={tools} isAdmin={isAdmin} onDone={() => router.refresh()} />

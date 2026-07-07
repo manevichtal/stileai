@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireProfileContext } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptSecret } from "@/lib/crypto";
+import { catalogTool } from "@/lib/toolCatalog";
 
 const DEMO_TOOL = {
   name: "sample",
@@ -89,6 +90,63 @@ export async function addDemoTool(): Promise<{ ok: true } | { ok: false; error: 
   if (error) {
     if (error.message.toLowerCase().includes("duplicate") || error.code === "23505") {
       return { ok: false, error: "The demo tool is already added." };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/connected-tools");
+  return { ok: true };
+}
+
+// Catalog path: the admin picks a known tool tile and only supplies the
+// credential(s) they already use for it. We fill in the technical connection
+// (transport/target) from the catalog and store any secret encrypted.
+export async function addFromCatalog(
+  toolId: string,
+  name: string,
+  creds: Record<string, string>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const ctx = await requireProfileContext();
+  if (ctx.role !== "admin") return { ok: false, error: "Admins only." };
+
+  const tool = catalogTool(toolId);
+  if (!tool) return { ok: false, error: "unknown tool" };
+
+  const transport = tool.transport;
+  const target = typeof tool.target === "string" ? tool.target : JSON.stringify(tool.target);
+
+  let bundle: Record<string, unknown> | null = null;
+  if (tool.transport === "http") {
+    const bearer = String(creds.bearer ?? "").trim();
+    if (bearer) bundle = { bearer };
+  } else if (tool.transport === "stdio" && tool.credentials.length > 0) {
+    const env: Record<string, string> = {};
+    for (const cred of tool.credentials) {
+      const value = String(creds[cred.key] ?? "").trim();
+      if (!value) {
+        if (cred.optional) continue;
+        return { ok: false, error: `${cred.label} is required` };
+      }
+      env[cred.key] = value;
+    }
+    bundle = { env };
+  }
+
+  const auth = bundle ? encryptSecret(JSON.stringify(bundle)) : null;
+  const finalName = name.trim() || tool.name;
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("connected_tools").insert({
+    org_id: ctx.orgId,
+    name: finalName,
+    transport,
+    target,
+    auth,
+    enabled: true,
+  });
+  if (error) {
+    if (error.message.toLowerCase().includes("duplicate") || error.code === "23505") {
+      return { ok: false, error: `${finalName} is already added.` };
     }
     return { ok: false, error: error.message };
   }
