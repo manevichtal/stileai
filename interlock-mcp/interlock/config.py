@@ -50,6 +50,7 @@ class Config:
     ep_approvals: str
     ep_approval_resolve: str  # may contain "{id}"
     ep_register: str
+    ep_tools: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -75,6 +76,7 @@ class Config:
             ep_approval_resolve=_env("INTERLOCK_EP_APPROVAL_RESOLVE",
                                      "/api/approvals/{id}/resolve"),
             ep_register=_env("INTERLOCK_EP_REGISTER", "/api/checkpoint"),
+            ep_tools=_env("INTERLOCK_EP_TOOLS", "/api/tools"),
         )
 
     def auth_headers(self) -> dict[str, str]:
