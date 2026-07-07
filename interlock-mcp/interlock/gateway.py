@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import json
 import time
+from datetime import datetime
 from typing import Any
 
 import mcp.types as types
@@ -14,6 +15,7 @@ from starlette.routing import Mount
 
 from .audit import PendingDecision
 from .engine import Decision, Effect, PolicyEngine
+from .enrichment import enrich
 
 
 async def wait_for_approval(audit, decision_id: str, poll: float, timeout: float) -> str:
@@ -40,7 +42,8 @@ def _decide(engine: PolicyEngine, actor: str, action: str, resource: str, params
     return engine.evaluate(actor, action, resource, params)
 
 
-def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:default") -> Server:
+def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:default",
+                         usage_store=None) -> Server:
     # map exposed tool name -> (downstream, real tool name)
     routing: dict[str, tuple[Any, str]] = {}
     server = Server("stileai-gateway")
@@ -100,7 +103,16 @@ def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:
         # Trustworthy resource: derived from the gateway's own routing (downstream
         # identity + real tool name), not from agent-controlled `args`. See _decide.
         resource = f"{d.name}:{real}"
-        decision = _decide(provider.engine(), actor, real, resource, args)
+        # Evaluate policy against ENRICHED params — trustworthy fields the gateway
+        # derives itself (velocity counters, business-hours, freeze flag, ...) that
+        # always override any agent-supplied same-named key (see enrich()). The
+        # downstream call and audit trail below still use the ORIGINAL `args`:
+        # enrichment is evaluation-only and must never leak synthetic fields to the
+        # real tool or the log.
+        usage = usage_store.get_usage(actor) if usage_store else {}
+        now_hour = datetime.now().hour
+        eval_params = enrich(args, cfg, usage, now_hour)
+        decision = _decide(provider.engine(), actor, real, resource, eval_params)
         status = {Effect.ALLOW: "allowed", Effect.DENY: "denied",
                   Effect.REQUIRE_APPROVAL: "pending"}[decision.effect]
         decision_id = audit.record(actor=actor, action=real, resource=resource,
@@ -130,9 +142,9 @@ def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:
     return server
 
 
-def build_gateway_app(downstreams, provider, audit, cfg) -> Starlette:
+def build_gateway_app(downstreams, provider, audit, cfg, usage_store=None) -> Starlette:
     """ASGI app serving the gateway MCP server over streamable-HTTP at /gw."""
-    server = build_gateway_server(downstreams, provider, audit, cfg)
+    server = build_gateway_server(downstreams, provider, audit, cfg, usage_store=usage_store)
     session_manager = StreamableHTTPSessionManager(app=server)
 
     async def handle_gw(scope, receive, send):

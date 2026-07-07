@@ -366,10 +366,12 @@ def _build_gateway_http_app():
     from .tools_config import ApiToolsStore
     from .downstream import Downstream
     from .gateway import build_gateway_app
+    from .usage import ApiUsageStore
 
     tools = ApiToolsStore(cfg).get_tools()
     downstreams = [Downstream(t) for t in tools]
-    return _token_gate(build_gateway_app(downstreams, policies, audit, cfg))
+    return _token_gate(build_gateway_app(downstreams, policies, audit, cfg,
+                                         usage_store=ApiUsageStore(cfg)))
 
 
 def _register_checkpoint() -> None:
