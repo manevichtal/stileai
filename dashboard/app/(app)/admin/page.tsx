@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/AppShell";
+import { LocalTime } from "@/components/LocalTime";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +84,7 @@ export default async function AdminOverviewPage() {
               {orgList.map((o) => (
                 <tr key={o.id} className="border-b border-line last:border-0">
                   <td className="px-3.5 py-3 font-mono text-[12.5px] text-ink font-medium">{o.name}</td>
-                  <td className="px-3.5 py-3 font-mono text-[11px] text-ink3">{new Date(o.created_at).toLocaleDateString()}</td>
+                  <td className="px-3.5 py-3 font-mono text-[11px] text-ink3"><LocalTime ts={o.created_at} mode="date" /></td>
                   <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{admins.get(o.id) ?? 0}</td>
                   <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{policyCount.get(o.id) ?? 0}</td>
                   <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{keyCount.get(o.id) ?? 0}</td>

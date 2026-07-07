@@ -2,6 +2,7 @@ import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/AppShell";
 import { EffectBadge, StatusBadge, Empty } from "@/components/ui";
+import { LocalTime } from "@/components/LocalTime";
 import { AuditFilters } from "./AuditFilters";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,7 @@ export default async function AuditPage({
               )}
               {(rows ?? []).map((r) => (
                 <tr key={r.decision_id + r.ts} className="border-b border-line last:border-0 align-top">
-                  <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink3 whitespace-nowrap">{new Date(r.ts).toLocaleString()}</td>
+                  <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink3 whitespace-nowrap"><LocalTime ts={r.ts} /></td>
                   <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{r.actor}</td>
                   <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink">{r.action}</td>
                   <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{r.resource}</td>

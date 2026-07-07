@@ -4,6 +4,10 @@ import asyncio
 import os
 from urllib.parse import quote
 
+import truststore
+
+truststore.inject_into_ssl()
+
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 

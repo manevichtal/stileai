@@ -4,6 +4,7 @@ import { requirePlatformAdmin } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/AppShell";
 import { EffectBadge, StatusBadge } from "@/components/ui";
+import { LocalTime } from "@/components/LocalTime";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function AdminOrgPage({
                 {(audit ?? []).length === 0 && <tr><td colSpan={5} className="text-center font-mono text-[12px] text-ink3 py-8">No decisions yet.</td></tr>}
                 {(audit ?? []).map((a, i) => (
                   <tr key={i} className="border-b border-line last:border-0">
-                    <td className="px-3.5 py-2.5 font-mono text-[10.5px] text-ink3 whitespace-nowrap">{new Date(a.ts).toLocaleString()}</td>
+                    <td className="px-3.5 py-2.5 font-mono text-[10.5px] text-ink3 whitespace-nowrap"><LocalTime ts={a.ts} /></td>
                     <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink2">{a.actor}</td>
                     <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink">{a.action}</td>
                     <td className="px-3.5 py-2.5"><EffectBadge effect={a.effect} /></td>

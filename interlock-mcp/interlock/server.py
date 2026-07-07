@@ -1,8 +1,8 @@
 """
-Interlock — the checkpoint for agentic AI, as an MCP server.
+StileAI — the checkpoint for agentic AI, as an MCP server.
 
-Interlock sits between an AI agent and the systems it can touch. Before an agent
-performs a sensitive action it calls `request_action`; Interlock evaluates the
+StileAI sits between an AI agent and the systems it can touch. Before an agent
+performs a sensitive action it calls `request_action`; StileAI evaluates the
 action against your policies and returns ALLOW / DENY / REQUIRE_APPROVAL, logging
 every decision. Decisions that need a human are resolved with `submit_approval`.
 
@@ -50,7 +50,7 @@ if _allowed_hosts:
 else:
     _transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
-mcp = FastMCP("interlock", transport_security=_transport_security)
+mcp = FastMCP("stileai", transport_security=_transport_security)
 policy_store, audit = build_stores(cfg)
 
 
@@ -172,7 +172,7 @@ def _evaluate_and_log(actor: str, action: str, resource: str,
 @mcp.tool()
 def request_action(actor: str, action: str, resource: str = "*",
                    params: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Ask Interlock whether an action is permitted, before performing it.
+    """Ask StileAI whether an action is permitted, before performing it.
 
     Call this first for any sensitive operation. Returns a decision:
     - effect "allow": proceed.
