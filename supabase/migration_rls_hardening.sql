@@ -11,19 +11,32 @@ create policy org_ro_audit on audit_log
 -- (no insert/update/delete policy for authenticated/anon → denied by RLS;
 --  service role bypasses RLS and remains the sole writer.)
 
--- 2) api_keys + org_policy_settings are ADMIN-ONLY (they mint credentials / set
---    the org's default posture). Was: any org member. Now: role='admin' + org.
+-- 2) api_keys + org_policy_settings: any org MEMBER may READ (so viewer/approver
+--    teammates still see the Keys/Policies pages), but only ADMINS may WRITE
+--    (create/rotate keys, change the org's default posture). Was: any member r/w.
+--    Split into a member SELECT policy + admin write policies (RLS OR's them:
+--    SELECT hits the member policy; writes hit the admin ones).
 drop policy if exists org_rw_api_keys on api_keys;
-create policy admin_rw_api_keys on api_keys
-  for all
-  using (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'))
-  with check (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+drop policy if exists admin_rw_api_keys on api_keys;
+create policy member_ro_api_keys on api_keys
+  for select using (org_id = current_org_id());
+create policy admin_write_api_keys on api_keys
+  for insert with check (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy admin_update_api_keys on api_keys
+  for update using (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'))
+          with check (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy admin_delete_api_keys on api_keys
+  for delete using (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
 
 drop policy if exists org_rw_settings on org_policy_settings;
-create policy admin_rw_settings on org_policy_settings
-  for all
-  using (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'))
-  with check (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+drop policy if exists admin_rw_settings on org_policy_settings;
+create policy member_ro_settings on org_policy_settings
+  for select using (org_id = current_org_id());
+create policy admin_write_settings on org_policy_settings
+  for insert with check (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy admin_update_settings on org_policy_settings
+  for update using (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'))
+          with check (org_id = current_org_id() and exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
 
 -- 3) constrain the role vocabulary.
 alter table profiles drop constraint if exists profiles_role_check;
