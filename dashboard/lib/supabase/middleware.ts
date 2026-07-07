@@ -44,5 +44,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Already signed in and landing on /login (e.g. from the marketing site's
+  // "Log in" button)? Send them straight to the portal.
+  if (user && path.startsWith("/login")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
   return supabaseResponse;
 }
