@@ -1,12 +1,16 @@
 # interlock/gateway.py
 from __future__ import annotations
 import asyncio
+import contextlib
 import json
 import time
 from typing import Any
 
 import mcp.types as types
 from mcp.server.lowlevel import Server
+from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+from starlette.applications import Starlette
+from starlette.routing import Mount
 
 from .audit import PendingDecision
 from .engine import Decision, Effect, PolicyEngine
@@ -124,3 +128,19 @@ def build_gateway_server(downstreams, provider, audit, cfg, actor: str = "agent:
                                  "reason": "not approved", "decision_id": decision_id}))]
 
     return server
+
+
+def build_gateway_app(downstreams, provider, audit, cfg) -> Starlette:
+    """ASGI app serving the gateway MCP server over streamable-HTTP at /gw."""
+    server = build_gateway_server(downstreams, provider, audit, cfg)
+    session_manager = StreamableHTTPSessionManager(app=server)
+
+    async def handle_gw(scope, receive, send):
+        await session_manager.handle_request(scope, receive, send)
+
+    @contextlib.asynccontextmanager
+    async def lifespan(app):
+        async with session_manager.run():
+            yield
+
+    return Starlette(routes=[Mount("/gw", app=handle_gw)], lifespan=lifespan)

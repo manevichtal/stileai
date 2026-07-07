@@ -302,15 +302,15 @@ def guarded_delete_record(actor: str, table: str, record_id: str
 
 # --- entrypoint --------------------------------------------------------------
 
-def _build_http_app():
-    """Build the streamable-HTTP ASGI app, gated by a shared token.
+def _token_gate(app):
+    """Wrap an ASGI `app` with the shared-token gate.
 
     When INTERLOCK_MCP_AUTH_TOKEN is set, every HTTP request must present the
     token, either way (constant-time compared):
       - in the URL:   ...?key=<token>   ← lets non-technical users connect by
         pasting ONE URL into a client's connector UI (no header, no OAuth).
       - or a header:  Authorization: Bearer <token>   ← for MCP configs / code.
-    If the token is unset (e.g. local stdio dev), no gate is added.
+    If the token is unset (e.g. local stdio dev), the app is returned unwrapped.
 
     Implemented as PURE ASGI middleware (not BaseHTTPMiddleware) so it never
     buffers the transport's streaming/SSE responses — wrapping those in
@@ -320,7 +320,6 @@ def _build_http_app():
     import os
     from urllib.parse import parse_qs
 
-    app = mcp.streamable_http_app()
     token = os.environ.get("INTERLOCK_MCP_AUTH_TOKEN", "").strip()
     if not token:
         return app
@@ -355,6 +354,22 @@ def _build_http_app():
         await app(scope, receive, send)
 
     return gated
+
+
+def _build_http_app():
+    """Build the streamable-HTTP ASGI app for the /mcp checkpoint, token-gated."""
+    return _token_gate(mcp.streamable_http_app())
+
+
+def _build_gateway_http_app():
+    """The enforced-gateway app (INTERLOCK_MODE=gateway), token-gated."""
+    from .tools_config import ApiToolsStore
+    from .downstream import Downstream
+    from .gateway import build_gateway_app
+
+    tools = ApiToolsStore(cfg).get_tools()
+    downstreams = [Downstream(t) for t in tools]
+    return _token_gate(build_gateway_app(downstreams, policies, audit, cfg))
 
 
 def _register_checkpoint() -> None:
@@ -396,7 +411,9 @@ def main() -> None:
 
         host = os.environ.get("HOST", "0.0.0.0")
         port = int(os.environ.get("PORT", str(mcp.settings.port)))
-        uvicorn.run(_build_http_app(), host=host, port=port)
+        mode = os.environ.get("INTERLOCK_MODE", "checkpoint").lower()
+        app = _build_gateway_http_app() if mode == "gateway" else _build_http_app()
+        uvicorn.run(app, host=host, port=port)
     else:
         mcp.run()  # stdio (default) — used by Claude Desktop
 
