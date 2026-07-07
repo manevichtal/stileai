@@ -37,6 +37,12 @@ class Downstream:
             headers: dict[str, str] = {}
             auth = self._cfg.get("auth")
             if auth:
+                # Credentials are stored encrypted (enc:...). Decrypt just-in-time
+                # before sending; fail closed if the key is unavailable rather than
+                # sending a broken token.
+                if auth.startswith("enc:"):
+                    from .crypto import decrypt_secret
+                    auth = decrypt_secret(auth)
                 headers["Authorization"] = f"Bearer {auth}"
             async with streamablehttp_client(self._cfg["target"], headers=headers) as (
                 read, write, _,
