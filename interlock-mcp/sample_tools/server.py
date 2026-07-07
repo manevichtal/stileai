@@ -20,10 +20,10 @@ TOOLS = {"read_data": _read_data, "send_email": _send_email,
          "charge_card": _charge_card, "delete_records": _delete_records}
 
 mcp = FastMCP("sample-tools")
-mcp.tool()(_read_data)
-mcp.tool()(_send_email)
-mcp.tool()(_charge_card)
-mcp.tool()(_delete_records)
+mcp.tool(name="read_data")(_read_data)
+mcp.tool(name="send_email")(_send_email)
+mcp.tool(name="charge_card")(_charge_card)
+mcp.tool(name="delete_records")(_delete_records)
 
 def main() -> None:
     mcp.run()  # stdio
