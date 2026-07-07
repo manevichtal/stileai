@@ -51,6 +51,13 @@ class Config:
     ep_approval_resolve: str  # may contain "{id}"
     ep_register: str
     ep_tools: str
+    ep_usage: str
+
+    # enrichment (gateway derives trustworthy policy fields from operator config)
+    env: str            # e.g. "prod" — for env-scoped rules
+    business_hours: str  # "9-17" local window; used to derive off_hours
+    tz: str             # timezone name for the business-hours clock
+    freeze: bool        # change-freeze mode (blocks deploys/migrations)
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -77,6 +84,11 @@ class Config:
                                      "/api/approvals/{id}/resolve"),
             ep_register=_env("INTERLOCK_EP_REGISTER", "/api/checkpoint"),
             ep_tools=_env("INTERLOCK_EP_TOOLS", "/api/tools"),
+            ep_usage=_env("INTERLOCK_EP_USAGE", "/api/usage"),
+            env=_env("INTERLOCK_ENV", ""),
+            business_hours=_env("INTERLOCK_BUSINESS_HOURS", "9-17"),
+            tz=_env("INTERLOCK_TZ", "UTC"),
+            freeze=_env("INTERLOCK_FREEZE", "false").lower() == "true",
         )
 
     def auth_headers(self) -> dict[str, str]:
