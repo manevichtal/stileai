@@ -1,5 +1,4 @@
 # tests/test_gateway.py — uses a fake downstream + a real engine
-import pytest
 from interlock.engine import PolicyEngine, load_policies_from_dict
 from interlock.gateway import build_gateway_server, _decide  # _decide: pure policy step
 
@@ -14,5 +13,5 @@ def _engine():
 
 def test_decide_allows_read_denies_delete():
     eng = _engine()
-    assert _decide(eng, "agent:default", "read_data", {}).effect.value == "allow"
-    assert _decide(eng, "agent:default", "delete_records", {"table": "t"}).effect.value == "deny"
+    assert _decide(eng, "agent:default", "read_data", "sample:read_data", {}).effect.value == "allow"
+    assert _decide(eng, "agent:default", "delete_records", "sample:delete_records", {"table": "t"}).effect.value == "deny"

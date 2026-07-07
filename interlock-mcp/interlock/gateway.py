@@ -9,9 +9,13 @@ from mcp.server.lowlevel import Server
 from .engine import Decision, Effect, PolicyEngine
 
 
-def _decide(engine: PolicyEngine, actor: str, tool: str, args: dict[str, Any]) -> Decision:
-    resource = str(args.get("resource") or "*")
-    return engine.evaluate(actor, tool, resource, args)
+def _decide(engine: PolicyEngine, actor: str, action: str, resource: str, params: dict[str, Any]) -> Decision:
+    # `resource` must be caller-derived (downstream identity + tool name), never taken
+    # from agent-supplied args: the agent is untrusted and can spoof an `args["resource"]`
+    # value to dodge resource-scoped policies while the real tool acts on other args
+    # (e.g. `table`). Arg-based scoping belongs in policy `conditions` over the real
+    # tool params, since those are the args the tool actually consumes.
+    return engine.evaluate(actor, action, resource, params)
 
 
 def build_gateway_server(downstreams, provider, audit, actor: str = "agent:default") -> Server:
@@ -22,7 +26,15 @@ def build_gateway_server(downstreams, provider, audit, actor: str = "agent:defau
     async def _refresh_routing():
         routing.clear()
         for d in downstreams:
-            for t in await d.list_tools():
+            try:
+                tools = await d.list_tools()
+            except Exception:
+                # Isolate per-downstream failures: an unreachable downstream is skipped
+                # (its tools simply don't appear) rather than blanking routing for
+                # everyone. This does not fail open — the agent can't call what isn't
+                # routed.
+                continue
+            for t in tools:
                 routing[f"{d.name}__{t.name}"] = (d, t)
 
     @server.list_tools()
@@ -40,13 +52,18 @@ def build_gateway_server(downstreams, provider, audit, actor: str = "agent:defau
             await _refresh_routing()
         entry = routing.get(name)
         if not entry:
-            return [types.TextContent(type="text", text=f"unknown tool {name}")]
+            return [types.TextContent(type="text",
+                    text=json.dumps({"performed": False, "blocked_by": "stileai",
+                                     "reason": f"unknown tool {name}"}))]
         d, tool = entry
         real = tool.name
-        decision = _decide(provider.engine(), actor, real, args)
+        # Trustworthy resource: derived from the gateway's own routing (downstream
+        # identity + real tool name), not from agent-controlled `args`. See _decide.
+        resource = f"{d.name}:{real}"
+        decision = _decide(provider.engine(), actor, real, resource, args)
         status = {Effect.ALLOW: "allowed", Effect.DENY: "denied",
                   Effect.REQUIRE_APPROVAL: "pending"}[decision.effect]
-        decision_id = audit.record(actor=actor, action=real, resource=str(args.get("resource") or "*"),
+        decision_id = audit.record(actor=actor, action=real, resource=resource,
                                    params=args, effect=decision.effect.value,
                                    matched_policy=decision.matched_policy, reason=decision.reason,
                                    status=status)
