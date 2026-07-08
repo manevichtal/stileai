@@ -11,6 +11,7 @@ export type ProfileContext = {
   orgName: string;
   checkpointUrl: string | null;
   isPlatformAdmin: boolean;
+  subscriptionActive: boolean;
 };
 
 // Loads the logged-in admin's profile + organization. Returns null if there is
@@ -25,7 +26,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("org_id, role, email, organizations(name, checkpoint_url)")
+    .select("org_id, role, email, organizations(name, checkpoint_url, subscription_status)")
     .eq("id", user.id)
     .single();
 
@@ -41,10 +42,15 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
       orgName: "",
       checkpointUrl: null,
       isPlatformAdmin: isPlatformAdmin(user.email),
+      subscriptionActive: false,
     };
   }
 
-  const org = profile.organizations as unknown as { name: string; checkpoint_url: string | null } | null;
+  const org = profile.organizations as unknown as {
+    name: string;
+    checkpoint_url: string | null;
+    subscription_status: string | null;
+  } | null;
   const email = profile.email ?? user.email ?? null;
   return {
     userId: user.id,
@@ -54,6 +60,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
     orgName: org?.name ?? "",
     checkpointUrl: org?.checkpoint_url ?? null,
     isPlatformAdmin: isPlatformAdmin(email),
+    subscriptionActive: (org?.subscription_status ?? "") === "active",
   };
 });
 
@@ -61,6 +68,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
 export async function requireProfileContext(): Promise<ProfileContext> {
   const ctx = await getProfileContext();
   if (!ctx) redirect("/login");
+  if (!ctx.isPlatformAdmin && !ctx.subscriptionActive) redirect("/complete-setup");
   return ctx;
 }
 

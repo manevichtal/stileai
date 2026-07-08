@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     ...(org?.stripe_customer_id ? { customer: org.stripe_customer_id } : {}),
     line_items: [{ price, quantity: qty }],
     success_url: `${APP_URL}/dashboard`,
-    cancel_url: `${APP_URL}/billing/inactive`,
+    cancel_url: `${APP_URL}/complete-setup`,
   });
   return json({ url: session.url });
 }
