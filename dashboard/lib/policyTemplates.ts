@@ -29,6 +29,22 @@ export type PolicyPack = {
 
 export const POLICY_PACKS: PolicyPack[] = [
   {
+    key: "ai-usage",
+    name: "AI request policy",
+    framework: "AI usage controls",
+    recommended: true,
+    blurb: "The rules StileAI enforces on what employees send to AI tools. Each rule decides what happens when a request contains that kind of content — allow, ask an admin, or block. This is what drives approve / deny / admin-approval.",
+    templates: [
+      { policy_id: "ai-secrets", effect: "deny", priority: 10, action: "secrets", description: "Block AI requests that contain passwords, API keys, or secrets.", control: "Secret protection" },
+      { policy_id: "ai-phi", effect: "deny", priority: 10, action: "phi", description: "Block AI requests that contain health information (PHI).", control: "HIPAA" },
+      { policy_id: "ai-pii", effect: "require_approval", priority: 20, action: "pii", approvals_required: 1, description: "Send AI requests containing personal data (PII) to an admin for approval.", control: "Privacy / PII" },
+      { policy_id: "ai-client-data", effect: "require_approval", priority: 20, action: "client_data", approvals_required: 1, description: "Send AI requests containing customer or client data to an admin for approval.", control: "Client confidentiality" },
+      { policy_id: "ai-financial", effect: "require_approval", priority: 20, action: "financial", approvals_required: 1, description: "Send AI requests containing financial information to an admin for approval.", control: "Financial data" },
+      { policy_id: "ai-legal", effect: "require_approval", priority: 20, action: "legal", approvals_required: 1, description: "Send AI requests containing legal or contract documents to an admin for approval.", control: "Legal / contracts" },
+      { policy_id: "ai-source-code", effect: "require_approval", priority: 20, action: "source_code", approvals_required: 1, description: "Send AI requests containing source code to an admin for approval.", control: "Source-code protection" },
+    ],
+  },
+  {
     key: "baseline",
     name: "Recommended baseline",
     framework: "General agent safety",

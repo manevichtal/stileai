@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/apiKeys";
-import { checkPrompt } from "@/lib/promptCheck";
+import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category } from "@/lib/promptCheck";
 
 // StileAI's real interception point. A company points its AI tool (anything that
 // speaks the OpenAI API — a custom app, Cursor, an SDK, etc.) at:
@@ -78,11 +78,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
 
   const promptText = extractPrompt(body?.messages);
   const model = body?.model ?? "gpt-4o-mini";
-  const result = checkPrompt(promptText, "balanced");
+
+  // The Policies page is the decision-maker: load the org's enabled policies and
+  // map each restricted-content category to its configured effect. Categories with
+  // no policy fall back to the recommended defaults, so it's safe out of the box.
+  const admin = createAdminClient();
+  const AI_CATEGORIES = new Set<Category>(["secrets", "pii", "client_data", "financial", "legal", "phi", "source_code"]);
+  const { data: pols } = await admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true);
+  const rules = { ...BALANCED_RULES };
+  for (const p of pols ?? []) {
+    if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
+  }
+  const result = checkPrompt(promptText, rules);
 
   // Record the decision. We never store restricted prompt content — only the
   // detected categories + reason (and a short preview for SAFE requests).
-  const admin = createAdminClient();
   const decisionId = "ai-" + crypto.randomUUID();
   const effect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
   const status = result.decision === "approved" ? "allowed" : result.decision === "denied" ? "denied" : "pending";

@@ -102,110 +102,55 @@ const DETECTORS: { category: Category; patterns: RegExp[]; evidence: string }[] 
   },
 ];
 
-export type PromptProfile = {
-  id: string;
-  name: string;
-  description: string;
-  recommended?: boolean;
-  rules: Partial<Record<Category, Decision>>; // unlisted categories default to "approved"
+// A per-category decision map. This is what the org's Policies produce: for each
+// kind of restricted content, what StileAI does — approve, ask an admin, or deny.
+export type CategoryRules = Partial<Record<Category, Decision>>;
+
+// The recommended defaults, used until an admin sets their own policies. The
+// dashboard's Policies page overrides these per category (see the "AI request
+// policy" pack), so what the admin configures is exactly what happens.
+export const BALANCED_RULES: CategoryRules = {
+  secrets: "denied",
+  phi: "denied",
+  pii: "admin_approval",
+  client_data: "admin_approval",
+  financial: "admin_approval",
+  legal: "admin_approval",
+  source_code: "admin_approval",
 };
 
-// A few clear presets. "Balanced" is the recommended default and matches the
-// intuitive outcomes for common prompts.
-export const PROFILES: PromptProfile[] = [
-  {
-    id: "balanced",
-    name: "Balanced (recommended)",
-    description:
-      "Safe general AI use is allowed. Sensitive requests are sent to an admin for approval; passwords and health data are blocked outright.",
-    recommended: true,
-    rules: {
-      secrets: "denied",
-      phi: "denied",
-      pii: "admin_approval",
-      client_data: "admin_approval",
-      financial: "admin_approval",
-      legal: "admin_approval",
-      source_code: "admin_approval",
-    },
-  },
-  {
-    id: "strict",
-    name: "Strict",
-    description:
-      "Locks things down: personal data, customer data, financials, code, and secrets are all blocked. Only clearly-safe requests get through.",
-    rules: {
-      secrets: "denied",
-      phi: "denied",
-      pii: "denied",
-      client_data: "denied",
-      financial: "denied",
-      source_code: "denied",
-      legal: "admin_approval",
-    },
-  },
-  {
-    id: "relaxed",
-    name: "Relaxed",
-    description:
-      "Light touch: everyday AI use flows freely. Only outright secrets (passwords/keys) and health data are stopped.",
-    rules: {
-      secrets: "denied",
-      phi: "denied",
-      pii: "admin_approval",
-    },
-  },
-];
-
-export function getProfile(id: string): PromptProfile {
-  return PROFILES.find((p) => p.id === id) ?? PROFILES[0];
+// Map a dashboard policy effect (allow/deny/require_approval) to a prompt decision.
+export function decisionFromEffect(effect: string): Decision {
+  return effect === "allow" ? "approved" : effect === "deny" ? "denied" : "admin_approval";
 }
 
 const SEVERITY: Record<Decision, number> = { approved: 0, admin_approval: 1, denied: 2 };
 
-// The core check. Deterministic and side-effect-free.
-export function checkPrompt(prompt: string, profileId: string): CheckResult {
-  const profile = getProfile(profileId);
+// The core check: detect restricted content, then decide per the org's policy
+// rules. Deterministic and side-effect-free. `rules` comes straight from the
+// Policies page — the strictest matching rule wins.
+export function checkPrompt(prompt: string, rules: CategoryRules = BALANCED_RULES): CheckResult {
   const text = prompt ?? "";
-
   const hits: CategoryHit[] = [];
   for (const det of DETECTORS) {
     if (det.patterns.some((re) => re.test(text))) {
       hits.push({ category: det.category, label: CATEGORY_LABEL[det.category], evidence: det.evidence });
     }
   }
-
   if (hits.length === 0) {
-    return {
-      decision: "approved",
-      reason: "No policy-restricted content detected — this is safe, general AI usage.",
-      hits: [],
-      profile: profile.name,
-    };
+    return { decision: "approved", reason: "No policy-restricted content detected — safe, general AI usage.", hits: [], profile: "your policies" };
   }
-
-  // Decide per hit via the profile; the strictest outcome wins.
   let decision: Decision = "approved";
   let driver: CategoryHit | null = null;
   for (const hit of hits) {
-    const d = profile.rules[hit.category] ?? "approved";
-    if (SEVERITY[d] > SEVERITY[decision]) {
-      decision = d;
-      driver = hit;
-    }
+    const d = rules[hit.category] ?? "approved";
+    if (SEVERITY[d] > SEVERITY[decision]) { decision = d; driver = hit; }
   }
-
   if (decision === "approved") {
-    return {
-      decision,
-      reason: "Allowed under this policy profile — the detected content is permitted.",
-      hits,
-      profile: profile.name,
-    };
+    return { decision, reason: "Allowed under your current policies.", hits, profile: "your policies" };
   }
-
   const d = driver ?? hits[0];
   const verb = decision === "denied" ? "blocked" : "sent to an admin for approval";
-  const reason = `This request was ${verb} because it ${d.evidence} (${d.label}), which your "${profile.name}" policy restricts.`;
-  return { decision, reason, hits, profile: profile.name };
+  const reason = `This request was ${verb} because it ${d.evidence} (${d.label}), which your policies restrict.`;
+  return { decision, reason, hits, profile: "your policies" };
 }
