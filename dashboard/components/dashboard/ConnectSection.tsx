@@ -5,12 +5,10 @@ import Link from "next/link";
 import { Icon } from "@/components/icons";
 
 const CLIENTS = [
-  { key: "claude", name: "Claude", loc: "Settings → Connectors", how: "Click Add custom connector, name it StileAI, and paste the URL." },
-  { key: "chatgpt", name: "ChatGPT", loc: "Settings → Connectors", how: "Add a new connector (or a GPT Action) and paste the URL." },
-  { key: "cursor", name: "Cursor", loc: "Settings → MCP", how: "Click Add new MCP server and paste the URL." },
-  { key: "gemini", name: "Gemini", loc: "Gemini CLI / settings", how: "Run gemini mcp add stileai <url>, or add it under mcpServers in settings.json." },
-  { key: "copilot", name: "Copilot", loc: "VS Code → mcp.json", how: "Command Palette → “MCP: Add Server” → paste the URL." },
-  { key: "custom", name: "Any client", loc: "Your MCP client", how: "Add an MCP server with this URL and an Authorization: Bearer header." },
+  { key: "app", name: "Your app / SDK", loc: "In your code or app config", how: "Set the AI base URL to the StileAI endpoint below, and keep using your normal AI provider key." },
+  { key: "cursor", name: "Cursor", loc: "Settings → Models → OpenAI Base URL", how: "Set the OpenAI Base URL to the StileAI endpoint below, and add your provider key." },
+  { key: "openwebui", name: "Open WebUI / LibreChat", loc: "Admin → Connections / endpoints", how: "Add an OpenAI-compatible endpoint pointing at the StileAI URL below." },
+  { key: "custom", name: "Any OpenAI-compatible tool", loc: "Your tool's API settings", how: "Point the tool's API base URL at the StileAI endpoint below; use your AI provider key as the tool's key." },
 ];
 
 function CopyField({ value, mono = true }: { value: string; mono?: boolean }) {
@@ -30,9 +28,10 @@ function CopyField({ value, mono = true }: { value: string; mono?: boolean }) {
   );
 }
 
-export function ConnectSection({ checkpointUrl }: { checkpointUrl: string | null }) {
+export function ConnectSection({ checkpointUrl: _checkpointUrl }: { checkpointUrl: string | null }) {
   const [client, setClient] = useState(CLIENTS[0]);
-  const [url, setUrl] = useState(checkpointUrl ?? "");
+  const base = typeof window !== "undefined" ? window.location.origin : "https://stileai.vercel.app";
+  const proxyUrl = `${base}/api/proxy/YOUR_STILEAI_KEY/v1`;
 
   return (
     <section className="bg-card border border-line rounded-2xl p-5">
@@ -58,42 +57,30 @@ export function ConnectSection({ checkpointUrl }: { checkpointUrl: string | null
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Step n={1} title="Copy your checkpoint URL" body="Paste it into your AI client in the next step.">
-          {url ? (
-            <CopyField value={url} />
-          ) : (
-            <>
-              <input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://your-checkpoint.onrender.com/mcp"
-                className="w-full font-mono text-[11px] text-ink2 bg-bg2 border border-line rounded-lg px-2.5 py-2 focus:border-blue outline-none"
-                aria-label="Checkpoint URL"
-              />
-              <p className="font-mono text-[10px] text-ink4 mt-1.5">
-                No checkpoint yet? <Link href="/guide" className="text-blue hover:underline">Deploy one in a click</Link> — it fills in here automatically.
-              </p>
-            </>
-          )}
+        <Step n={1} title="Point your tool at StileAI" body="Use this as your AI tool's API base URL — every request passes through StileAI first.">
+          <CopyField value={proxyUrl} />
+          <p className="font-mono text-[10px] text-ink4 mt-1.5">
+            Replace <span className="text-ink3">YOUR_STILEAI_KEY</span> with a key from{" "}
+            <Link href="/keys" className="text-blue hover:underline">API keys</Link>.
+          </p>
         </Step>
 
-        <Step n={2} title={`Open ${client.name}`} body={client.how}>
+        <Step n={2} title={`Set it up in ${client.name}`} body={client.how}>
           <div className="font-mono text-[11px] text-blue bg-bluedim border border-blue/25 rounded-lg px-2.5 py-2">
             {client.loc}
           </div>
         </Step>
 
-        <Step n={3} title="Connect — that's it" body="Nothing else to enter. Your URL already includes your access key, so the connector signs in on its own. Keep the URL private — anyone with it can reach your checkpoint.">
+        <Step n={3} title="You're protected" body="From now on, every request your team sends is checked against your policies before it reaches the AI — approved, blocked, or routed to admin.">
           <div className="font-mono text-[11px] text-ink3 bg-bg2 border border-line rounded-lg px-2.5 py-2">
-            No token field, no OAuth — just the URL.
+            Keep this URL private — your key is in it.
           </div>
         </Step>
       </div>
 
       <p className="font-mono text-[10.5px] text-ink4 mt-4 pt-3 border-t border-line">
-        Prefer a header instead of the key in the URL? Use{" "}
-        <span className="text-ink3">Authorization: Bearer &lt;token&gt;</span> with the base <span className="text-ink3">/mcp</span> URL.
-        Running your own checkpoint? <Link href="/guide" className="text-blue hover:underline">See the self-host steps</Link>.
+        Works with any tool or app that lets you set an OpenAI-compatible API base URL. Your team keeps using their
+        normal AI provider key — StileAI checks each request, then forwards the approved ones to the AI.
       </p>
     </section>
   );
