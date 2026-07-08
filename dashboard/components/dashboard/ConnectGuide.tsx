@@ -191,7 +191,8 @@ export function ConnectGuide() {
           {tool.status !== "locked" && (
             <p className="text-[11px] text-ink4">
               Replace <span className="text-ink3">YOUR_KEY</span> with a key from{" "}
-              <Link href="/keys" className="text-blue hover:underline">API keys</Link>, and use your own AI provider key as before.
+              <Link href="/keys" className="text-blue hover:underline">API keys</Link>, or an employee&apos;s personal key from{" "}
+              <Link href="/team" className="text-blue hover:underline">Team &amp; seats</Link>, and use your own AI provider key as before.
             </p>
           )}
         </div>

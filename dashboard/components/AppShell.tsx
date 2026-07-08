@@ -13,7 +13,9 @@ const NAV = [
   { href: "/audit", label: "Audit log", icon: "audit" },
   { href: "/approvals", label: "Approvals", icon: "approvals" },
   { href: "/keys", label: "API keys", icon: "keys" },
+  { href: "/team", label: "Team & seats", icon: "tenants" },
   { href: "/trust", label: "Trust & security", icon: "check" },
+  { href: "/billing", label: "Billing", icon: "payment" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
