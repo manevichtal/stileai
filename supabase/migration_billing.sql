@@ -23,6 +23,9 @@ create index if not exists employees_key_hash_idx on employees(key_hash);
 
 alter table employees enable row level security;
 
+-- Per-employee audit trail: which seat made each AI request (null for admin/legacy key).
+alter table audit_log add column if not exists employee_id uuid;
+
 -- Members read their org's employees; only admins write. Proxy uses service role (bypasses RLS).
 create policy employees_select on employees for select
   using (org_id in (select org_id from profiles where id = auth.uid()));

@@ -1,4 +1,5 @@
-import { orgForKey, gate, blockMessage } from "@/lib/aiGate";
+import { resolveCaller, gate, blockMessage } from "@/lib/aiGate";
+import { callerDecision } from "@/lib/seats";
 
 // Anthropic-compatible interception (for Claude Code, the Claude SDK, and any tool
 // that speaks the Anthropic Messages API). Point ANTHROPIC_BASE_URL at:
@@ -64,8 +65,8 @@ function anthropicSSE(model: string, text: string): ReadableStream {
 
 export async function POST(req: Request, { params }: { params: Promise<{ key: string }> }) {
   const { key } = await params;
-  const orgId = await orgForKey(key);
-  if (!orgId) {
+  const caller = await resolveCaller(key);
+  if (!caller) {
     return new Response(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "Invalid StileAI key." } }), { status: 401, headers: { "Content-Type": "application/json" } });
   }
 
@@ -76,9 +77,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
     return new Response(JSON.stringify({ type: "error", error: { type: "invalid_request_error", message: "Invalid JSON body." } }), { status: 400, headers: { "Content-Type": "application/json" } });
   }
 
-  const promptText = extractPrompt(body);
   const model = body?.model ?? "claude";
-  const result = await gate(orgId, promptText, model);
+
+  // Caller gate: over-seat employees and orgs without an active subscription are
+  // blocked here, before any policy check runs or the request is forwarded.
+  const gatePass = callerDecision(caller);
+  if (!gatePass.allowed) {
+    if (body?.stream) {
+      return new Response(anthropicSSE(model, gatePass.reason), { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+    }
+    return new Response(JSON.stringify(anthropicMessage(model, gatePass.reason)), { headers: { "Content-Type": "application/json" } });
+  }
+
+  const promptText = extractPrompt(body);
+  const result = await gate(caller.orgId, promptText, model, caller.employeeId);
 
   if (result.decision === "approved") {
     const headers: Record<string, string> = { "Content-Type": "application/json" };

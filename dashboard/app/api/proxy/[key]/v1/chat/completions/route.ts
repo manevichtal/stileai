@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { hashApiKey } from "@/lib/apiKeys";
 import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category } from "@/lib/promptCheck";
+import { resolveCaller } from "@/lib/aiGate";
+import { callerDecision } from "@/lib/seats";
 
 // StileAI's real interception point. A company points its AI tool (anything that
 // speaks the OpenAI API — a custom app, Cursor, an SDK, etc.) at:
@@ -14,13 +15,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const PROVIDER_URL = "https://api.openai.com/v1/chat/completions";
-
-async function orgForKey(rawKey: string): Promise<string | null> {
-  if (!rawKey) return null;
-  const admin = createAdminClient();
-  const { data } = await admin.from("api_keys").select("org_id").eq("key_hash", hashApiKey(rawKey)).maybeSingle();
-  return (data?.org_id as string) ?? null;
-}
 
 function extractPrompt(messages: unknown): string {
   if (!Array.isArray(messages)) return "";
@@ -66,8 +60,8 @@ const json = (obj: unknown, status = 200) =>
 
 export async function POST(req: Request, { params }: { params: Promise<{ key: string }> }) {
   const { key } = await params;
-  const orgId = await orgForKey(key);
-  if (!orgId) return json({ error: { message: "Invalid StileAI key.", type: "stileai_auth" } }, 401);
+  const caller = await resolveCaller(key);
+  if (!caller) return json({ error: { message: "Invalid StileAI key.", type: "stileai_auth" } }, 401);
 
   let body: { messages?: unknown; model?: string; stream?: boolean };
   try {
@@ -76,8 +70,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
     return json({ error: { message: "Invalid JSON body." } }, 400);
   }
 
-  const promptText = extractPrompt(body?.messages);
   const model = body?.model ?? "gpt-4o-mini";
+
+  // Caller gate: over-seat employees and orgs without an active subscription are
+  // blocked here, before any policy check runs or the request is forwarded.
+  const gatePass = callerDecision(caller);
+  if (!gatePass.allowed) {
+    if (body?.stream) {
+      return new Response(sseBlock(model, gatePass.reason), {
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+      });
+    }
+    return json(completion(model, gatePass.reason));
+  }
+
+  const orgId = caller.orgId;
+  const promptText = extractPrompt(body?.messages);
 
   // The Policies page is the decision-maker: load the org's enabled policies and
   // map each restricted-content category to its configured effect. Categories with
@@ -103,6 +111,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
     actor: "employee", action: "ai.request", resource: model,
     params: { categories, preview: safePreview },
     effect, matched_policy: result.hits[0]?.label ?? null, reason: result.reason, status,
+    employee_id: caller.employeeId,
   });
 
   // Approved → forward to the AI provider with the caller's own key (flows through).
