@@ -65,7 +65,7 @@ function LoginPageInner() {
         const co = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orgId: res.orgId, plan, seats }),
+          body: JSON.stringify({ plan, seats }),
         }).then((r) => r.json());
         if (co.url) {
           location.href = co.url;

@@ -31,11 +31,6 @@ export async function createEmployee(
   return { id: data.id as string, key: raw, prefix };
 }
 
-export async function disableEmployee(id: string): Promise<void> {
-  const admin = createAdminClient();
-  await admin.from("employees").update({ status: "disabled" }).eq("id", id);
-}
-
 export async function listEmployees(orgId: string) {
   const admin = createAdminClient();
   const { data } = await admin
