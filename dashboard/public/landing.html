@@ -165,7 +165,7 @@ function blank(){print('&nbsp;');}
 
 const CMDS={
   help(){return `<span class="w">sections</span>  <span class="mut">tap one below to explore</span>
-  <span class="g">about</span>  <span class="g">how</span>  <span class="g">why</span>  <span class="g">who</span>  <span class="g">demo</span>  <span class="g">inspect</span>  <span class="g">policy</span>  <span class="g">deploy</span>  <span class="g">standards</span>  <span class="g">book</span>`;},
+  <span class="g">about</span>  <span class="g">how</span>  <span class="g">why</span>  <span class="g">who</span>  <span class="g">demo</span>  <span class="g">inspect</span>  <span class="g">policy</span>  <span class="g">deploy</span>  <span class="g">standards</span>  <span class="g">pricing</span>  <span class="g">book</span>`;},
   about(){return `<span class="bl">// the checkpoint for agentic AI</span>
 Companies are handing AI real power: assistants and agents that read
 files, query databases, send email, and run commands on their own.
@@ -318,9 +318,27 @@ actually does for a week, then hands you a risk report:
 When you are ready, flip from monitor to enforce. Land small, expand
 safely.
 <span class="w">Ready?</span> <span class="runchip" data-cta="1">Book a walkthrough &#8594;</span> <span class="mut">(or use the button top-right)</span>`;},
+  pricing(){return `<span class="bl">// pricing &#183; per seat, per month</span>
+Priced per protected employee. Every request they send to an AI tool
+is checked against your policies. No free tier, the controls are on
+from day one.
+
+  <span class="w">STARTER</span>     <span class="a">$25</span> <span class="mut">/ seat / mo</span>   <span class="mut">min 5 seats</span>
+              core policy packs &#183; 30-day audit trail &#183; email support
+
+  <span class="w">BUSINESS</span>    <span class="a">$59</span> <span class="mut">/ seat / mo</span>   <span class="tag t-ALLOW">most teams</span>
+              all policy packs + approvals &#183; per-employee audit
+              1-year audit trail &#183; priority support
+
+  <span class="w">ENTERPRISE</span>  <span class="a">custom</span>          <span class="mut">contact sales</span>
+              SSO &#183; DPA &#183; self-host &#183; Copilot &amp; ChatGPT coverage
+              custom policies &#183; SLA
+
+<span class="mut">billed monthly &#183; cancel anytime</span>
+<span class="mut">ready? &#8594;</span> <span class="runchip" data-cta="1">book a walkthrough</span> <span class="mut">&#183;</span> <span class="runchip" data-run="who">who it's for</span>`;},
   clear(){out.innerHTML='';return null;}
 };
-const ALIAS={why:'problem',who:'msp',standards:'compliance',whoami:'about',start:'book',contact:'book','?':'help',ls:'help'};
+const ALIAS={why:'problem',who:'msp',standards:'compliance',whoami:'about',start:'book',contact:'book',plans:'pricing',price:'pricing',cost:'pricing','?':'help',ls:'help'};
 
 const DEC={
   allow:{v:'ALLOW',tool:'github.read',req:'path=repo/app/handlers.ts',checks:[['✓','identity & scope','role=dev-read'],['✓','prompt-injection','clean'],['✓','sensitive data','none'],['✓','policy','rule: dev-read']],reason:'read within scope, passed through',ctl:'policy: dev-read'},
@@ -348,12 +366,12 @@ function run(raw){const cmd=(raw||'').trim();lineN=0;const first=cmd.split(/\s+/
 
 /* tap-to-run */
 let busy=false;
-const CMDSET=new Set(['about','how','why','who','demo','inspect','policy','deploy','standards','book','clear','help']);
+const CMDSET=new Set(['about','how','why','who','demo','inspect','policy','deploy','standards','pricing','plans','price','cost','book','clear','help']);
 const QA=[
  {k:['what is','what does','tell me','explain','overview','purpose'],a:`StileAI is a <span class="w">security and compliance checkpoint</span> between the AI a company uses and the systems it can reach. Every prompt and action is inspected, gets a verdict (<span class="tag t-ALLOW">ALLOW</span> <span class="tag t-REDACT">REDACT</span> <span class="tag t-HOLD">HOLD</span> <span class="tag t-BLOCK">BLOCK</span>), and is logged as evidence. <span class="mut">more &#8594;</span> <span class="runchip" data-run="about">about</span>`},
  {k:['how does','how do','how it','works','work','mechanism','pipeline','process','function'],a:`Point your AI at StileAI instead of straight at your systems. Each request runs a pipeline, identity, injection, sensitive-data, policy, verdict, before anything executes, then it allows, redacts, holds, or blocks and seals the decision. <span class="mut">see the diagram &#8594;</span> <span class="runchip" data-run="how">how</span>`},
  {k:['who is it','who uses','who for','audience','customer','msp','managed service','it company'],a:`Built for IT companies and MSPs (multi-tenant, one console, per-client policy packs, PSA-routed approvals) and for any team running AI in-house (same product, one tenant). <span class="mut">more &#8594;</span> <span class="runchip" data-run="who">who</span>`},
- {k:['price','pricing','cost','how much','expensive','license','fee','pay','budget'],a:`Priced per protected environment (per tenant), with volume pricing for MSPs managing many clients. You can start free in <span class="w">watch-only mode</span> with zero agent changes. For a quote, <span class="runchip" data-run="book">book a walkthrough</span>. <span class="mut">(concept pricing)</span>`},
+ {k:['price','pricing','cost','how much','expensive','license','fee','pay','budget'],a:`Priced <span class="w">per seat, per month</span>: <span class="a">$25</span> Starter, <span class="a">$59</span> Business, custom Enterprise. No free tier, the controls are on from day one. <span class="mut">see the plans &#8594;</span> <span class="runchip" data-run="pricing">pricing</span>`},
  {k:['hipaa','soc 2','soc2','pci','gdpr','compliance','standard','audit','evidence','framework','iso','regulat'],a:`Every decision maps to the control it satisfies (HIPAA, SOC 2, PCI-DSS, GDPR, ISO 42001, OWASP, NIST, EU AI Act) and is sealed in a tamper-evident ledger. Export a per-framework evidence bundle at any review. <span class="mut">more &#8594;</span> <span class="runchip" data-run="standards">standards</span>`},
  {k:['deploy','install','setup','set up','where does it run','where do','cloud','on-prem','on prem','self-host','self host','architecture','vpc','environment'],a:`Runs as two planes: an <span class="w">enforcement plane</span> inside your own environment (data and credentials stay local) and a central <span class="w">control plane</span> that sees metadata only. <span class="mut">more &#8594;</span> <span class="runchip" data-run="deploy">deploy</span>`},
  {k:['latency','slow','speed','fast','performance','overhead','lag','delay'],a:`The fast path adds <span class="w">under 50ms</span> (identity, policy, pattern checks). Heavier model checks run async or sampled, so normal traffic is not held up.`},
@@ -479,9 +497,10 @@ const IC={
   deploy:'<rect x="3" y="4" width="18" height="7" rx="1.6"/><rect x="3" y="13" width="18" height="7" rx="1.6"/><path d="M6.6 7.5h.01M6.6 16.5h.01"/>',
   standards:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/>',
   book:'<rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M3.5 9h17M8 3v3M16 3v3"/>',
+  pricing:'<path d="M20.5 13.4l-7.1 7.1a1.5 1.5 0 0 1-2.1 0L3.5 13V3.5H13l7.5 7.8a1.5 1.5 0 0 1 0 2.1Z"/><circle cx="8" cy="8" r="1.3"/>',
   clear:'<path d="M3.6 12a8.4 8.4 0 1 0 2.5-6"/><path d="M3.6 4.5v4h4"/>'
 };
-const CHIPS=['about','how','why','who','demo','inspect','policy','deploy','standards','book'];
+const CHIPS=['about','how','why','who','demo','inspect','policy','deploy','standards','pricing','book'];
 const cbar=document.getElementById('cmdbar');
 CHIPS.forEach(c=>{const b=document.createElement('div');b.className='chip';b.dataset.cmd=c;b.innerHTML='<svg class="cicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[c]||'')+'</svg><span class="clabel">'+c+'</span><span class="dtip">'+c+'</span>';b.onclick=()=>{if(!busy){out.innerHTML='';run(c);}};cbar.appendChild(b);});
 function highlight(cmd){if(!cbar)return;[].forEach.call(cbar.children,x=>x.classList.toggle('on',x.dataset.cmd===cmd));}
