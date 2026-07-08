@@ -13,6 +13,7 @@ const NAV = [
   { href: "/audit", label: "Audit log", icon: "audit" },
   { href: "/approvals", label: "Approvals", icon: "approvals" },
   { href: "/keys", label: "API keys", icon: "keys" },
+  { href: "/trust", label: "Trust & security", icon: "check" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
