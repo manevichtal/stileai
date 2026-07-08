@@ -16,7 +16,7 @@ export function EffectBadge({ effect }: { effect: string }) {
   };
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded-[5px] text-[10.5px] font-semibold tracking-wide border font-mono ${
+      className={`inline-block px-2 py-0.5 rounded-[5px] text-[10.5px] font-semibold tracking-wide border font-sans ${
         map[effect] ?? map.require_approval
       }`}
     >
@@ -34,7 +34,7 @@ export function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded-[5px] text-[10.5px] font-semibold tracking-wide border font-mono ${
+      className={`inline-block px-2 py-0.5 rounded-[5px] text-[10.5px] font-semibold tracking-wide border font-sans ${
         map[status] ?? map.pending
       }`}
     >
@@ -60,16 +60,16 @@ export function Card({
 }
 
 export function inputCls(extra = "") {
-  return `font-mono text-[12.5px] text-ink bg-bg2 border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-blue focus:bg-card transition-colors ${extra}`;
+  return `font-sans text-[12.5px] text-ink bg-bg2 border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-blue focus:bg-card transition-colors ${extra}`;
 }
 
 export function labelCls() {
-  return "font-mono text-[11px] text-ink2 font-medium";
+  return "font-sans text-[11px] text-ink2 font-medium";
 }
 
 export function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[12.5px] text-ink3 py-10 text-center">
+    <div className="font-sans text-[12.5px] text-ink3 py-10 text-center">
       {children}
     </div>
   );

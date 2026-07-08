@@ -50,7 +50,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[400px]">
         <div className="flex flex-col items-center mb-7">
           <Brand />
-          <p className="font-mono text-[12.5px] text-ink3 mt-2.5 text-center">
+          <p className="font-sans text-[12.5px] text-ink3 mt-2.5 text-center">
             The checkpoint for agentic AI.
           </p>
         </div>
@@ -60,7 +60,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setMode("signin"); setError(null); }}
-              className={`flex-1 py-3 font-mono text-[12.5px] transition-colors ${
+              className={`flex-1 py-3 font-sans text-[12.5px] transition-colors ${
                 mode === "signin"
                   ? "text-blue bg-bluedim font-semibold"
                   : "text-ink3 hover:text-ink"
@@ -71,7 +71,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setMode("signup"); setError(null); }}
-              className={`flex-1 py-3 font-mono text-[12.5px] border-l border-line transition-colors ${
+              className={`flex-1 py-3 font-sans text-[12.5px] border-l border-line transition-colors ${
                 mode === "signup"
                   ? "text-blue bg-bluedim font-semibold"
                   : "text-ink3 hover:text-ink"
@@ -109,7 +109,7 @@ export default function LoginPage() {
             />
 
             {error && (
-              <div className="font-mono text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">
+              <div className="font-sans text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">
                 {error}
               </div>
             )}
@@ -128,7 +128,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="font-mono text-[11px] text-ink4 mt-5 text-center leading-relaxed">
+        <p className="font-sans text-[11px] text-ink4 mt-5 text-center leading-relaxed">
           Each organization is fully isolated. Admins only ever see their own
           org&apos;s policies, audit trail, and approvals.
         </p>
@@ -156,7 +156,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-[11.5px] text-ink2 font-medium">{label}</span>
+      <span className="font-sans text-[11.5px] text-ink2 font-medium">{label}</span>
       <input
         type={type}
         value={value}
@@ -164,9 +164,9 @@ function Field({
         placeholder={placeholder}
         autoFocus={autoFocus}
         required
-        className="font-mono text-[13px] text-ink bg-bg2 border border-line rounded-lg px-3 py-2 outline-none focus:border-blue focus:bg-card transition-colors"
+        className="font-sans text-[13px] text-ink bg-bg2 border border-line rounded-lg px-3 py-2 outline-none focus:border-blue focus:bg-card transition-colors"
       />
-      {hint && <span className="font-mono text-[10.5px] text-ink4">{hint}</span>}
+      {hint && <span className="font-sans text-[10.5px] text-ink4">{hint}</span>}
     </label>
   );
 }

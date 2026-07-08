@@ -38,7 +38,7 @@ export default async function AuditPage({
             <thead>
               <tr className="bg-bg2 border-b border-line">
                 {["Time", "Actor", "Action", "Resource", "Effect", "Status", "Rule"].map((h) => (
-                  <th key={h} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
+                  <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -48,20 +48,20 @@ export default async function AuditPage({
               )}
               {(rows ?? []).map((r) => (
                 <tr key={r.decision_id + r.ts} className="border-b border-line last:border-0 align-top">
-                  <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink3 whitespace-nowrap"><LocalTime ts={r.ts} /></td>
-                  <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{r.actor}</td>
-                  <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink">{r.action}</td>
-                  <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{r.resource}</td>
+                  <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink3 whitespace-nowrap"><LocalTime ts={r.ts} /></td>
+                  <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{r.actor}</td>
+                  <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink">{r.action}</td>
+                  <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{r.resource}</td>
                   <td className="px-3.5 py-2.5"><EffectBadge effect={r.effect} /></td>
                   <td className="px-3.5 py-2.5">{r.status ? <StatusBadge status={r.status} /> : null}</td>
-                  <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink3">{r.matched_policy ?? "—"}</td>
+                  <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink3">{r.matched_policy ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         {rows && rows.length === 200 && (
-          <p className="font-mono text-[11px] text-ink4">Showing the most recent 200 entries. Narrow with the filters above.</p>
+          <p className="font-sans text-[11px] text-ink4">Showing the most recent 200 entries. Narrow with the filters above.</p>
         )}
       </div>
     </>

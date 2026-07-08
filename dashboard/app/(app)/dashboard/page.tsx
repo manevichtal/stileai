@@ -91,7 +91,7 @@ function Hero({ name, orgName }: { name: string; orgName: string }) {
         <h1 className="font-sans font-extrabold text-[23px] tracking-[-0.03em] text-ink leading-tight">
           Welcome back, {name}
         </h1>
-        <p className="font-mono text-[12px] text-ink3 mt-1 leading-relaxed">
+        <p className="font-sans text-[12px] text-ink3 mt-1 leading-relaxed">
           StileAI sits between your team and the AI tools they use. Every request from{" "}
           <span className="text-ink2 font-medium">{orgName || "your organization"}</span> is checked
           against your policies before it reaches ChatGPT, Claude, Gemini, or Copilot — safe requests
@@ -115,7 +115,7 @@ function StatusCard({ pending, policies }: { pending: number; policies: number }
       </div>
       <div className="min-w-0 flex-1">
         <div className="font-sans font-semibold text-[14px] text-ink">Checkpoint online</div>
-        <div className="font-mono text-[11.5px] text-ink3">
+        <div className="font-sans text-[11.5px] text-ink3">
           {policies} active {policies === 1 ? "policy" : "policies"} ·{" "}
           {needsReview ? `${pending} decision${pending === 1 ? "" : "s"} need a human` : "nothing awaiting review"}
         </div>
@@ -134,7 +134,7 @@ function StatTile({ value, label, accent = false }: { value: number; label: stri
   return (
     <div className={`rounded-2xl border p-4 ${accent ? "bg-blue border-blue text-white" : "bg-card border-line"}`}>
       <div className={`font-sans font-extrabold text-[30px] tracking-[-0.03em] ${accent ? "text-white" : "text-ink"}`}>{value}</div>
-      <div className={`font-mono text-[11px] mt-0.5 ${accent ? "text-white/80" : "text-ink3"}`}>{label}</div>
+      <div className={`font-sans text-[11px] mt-0.5 ${accent ? "text-white/80" : "text-ink3"}`}>{label}</div>
     </div>
   );
 }
@@ -155,7 +155,7 @@ function StatsCard({ days, deniedToday, policies }: { days: { label: string; val
     <section className="bg-card border border-line rounded-2xl p-4">
       <div className="flex items-center justify-between mb-1">
         <h2 className="font-sans font-bold text-[14px] text-ink tracking-[-0.01em]">Decisions this week</h2>
-        <span className="font-mono text-[10px] text-ink3 bg-bg2 border border-line rounded-md px-2 py-0.5">7 days</span>
+        <span className="font-sans text-[10px] text-ink3 bg-bg2 border border-line rounded-md px-2 py-0.5">7 days</span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[92px]" preserveAspectRatio="none" role="img" aria-label="Decisions per day">
         <polygon points={area} fill="var(--bluedim)" />
@@ -163,7 +163,7 @@ function StatsCard({ days, deniedToday, policies }: { days: { label: string; val
         {pts.map((p, i) => (
           <g key={i}>
             <circle cx={p.x} cy={p.y} r="2.6" fill="var(--card)" stroke="var(--blue)" strokeWidth="2" />
-            <text x={p.x} y={H - 6} textAnchor="middle" className="font-mono" fontSize="8.5" fill="var(--ink3)">{p.label}</text>
+            <text x={p.x} y={H - 6} textAnchor="middle" className="font-sans" fontSize="8.5" fill="var(--ink3)">{p.label}</text>
           </g>
         ))}
       </svg>
@@ -179,7 +179,7 @@ function MiniStat({ value, label }: { value: number; label: string }) {
   return (
     <div>
       <div className="font-sans font-bold text-[17px] text-ink">{value}</div>
-      <div className="font-mono text-[10.5px] text-ink3">{label}</div>
+      <div className="font-sans text-[10.5px] text-ink3">{label}</div>
     </div>
   );
 }
@@ -190,10 +190,10 @@ function PromoCard() {
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2 text-blue2">
           <Icon name="policies" size={18} />
-          <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-railmut">Compliance</span>
+          <span className="font-sans text-[10.5px] uppercase tracking-[0.12em] text-railmut">Compliance</span>
         </div>
         <h3 className="font-sans font-bold text-[15px] leading-snug">Add a compliance pack</h3>
-        <p className="font-mono text-[11px] text-railink mt-1.5 leading-relaxed">
+        <p className="font-sans text-[11px] text-railink mt-1.5 leading-relaxed">
           Turn on ready-made SOC 2, HIPAA, PCI-DSS, GDPR and more — mapped to real controls, enabled in one click.
         </p>
         <Link href="/policies?tab=library" className="inline-block mt-3 bg-white text-ink font-sans font-semibold text-[12px] rounded-xl px-3.5 py-2 hover:opacity-90">
@@ -239,13 +239,13 @@ function Integrations() {
       </div>
       <div className="flex flex-col gap-3">
         <div>
-          <div className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink4 mb-2">Any AI agent</div>
+          <div className="font-sans text-[9.5px] uppercase tracking-[0.12em] text-ink4 mb-2">Any AI agent</div>
           <div className="flex flex-wrap gap-1.5">
             {AGENTS.map((a) => <Chip key={a.name} {...a} />)}
           </div>
         </div>
         <div>
-          <div className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink4 mb-2">Any system they touch</div>
+          <div className="font-sans text-[9.5px] uppercase tracking-[0.12em] text-ink4 mb-2">Any system they touch</div>
           <div className="flex flex-wrap gap-1.5">
             {SYSTEMS.map((s) => <Chip key={s.name} {...s} />)}
           </div>

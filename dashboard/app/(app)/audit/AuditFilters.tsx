@@ -31,7 +31,7 @@ export function AuditFilters() {
       </select>
       <input type="date" defaultValue={sp.get("since") ?? ""} onChange={(e) => update("since", e.target.value)} className={inputCls()} title="on or after this date" />
       {(sp.get("actor") || sp.get("effect") || sp.get("since")) && (
-        <button onClick={() => router.push("/audit")} className="font-mono text-[11.5px] text-ink3 hover:text-slate">clear</button>
+        <button onClick={() => router.push("/audit")} className="font-sans text-[11.5px] text-ink3 hover:text-slate">clear</button>
       )}
     </div>
   );

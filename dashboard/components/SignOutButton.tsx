@@ -21,7 +21,7 @@ export function SignOutButton({
       onClick={signOut}
       className={
         className ??
-        "font-mono text-[11.5px] text-ink3 hover:text-slate transition-colors"
+        "font-sans text-[11.5px] text-ink3 hover:text-slate transition-colors"
       }
     >
       {children ?? "Sign out"}

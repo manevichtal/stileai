@@ -48,7 +48,7 @@
   --color-railicon: var(--railicon);
   --color-railmut: var(--railmut);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
+  --font-mono: ui-monospace, monospace;
 }
 
 html,
@@ -58,7 +58,7 @@ body {
 
 body {
   color: var(--ink);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 13.5px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

@@ -24,7 +24,7 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
 
   return (
     <div className="bg-bg2 border border-line rounded-[14px] p-4 flex flex-col gap-4">
-      <span className="font-mono text-[11px] text-ink2 font-medium">Add a tool from the catalog</span>
+      <span className="font-sans text-[11px] text-ink2 font-medium">Add a tool from the catalog</span>
 
       <input
         value={query}
@@ -35,11 +35,11 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
 
       <div className="flex flex-col gap-5">
         {groups.length === 0 && (
-          <div className="font-mono text-[12px] text-ink3 py-6 text-center">No tools match &quot;{query}&quot;.</div>
+          <div className="font-sans text-[12px] text-ink3 py-6 text-center">No tools match &quot;{query}&quot;.</div>
         )}
         {groups.map(({ cat, tools }) => (
           <div key={cat.key} className="flex flex-col gap-2">
-            <span className="font-mono text-[10.5px] text-ink3 uppercase tracking-wide">{cat.label}</span>
+            <span className="font-sans text-[10.5px] text-ink3 uppercase tracking-wide">{cat.label}</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {tools.map((tool) => (
                 <button
@@ -50,7 +50,7 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-sans font-semibold text-[13px] text-ink">{tool.name}</span>
                     <span
-                      className={`font-mono text-[9.5px] uppercase tracking-wide rounded-[4px] px-1.5 py-0.5 border ${
+                      className={`font-sans text-[9.5px] uppercase tracking-wide rounded-[4px] px-1.5 py-0.5 border ${
                         tool.official
                           ? "text-blue border-blue/30 bg-bluedim"
                           : "text-ink3 border-line bg-bg2"
@@ -59,7 +59,7 @@ export function ToolCatalog({ onUseCustomForm }: { onUseCustomForm: (prefill: Cu
                       {tool.official ? "Official" : "Community"}
                     </span>
                   </div>
-                  <span className="font-mono text-[11px] text-ink3 leading-snug">{tool.blurb}</span>
+                  <span className="font-sans text-[11px] text-ink3 leading-snug">{tool.blurb}</span>
                 </button>
               ))}
             </div>
@@ -117,14 +117,14 @@ function SetupPanel({
         <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-3">
           <div>
             <h2 className="font-sans font-bold text-[15px] text-ink">{tool.name}</h2>
-            <p className="font-mono text-[11px] text-ink3 mt-0.5">{tool.blurb}</p>
+            <p className="font-sans text-[11px] text-ink3 mt-0.5">{tool.blurb}</p>
           </div>
-          <button onClick={onClose} className="font-mono text-[13px] text-ink3 hover:text-ink">✕</button>
+          <button onClick={onClose} className="font-sans text-[13px] text-ink3 hover:text-ink">✕</button>
         </div>
 
         {tool.reuseExisting ? (
           <div className="p-5 flex flex-col gap-3">
-            <div className="font-mono text-[11.5px] text-ink2 bg-bg2 border border-line rounded-lg px-3 py-2.5">
+            <div className="font-sans text-[11.5px] text-ink2 bg-bg2 border border-line rounded-lg px-3 py-2.5">
               This tool uses a one-time sign-in (OAuth), so StileAI can&apos;t take a pasteable key for it.
               Connect the {tool.name} connector you&apos;ve already set up in your environment by pointing the
               custom tool form at it.
@@ -139,16 +139,16 @@ function SetupPanel({
         ) : (
           <div className="p-5 flex flex-col gap-3.5">
             <label className="flex flex-col gap-1">
-              <span className="font-mono text-[10.5px] text-ink3">Name</span>
+              <span className="font-sans text-[10.5px] text-ink3">Name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls("w-full")} placeholder={tool.name} />
             </label>
 
             {tool.credentials.length === 0 ? (
-              <p className="font-mono text-[11px] text-ink4">No key needed for this one — just connect.</p>
+              <p className="font-sans text-[11px] text-ink4">No key needed for this one — just connect.</p>
             ) : (
               tool.credentials.map((cred) => (
                 <label key={cred.key} className="flex flex-col gap-1">
-                  <span className="font-mono text-[10.5px] text-ink3">
+                  <span className="font-sans text-[10.5px] text-ink3">
                     {cred.label}{cred.optional ? " (optional)" : ""}
                   </span>
                   <input
@@ -158,12 +158,12 @@ function SetupPanel({
                     className={inputCls("w-full")}
                     placeholder="••••••••"
                   />
-                  <span className="font-mono text-[10px] text-ink4">{cred.where}</span>
+                  <span className="font-sans text-[10px] text-ink4">{cred.where}</span>
                 </label>
               ))
             )}
 
-            {error && <div className="font-mono text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{error}</div>}
+            {error && <div className="font-sans text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{error}</div>}
 
             <button
               onClick={connect}

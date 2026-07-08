@@ -47,7 +47,7 @@ export function RecentActivity({ decisions }: { decisions: Decision[] }) {
     <section className="bg-card border border-line rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-sans font-bold text-[15px] text-ink tracking-[-0.01em]">Recent activity</h2>
-        <Link href="/audit" className="font-mono text-[11.5px] text-blue hover:underline">View all →</Link>
+        <Link href="/audit" className="font-sans text-[11.5px] text-blue hover:underline">View all →</Link>
       </div>
 
       <div className="flex gap-5 border-b border-line mb-1.5">
@@ -68,7 +68,7 @@ export function RecentActivity({ decisions }: { decisions: Decision[] }) {
 
       <div className="flex flex-col">
         {rows.length === 0 && (
-          <div className="font-mono text-[12.5px] text-ink3 py-9 text-center">
+          <div className="font-sans text-[12.5px] text-ink3 py-9 text-center">
             No activity here yet. Decisions from your checkpoint will appear as they happen.
           </div>
         )}
@@ -79,11 +79,11 @@ export function RecentActivity({ decisions }: { decisions: Decision[] }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-sans text-[13.5px] text-ink font-medium truncate">{d.action}</div>
-              <div className="font-mono text-[11px] text-ink3 truncate">
+              <div className="font-sans text-[11px] text-ink3 truncate">
                 {d.actor} · {d.resource}
               </div>
             </div>
-            <div className="hidden sm:block font-mono text-[11px] text-ink4 w-16 text-right">{ago(d.ts)}</div>
+            <div className="hidden sm:block font-sans text-[11px] text-ink4 w-16 text-right">{ago(d.ts)}</div>
             <EffectBadge effect={d.effect} />
             <Link
               href="/audit"

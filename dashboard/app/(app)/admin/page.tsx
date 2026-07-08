@@ -73,32 +73,32 @@ export default async function AdminOverviewPage() {
             <thead>
               <tr className="bg-bg2 border-b border-line">
                 {["Organization", "Created", "Admins", "Policies", "Keys", "Pending", "Decisions", ""].map((h) => (
-                  <th key={h} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
+                  <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {orgList.length === 0 && (
-                <tr><td colSpan={8} className="font-mono text-[12.5px] text-ink3 text-center py-10">No organizations yet.</td></tr>
+                <tr><td colSpan={8} className="font-sans text-[12.5px] text-ink3 text-center py-10">No organizations yet.</td></tr>
               )}
               {orgList.map((o) => (
                 <tr key={o.id} className="border-b border-line last:border-0">
-                  <td className="px-3.5 py-3 font-mono text-[12.5px] text-ink font-medium">{o.name}</td>
-                  <td className="px-3.5 py-3 font-mono text-[11px] text-ink3"><LocalTime ts={o.created_at} mode="date" /></td>
-                  <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{admins.get(o.id) ?? 0}</td>
-                  <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{policyCount.get(o.id) ?? 0}</td>
-                  <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{keyCount.get(o.id) ?? 0}</td>
-                  <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{pending.get(o.id) ?? 0}</td>
-                  <td className="px-3.5 py-3 font-mono text-[12px] text-ink2">{auditCounts.get(o.id) ?? 0}</td>
+                  <td className="px-3.5 py-3 font-sans text-[12.5px] text-ink font-medium">{o.name}</td>
+                  <td className="px-3.5 py-3 font-sans text-[11px] text-ink3"><LocalTime ts={o.created_at} mode="date" /></td>
+                  <td className="px-3.5 py-3 font-sans text-[12px] text-ink2">{admins.get(o.id) ?? 0}</td>
+                  <td className="px-3.5 py-3 font-sans text-[12px] text-ink2">{policyCount.get(o.id) ?? 0}</td>
+                  <td className="px-3.5 py-3 font-sans text-[12px] text-ink2">{keyCount.get(o.id) ?? 0}</td>
+                  <td className="px-3.5 py-3 font-sans text-[12px] text-ink2">{pending.get(o.id) ?? 0}</td>
+                  <td className="px-3.5 py-3 font-sans text-[12px] text-ink2">{auditCounts.get(o.id) ?? 0}</td>
                   <td className="px-3.5 py-3 text-right">
-                    <Link href={`/admin/${o.id}`} className="font-mono text-[11.5px] text-blue hover:underline">View →</Link>
+                    <Link href={`/admin/${o.id}`} className="font-sans text-[11.5px] text-blue hover:underline">View →</Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="font-mono text-[10.5px] text-ink4">
+        <p className="font-sans text-[10.5px] text-ink4">
           This view is limited to the {platformNote()}. Tenant admins never see other tenants — only you, the platform owner, see this page.
         </p>
       </div>
@@ -113,7 +113,7 @@ function platformNote() {
 function Kpi({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-bg2 border border-line rounded-[14px] px-4 py-3">
-      <div className="font-mono text-[10.5px] text-ink4 uppercase tracking-wide">{label}</div>
+      <div className="font-sans text-[10.5px] text-ink4 uppercase tracking-wide">{label}</div>
       <div className="font-sans font-bold text-[22px] text-ink mt-1">{value}</div>
     </div>
   );

@@ -69,7 +69,7 @@ export function AppShell({
 
           {isPlatformAdmin && (
             <>
-              <div className="mt-4 mb-1.5 px-3 font-mono text-[9.5px] text-railmut uppercase tracking-[0.14em]">
+              <div className="mt-4 mb-1.5 px-3 font-sans text-[9.5px] text-railmut uppercase tracking-[0.14em]">
                 Platform owner
               </div>
               <Link
@@ -91,8 +91,8 @@ export function AppShell({
 
         <div className="mx-4 mt-1 py-4 border-t border-white/10">
           <div className="font-sans text-[12.5px] text-white/90 font-medium truncate">{orgName || "Your org"}</div>
-          <div className="font-mono text-[10.5px] text-railmut truncate">{email}</div>
-          <SignOutButton className="flex items-center gap-1.5 mt-3 font-mono text-[11px] text-railmut hover:text-white transition-colors">
+          <div className="font-sans text-[10.5px] text-railmut truncate">{email}</div>
+          <SignOutButton className="flex items-center gap-1.5 mt-3 font-sans text-[11px] text-railmut hover:text-white transition-colors">
             <Icon name="signout" size={13} /> Sign out
           </SignOutButton>
         </div>
@@ -120,7 +120,7 @@ export function PageHeader({
           {title}
         </h1>
         {subtitle && (
-          <p className="font-mono text-[12.5px] text-ink3 mt-1">{subtitle}</p>
+          <p className="font-sans text-[12.5px] text-ink3 mt-1">{subtitle}</p>
         )}
       </div>
       {actions}

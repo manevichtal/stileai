@@ -69,7 +69,7 @@ export default async function GuidePage() {
           <h2 className="font-sans font-bold text-[17px] text-ink tracking-[-0.01em]">
             StileAI sits between your employees and the AI tools they already use.
           </h2>
-          <p className="font-mono text-[12.5px] text-ink2 leading-relaxed mt-2 max-w-[740px]">
+          <p className="font-sans text-[12.5px] text-ink2 leading-relaxed mt-2 max-w-[740px]">
             Every AI request is checked against your company policies before it reaches ChatGPT, Claude, Gemini,
             Copilot, or any other AI tool. Safe requests are <span className="text-blue font-medium">approved</span>.
             Risky ones are <span className="text-slate font-medium">blocked</span> or{" "}
@@ -86,8 +86,64 @@ export default async function GuidePage() {
               <Arrow label="approve / deny / admin" />
               <FlowNode icon="server" title="AI tool" sub="ChatGPT · Claude · Gemini" />
             </div>
-            <p className="font-mono text-[10.5px] text-ink4 mt-3">
+            <p className="font-sans text-[10.5px] text-ink4 mt-3">
               This dashboard is where you set the policies and review every decision.
+            </p>
+          </div>
+        </section>
+
+        {/* How to connect */}
+        <section className="bg-card border border-line rounded-2xl p-6">
+          <h3 className="font-sans font-bold text-[15px] text-ink">How to connect your AI — step by step</h3>
+          <p className="font-sans text-[12px] text-ink2 mt-1 max-w-[720px]">
+            StileAI gives you an endpoint that works exactly like the OpenAI API. Point any AI tool or app that lets you
+            set an API base URL at it — nothing to install.
+          </p>
+
+          <div className="mt-4 flex flex-col gap-4">
+            <div>
+              <div className="font-sans font-semibold text-[12.5px] text-ink mb-1">1 · Get your endpoint</div>
+              <p className="font-sans text-[11.5px] text-ink2 mb-1.5">
+                Create a key on <Link href="/keys" className="text-blue hover:underline">API keys</Link>. Your endpoint (base URL) is:
+              </p>
+              <code className="block bg-bg2 border border-line rounded-lg px-3 py-2 text-[12px] text-ink break-all">
+                https://stileai.vercel.app/api/proxy/<span className="text-blue">YOUR_KEY</span>/v1
+              </code>
+            </div>
+
+            <div>
+              <div className="font-sans font-semibold text-[12.5px] text-ink mb-1">2 · Set it in your AI tool</div>
+              <p className="font-sans text-[11.5px] text-ink2 mb-1.5">
+                In your tool&apos;s settings find the <span className="text-ink font-medium">API base URL</span> (a.k.a.
+                &ldquo;OpenAI base URL&rdquo;, &ldquo;endpoint&rdquo;, or &ldquo;custom API host&rdquo;), paste the endpoint above, and keep using
+                your normal AI provider key. For example:
+              </p>
+              <ul className="flex flex-col gap-1 text-[11.5px] text-ink2">
+                <li>• <b>Cursor</b> → Settings → Models → &ldquo;Override OpenAI Base URL&rdquo; → paste it.</li>
+                <li>• <b>Open WebUI / LibreChat</b> → Admin → Connections → add an OpenAI-compatible endpoint → paste it.</li>
+                <li>• <b>Your own app / SDK</b> → set the client&apos;s <span className="text-ink">baseURL</span> (code below).</li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="font-sans font-semibold text-[12.5px] text-ink mb-1">3 · Or drop it into code</div>
+              <pre className="bg-bg2 border border-line rounded-lg px-3 py-2.5 text-[11.5px] text-ink2 overflow-x-auto"><code>{`from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://stileai.vercel.app/api/proxy/YOUR_KEY/v1",
+    api_key="sk-your-openai-key",   # your normal provider key
+)
+
+client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Write a cold email"}],
+)`}</code></pre>
+            </div>
+
+            <p className="font-sans text-[11px] text-ink4 pt-2 border-t border-line">
+              From here every request is checked against your{" "}
+              <Link href="/policies" className="text-blue hover:underline">policies</Link> — and each decision shows up in the{" "}
+              <Link href="/audit" className="text-blue hover:underline">audit log</Link>.
             </p>
           </div>
         </section>
@@ -110,7 +166,7 @@ export default async function GuidePage() {
         <section className="bg-card border border-line rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-sans font-bold text-[15px] text-ink">Your setup checklist</h3>
-            <span className="font-mono text-[11px] text-ink3">{completed} of {steps.length} done</span>
+            <span className="font-sans text-[11px] text-ink3">{completed} of {steps.length} done</span>
           </div>
           {/* progress bar */}
           <div className="h-1.5 rounded-full bg-bg3 overflow-hidden mb-5">
@@ -125,7 +181,7 @@ export default async function GuidePage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className={`font-sans font-semibold text-[13.5px] ${s.done ? "text-ink3 line-through decoration-ink4" : "text-ink"}`}>{s.title}</div>
-                  <p className="font-mono text-[11.5px] text-ink2 leading-relaxed mt-0.5">{s.body}</p>
+                  <p className="font-sans text-[11.5px] text-ink2 leading-relaxed mt-0.5">{s.body}</p>
                 </div>
                 <Link
                   href={s.href}
@@ -140,7 +196,7 @@ export default async function GuidePage() {
           </ol>
 
           {completed === steps.length && (
-            <div className="mt-4 flex items-center gap-2 font-mono text-[12px] text-blue">
+            <div className="mt-4 flex items-center gap-2 font-sans text-[12px] text-blue">
               <Icon name="check" size={16} /> You&apos;re live — StileAI is checking every AI request.
             </div>
           )}
@@ -157,7 +213,7 @@ function FlowNode({ icon, title, sub, highlight = false }: { icon: string; title
         <Icon name={icon} size={17} />
         <span className="font-sans font-semibold text-[12.5px] text-ink">{title}</span>
       </div>
-      <div className="font-mono text-[10.5px] text-ink3 mt-1">{sub}</div>
+      <div className="font-sans text-[10.5px] text-ink3 mt-1">{sub}</div>
     </div>
   );
 }
@@ -165,7 +221,7 @@ function FlowNode({ icon, title, sub, highlight = false }: { icon: string; title
 function Arrow({ label }: { label: string }) {
   return (
     <div className="flex-none flex flex-col items-center text-ink4">
-      <span className="font-mono text-[9px] text-ink4 whitespace-nowrap mb-0.5">{label}</span>
+      <span className="font-sans text-[9px] text-ink4 whitespace-nowrap mb-0.5">{label}</span>
       <Icon name="arrowRight" size={18} />
     </div>
   );
@@ -178,8 +234,8 @@ function Piece({ icon, title, body, href }: { icon: string; title: string; body:
         <Icon name={icon} size={18} />
       </div>
       <div className="font-sans font-semibold text-[13.5px] text-ink">{title}</div>
-      <p className="font-mono text-[11px] text-ink2 leading-relaxed mt-1">{body}</p>
-      <span className="font-mono text-[11px] text-blue mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Open →</span>
+      <p className="font-sans text-[11px] text-ink2 leading-relaxed mt-1">{body}</p>
+      <span className="font-sans text-[11px] text-blue mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Open →</span>
     </Link>
   );
 }

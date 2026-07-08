@@ -41,7 +41,7 @@ export default async function AdminOrgPage({
         title={org.name}
         subtitle={`Tenant detail (read-only) · default effect: ${settings?.default_effect ?? "require_approval"}`}
         actions={
-          <Link href="/admin" className="font-mono text-[11.5px] text-ink3 hover:text-ink self-center">← all tenants</Link>
+          <Link href="/admin" className="font-sans text-[11.5px] text-ink3 hover:text-ink self-center">← all tenants</Link>
         }
       />
       <div className="p-7 flex flex-col gap-7 max-w-[1000px]">
@@ -59,19 +59,19 @@ export default async function AdminOrgPage({
               <thead>
                 <tr className="bg-bg2 border-b border-line">
                   {["Pri", "Rule", "Effect", "Matches", ""].map((h) => (
-                    <th key={h} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2 font-medium">{h}</th>
+                    <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2 font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {(policies ?? []).length === 0 && <tr><td colSpan={5} className="text-center font-mono text-[12px] text-ink3 py-8">No policies.</td></tr>}
+                {(policies ?? []).length === 0 && <tr><td colSpan={5} className="text-center font-sans text-[12px] text-ink3 py-8">No policies.</td></tr>}
                 {(policies ?? []).map((p, i) => (
                   <tr key={i} className={`border-b border-line last:border-0 ${p.enabled ? "" : "opacity-45"}`}>
-                    <td className="px-3.5 py-2.5 font-mono text-[12px] text-ink2">{p.priority}</td>
-                    <td className="px-3.5 py-2.5 font-mono text-[12px] text-ink">{p.policy_id}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[12px] text-ink2">{p.priority}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[12px] text-ink">{p.policy_id}</td>
                     <td className="px-3.5 py-2.5"><EffectBadge effect={p.effect} /></td>
-                    <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink2">{p.actor} · {p.action} · {p.resource}</td>
-                    <td className="px-3.5 py-2.5 font-mono text-[10px] text-ink4">{p.enabled ? "" : "disabled"}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink2">{p.actor} · {p.action} · {p.resource}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[10px] text-ink4">{p.enabled ? "" : "disabled"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -101,17 +101,17 @@ export default async function AdminOrgPage({
               <thead>
                 <tr className="bg-bg2 border-b border-line">
                   {["Time", "Actor", "Action", "Effect", "Status"].map((h) => (
-                    <th key={h} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2 font-medium">{h}</th>
+                    <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2 font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {(audit ?? []).length === 0 && <tr><td colSpan={5} className="text-center font-mono text-[12px] text-ink3 py-8">No decisions yet.</td></tr>}
+                {(audit ?? []).length === 0 && <tr><td colSpan={5} className="text-center font-sans text-[12px] text-ink3 py-8">No decisions yet.</td></tr>}
                 {(audit ?? []).map((a, i) => (
                   <tr key={i} className="border-b border-line last:border-0">
-                    <td className="px-3.5 py-2.5 font-mono text-[10.5px] text-ink3 whitespace-nowrap"><LocalTime ts={a.ts} /></td>
-                    <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink2">{a.actor}</td>
-                    <td className="px-3.5 py-2.5 font-mono text-[11px] text-ink">{a.action}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[10.5px] text-ink3 whitespace-nowrap"><LocalTime ts={a.ts} /></td>
+                    <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink2">{a.actor}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink">{a.action}</td>
                     <td className="px-3.5 py-2.5"><EffectBadge effect={a.effect} /></td>
                     <td className="px-3.5 py-2.5">{a.status ? <StatusBadge status={a.status} /> : null}</td>
                   </tr>
@@ -141,16 +141,16 @@ function SimpleTable({ head, rows, empty }: { head: string[]; rows: (string | nu
         <thead>
           <tr className="bg-bg2 border-b border-line">
             {head.map((h) => (
-              <th key={h} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2 font-medium">{h}</th>
+              <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2 font-medium">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={head.length} className="text-center font-mono text-[12px] text-ink3 py-8">{empty}</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={head.length} className="text-center font-sans text-[12px] text-ink3 py-8">{empty}</td></tr>}
           {rows.map((r, i) => (
             <tr key={i} className="border-b border-line last:border-0">
               {r.map((c, j) => (
-                <td key={j} className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{c}</td>
+                <td key={j} className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{c}</td>
               ))}
             </tr>
           ))}

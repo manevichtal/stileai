@@ -24,7 +24,7 @@ export function DeployCard() {
   return (
     <section className="bg-card border border-line rounded-2xl p-6">
       <h3 className="font-sans font-bold text-[15px] text-ink">Deploy your checkpoint</h3>
-      <p className="font-mono text-[11.5px] text-ink2 leading-relaxed mt-1.5 mb-4 max-w-[680px]">
+      <p className="font-sans text-[11.5px] text-ink2 leading-relaxed mt-1.5 mb-4 max-w-[680px]">
         The checkpoint runs in <span className="text-ink font-medium">your own</span> environment — sensitive actions
         never leave your infrastructure. One click spins it up in your Render account, wired to this dashboard. It
         registers its own URL back here automatically.
@@ -40,18 +40,18 @@ export function DeployCard() {
           <Icon name="cloud" size={16} /> Deploy to Render
           <Icon name="arrowRight" size={14} />
         </a>
-        <span className="font-mono text-[11px] text-ink4">
+        <span className="font-sans text-[11px] text-ink4">
           You&apos;ll paste your API key during setup. Free tier works for testing.
         </span>
       </div>
 
       <div className="mt-4">
-        <div className="font-mono text-[10px] text-ink4 mb-1.5">…or run it anywhere with Docker</div>
+        <div className="font-sans text-[10px] text-ink4 mb-1.5">…or run it anywhere with Docker</div>
         <div className="relative">
-          <pre className="font-mono text-[11px] leading-relaxed text-railink bg-rail rounded-xl p-3.5 pr-16 overflow-auto max-h-[220px] whitespace-pre">{DOCKER}</pre>
+          <pre className="font-sans text-[11px] leading-relaxed text-railink bg-rail rounded-xl p-3.5 pr-16 overflow-auto max-h-[220px] whitespace-pre">{DOCKER}</pre>
           <button
             onClick={() => { navigator.clipboard.writeText(DOCKER); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-            className="absolute top-2.5 right-2.5 flex items-center gap-1.5 font-mono text-[10px] text-railink bg-railhov hover:bg-white/10 rounded-md px-2 py-1"
+            className="absolute top-2.5 right-2.5 flex items-center gap-1.5 font-sans text-[10px] text-railink bg-railhov hover:bg-white/10 rounded-md px-2 py-1"
           >
             <Icon name={copied ? "check" : "copy"} size={12} /> {copied ? "Copied" : "Copy"}
           </button>

@@ -102,7 +102,7 @@ function RulesTab({
       />
 
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[12px] text-ink3">
+        <p className="font-sans text-[12px] text-ink3">
           Rules are checked top-to-bottom by priority (lower number first). The
           first match wins; if nothing matches, the default above applies.
         </p>
@@ -119,7 +119,7 @@ function RulesTab({
           <thead>
             <tr className="bg-bg2 border-b border-line">
               {["Priority", "Rule", "Effect", "Matches", "", ""].map((h, i) => (
-                <th key={i} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">
+                <th key={i} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">
                   {h}
                 </th>
               ))}
@@ -128,20 +128,20 @@ function RulesTab({
           <tbody>
             {policies.length === 0 && (
               <tr>
-                <td colSpan={6} className="font-mono text-[12.5px] text-ink3 text-center py-10">
+                <td colSpan={6} className="font-sans text-[12.5px] text-ink3 text-center py-10">
                   No rules yet. Add one, or every request falls through to the default.
                 </td>
               </tr>
             )}
             {policies.map((p) => (
               <tr key={p.id} className={`border-b border-line last:border-0 ${p.enabled ? "" : "opacity-45"}`}>
-                <td className="px-3.5 py-3 font-mono text-[12.5px] text-ink2">{p.priority}</td>
+                <td className="px-3.5 py-3 font-sans text-[12.5px] text-ink2">{p.priority}</td>
                 <td className="px-3.5 py-3">
-                  <div className="font-mono text-[12.5px] text-ink font-medium">{p.policy_id}</div>
-                  {p.description && <div className="font-mono text-[11px] text-ink3 mt-0.5">{p.description}</div>}
+                  <div className="font-sans text-[12.5px] text-ink font-medium">{p.policy_id}</div>
+                  {p.description && <div className="font-sans text-[11px] text-ink3 mt-0.5">{p.description}</div>}
                 </td>
                 <td className="px-3.5 py-3"><EffectBadge effect={p.effect} /></td>
-                <td className="px-3.5 py-3 font-mono text-[11.5px] text-ink2">
+                <td className="px-3.5 py-3 font-sans text-[11.5px] text-ink2">
                   <span className="text-ink3">actor</span> {p.actor}{"  "}
                   <span className="text-ink3">action</span> {p.action}{"  "}
                   <span className="text-ink3">on</span> {p.resource}
@@ -154,10 +154,10 @@ function RulesTab({
                   )}
                 </td>
                 <td className="px-2 py-3">
-                  {!p.enabled && <span className="font-mono text-[10px] text-ink3">disabled</span>}
+                  {!p.enabled && <span className="font-sans text-[10px] text-ink3">disabled</span>}
                 </td>
                 <td className="px-3.5 py-3 text-right whitespace-nowrap">
-                  <button onClick={() => setEditing({ ...p })} className="font-mono text-[11.5px] text-blue hover:underline mr-3">Edit</button>
+                  <button onClick={() => setEditing({ ...p })} className="font-sans text-[11.5px] text-blue hover:underline mr-3">Edit</button>
                   <DeleteButton id={p.id!} label={p.policy_id} onDone={() => router.refresh()} />
                 </td>
               </tr>
@@ -184,7 +184,7 @@ function DefaultsBar({ defaultEffect, defaultReason, onSaved }: { defaultEffect:
   const dirty = effect !== defaultEffect || reason !== defaultReason;
   return (
     <div className="bg-bg2 border border-line rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
-      <span className="font-mono text-[12px] text-ink2">When no rule matches,</span>
+      <span className="font-sans text-[12px] text-ink2">When no rule matches,</span>
       <select value={effect} onChange={(e) => setEffect(e.target.value)} className={inputCls()}>
         {EFFECTS.map((e) => <option key={e} value={e}>{e}</option>)}
       </select>
@@ -192,7 +192,7 @@ function DefaultsBar({ defaultEffect, defaultReason, onSaved }: { defaultEffect:
       <button
         disabled={!dirty || busy}
         onClick={async () => { setBusy(true); await updateDefaults(effect, reason); setBusy(false); onSaved(); }}
-        className="font-mono text-[11.5px] text-blue disabled:text-ink4 hover:underline"
+        className="font-sans text-[11.5px] text-blue disabled:text-ink4 hover:underline"
       >
         {busy ? "Saving…" : "Save default"}
       </button>
@@ -203,9 +203,9 @@ function DefaultsBar({ defaultEffect, defaultReason, onSaved }: { defaultEffect:
 function DeleteButton({ id, label, onDone }: { id: string; label: string; onDone: () => void }) {
   const [confirming, setConfirming] = useState(false);
   if (!confirming)
-    return <button onClick={() => setConfirming(true)} className="font-mono text-[11.5px] text-ink3 hover:text-slate">Delete</button>;
+    return <button onClick={() => setConfirming(true)} className="font-sans text-[11.5px] text-ink3 hover:text-slate">Delete</button>;
   return (
-    <span className="font-mono text-[11px]">
+    <span className="font-sans text-[11px]">
       <span className="text-ink3 mr-1">delete {label}?</span>
       <button onClick={async () => { await deletePolicy(id); onDone(); }} className="text-slate font-semibold mr-2">yes</button>
       <button onClick={() => setConfirming(false)} className="text-ink3">no</button>
@@ -266,10 +266,10 @@ function PolicyModal({ initial, onClose, onSaved }: { initial: PolicyInput; onCl
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className={labelCls()}>Conditions <span className="text-ink4">(all must hold)</span></span>
-              <button onClick={() => set({ conditions: [...p.conditions, { field: "", op: "eq", value: "" }] })} className="font-mono text-[11px] text-blue hover:underline">+ add condition</button>
+              <button onClick={() => set({ conditions: [...p.conditions, { field: "", op: "eq", value: "" }] })} className="font-sans text-[11px] text-blue hover:underline">+ add condition</button>
             </div>
             <div className="flex flex-col gap-2">
-              {p.conditions.length === 0 && <span className="font-mono text-[11px] text-ink4">No conditions — the rule matches on actor/action/resource alone.</span>}
+              {p.conditions.length === 0 && <span className="font-sans text-[11px] text-ink4">No conditions — the rule matches on actor/action/resource alone.</span>}
               {p.conditions.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <input value={c.field} onChange={(e) => setCond(i, { field: e.target.value })} className={inputCls("flex-1")} placeholder="amount" />
@@ -277,7 +277,7 @@ function PolicyModal({ initial, onClose, onSaved }: { initial: PolicyInput; onCl
                     {OPS.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                   <input value={String(c.value ?? "")} onChange={(e) => setCond(i, { value: e.target.value })} className={inputCls("flex-1")} placeholder="100" disabled={c.op === "exists"} />
-                  <button onClick={() => set({ conditions: p.conditions.filter((_, idx) => idx !== i) })} className="font-mono text-[13px] text-ink3 hover:text-slate px-1">×</button>
+                  <button onClick={() => set({ conditions: p.conditions.filter((_, idx) => idx !== i) })} className="font-sans text-[13px] text-ink3 hover:text-slate px-1">×</button>
                 </div>
               ))}
             </div>
@@ -285,13 +285,13 @@ function PolicyModal({ initial, onClose, onSaved }: { initial: PolicyInput; onCl
 
           <label className="flex items-center gap-2 mt-1">
             <input type="checkbox" checked={p.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
-            <span className="font-mono text-[12px] text-ink2">Enabled (the checkpoint uses this rule)</span>
+            <span className="font-sans text-[12px] text-ink2">Enabled (the checkpoint uses this rule)</span>
           </label>
 
-          {error && <div className="font-mono text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{error}</div>}
+          {error && <div className="font-sans text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">{error}</div>}
         </div>
         <div className="px-5 py-4 border-t border-line flex justify-end gap-2.5">
-          <button onClick={onClose} className="font-mono text-[12px] text-ink3 hover:text-ink px-3 py-2">Cancel</button>
+          <button onClick={onClose} className="font-sans text-[12px] text-ink3 hover:text-ink px-3 py-2">Cancel</button>
           <button onClick={submit} disabled={busy} className="bg-blue text-white font-sans font-semibold text-[12.5px] rounded-lg px-4 py-2 hover:opacity-90 disabled:opacity-50">
             {busy ? "Saving…" : "Save rule"}
           </button>
@@ -313,7 +313,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 function PolicyLibrary({ existingIds, onChanged }: { existingIds: Set<string>; onChanged: () => void }) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="font-mono text-[12px] text-ink3 max-w-[640px]">
+      <p className="font-sans text-[12px] text-ink3 max-w-[640px]">
         Turn on a ready-made set of rules. Each pack maps to real controls; enabling one adds its
         policies to yours, which you can then edit or disable individually under <span className="text-ink2">Your policies</span>.
       </p>
@@ -346,19 +346,19 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
           <div className="flex items-center gap-2">
             <h3 className="font-sans font-bold text-[15px] text-ink">{pack.name}</h3>
             {pack.recommended && (
-              <span className="font-mono text-[9.5px] uppercase tracking-wide text-blue bg-bluedim border border-blue/30 rounded px-1.5 py-0.5">
+              <span className="font-sans text-[9.5px] uppercase tracking-wide text-blue bg-bluedim border border-blue/30 rounded px-1.5 py-0.5">
                 Recommended
               </span>
             )}
           </div>
-          <div className="font-mono text-[10.5px] text-ink3 mt-0.5">{pack.framework}</div>
+          <div className="font-sans text-[10.5px] text-ink3 mt-0.5">{pack.framework}</div>
         </div>
-        <span className="font-mono text-[10.5px] text-ink3 whitespace-nowrap">{pack.templates.length} rules</span>
+        <span className="font-sans text-[10.5px] text-ink3 whitespace-nowrap">{pack.templates.length} rules</span>
       </div>
 
-      <p className="font-mono text-[11.5px] text-ink2 leading-relaxed mt-2.5">{pack.blurb}</p>
+      <p className="font-sans text-[11.5px] text-ink2 leading-relaxed mt-2.5">{pack.blurb}</p>
 
-      <button onClick={() => setOpen((o) => !o)} className="self-start font-mono text-[11px] text-blue hover:underline mt-2.5">
+      <button onClick={() => setOpen((o) => !o)} className="self-start font-sans text-[11px] text-blue hover:underline mt-2.5">
         {open ? "Hide rules" : "What it adds"}
       </button>
       {open && (
@@ -367,8 +367,8 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
             <li key={t.policy_id} className="flex items-start gap-2">
               <span className="mt-[3px]"><EffectBadge effect={t.effect} /></span>
               <div className="min-w-0">
-                <div className="font-mono text-[11px] text-ink2">{t.description}</div>
-                {t.control && <div className="font-mono text-[10px] text-ink4">{t.control}</div>}
+                <div className="font-sans text-[11px] text-ink2">{t.description}</div>
+                {t.control && <div className="font-sans text-[10px] text-ink4">{t.control}</div>}
               </div>
             </li>
           ))}
@@ -376,7 +376,7 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
       )}
 
       <div className="mt-auto pt-4 border-t border-line flex items-center justify-between">
-        <span className="font-mono text-[10.5px] text-ink3">
+        <span className="font-sans text-[10.5px] text-ink3">
           {addedCount > 0 ? `${addedCount}/${pack.templates.length} enabled` : "not enabled"}
         </span>
         <button

@@ -27,7 +27,7 @@ export function ApprovalsClient({ pending, recent }: { pending: Approval[]; rece
           Awaiting a human · {pending.length}
         </h2>
         {pending.length === 0 ? (
-          <div className="font-mono text-[12.5px] text-ink3 border border-line rounded-[14px] bg-card py-10 text-center">
+          <div className="font-sans text-[12.5px] text-ink3 border border-line rounded-[14px] bg-card py-10 text-center">
             Nothing waiting. Decisions needing approval will queue here.
           </div>
         ) : (
@@ -45,16 +45,16 @@ export function ApprovalsClient({ pending, recent }: { pending: Approval[]; rece
               <thead>
                 <tr className="bg-bg2 border-b border-line">
                   {["Actor", "Action", "Resource", "Outcome"].map((h) => (
-                    <th key={h} className="text-left font-mono text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
+                    <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {recent.map((a) => (
                   <tr key={a.decision_id} className="border-b border-line last:border-0">
-                    <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{a.actor}</td>
-                    <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink">{a.action}</td>
-                    <td className="px-3.5 py-2.5 font-mono text-[11.5px] text-ink2">{a.resource}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{a.actor}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink">{a.action}</td>
+                    <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{a.resource}</td>
                     <td className="px-3.5 py-2.5"><StatusBadge status={a.status} /></td>
                   </tr>
                 ))}
@@ -86,15 +86,15 @@ function PendingCard({ a }: { a: Approval }) {
     <div className="border border-line rounded-[14px] bg-card p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="font-mono text-[13px] text-ink">
+          <div className="font-sans text-[13px] text-ink">
             <span className="text-ink2">{a.actor}</span> wants to{" "}
             <span className="font-semibold">{a.action}</span>{" "}
             <span className="text-ink2">on {a.resource}</span>
           </div>
-          {a.reason && <div className="font-mono text-[11.5px] text-ink3 mt-1">{a.reason}</div>}
-          {a.matched_policy && <div className="font-mono text-[10.5px] text-ink4 mt-0.5">rule: {a.matched_policy} · needs {a.approvals_required} approval(s)</div>}
+          {a.reason && <div className="font-sans text-[11.5px] text-ink3 mt-1">{a.reason}</div>}
+          {a.matched_policy && <div className="font-sans text-[10.5px] text-ink4 mt-0.5">rule: {a.matched_policy} · needs {a.approvals_required} approval(s)</div>}
           {a.params && Object.keys(a.params).length > 0 && (
-            <div className="mt-2 bg-bg2 border border-line rounded-lg px-3 py-2 font-mono text-[11px] text-ink2 max-w-[520px] overflow-x-auto">
+            <div className="mt-2 bg-bg2 border border-line rounded-lg px-3 py-2 font-sans text-[11px] text-ink2 max-w-[520px] overflow-x-auto">
               {Object.entries(a.params).map(([k, v]) => (
                 <span key={k} className="mr-3"><span className="text-ink3">{k}</span> {String(v)}</span>
               ))}
@@ -111,7 +111,7 @@ function PendingCard({ a }: { a: Approval }) {
           {busy === "reject" ? "…" : "Reject"}
         </button>
       </div>
-      {error && <div className="font-mono text-[11px] text-slate mt-2">{error}</div>}
+      {error && <div className="font-sans text-[11px] text-slate mt-2">{error}</div>}
     </div>
   );
 }
