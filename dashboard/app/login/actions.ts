@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
-type SignUpResult = { ok: true } | { ok: false; error: string };
+type SignUpResult = { ok: true; orgId: string } | { ok: false; error: string };
 
 // Onboards a brand-new admin: creates the auth user (email pre-confirmed so they
 // can log in immediately), a fresh organization, its default policy settings,
@@ -70,5 +70,5 @@ export async function signUpAction(
     return { ok: false, error: profileErr.message };
   }
 
-  return { ok: true };
+  return { ok: true, orgId: org.id };
 }

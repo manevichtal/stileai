@@ -1,21 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { signUpAction } from "./actions";
 import { Brand } from "@/components/Brand";
 
 type Mode = "signin" | "signup";
+type Plan = "starter" | "business";
+
+const PLANS: Record<Plan, { label: string; priceLabel: string; minSeats: number }> = {
+  starter: { label: "Starter", priceLabel: "$25/seat", minSeats: 5 },
+  business: { label: "Business", priceLabel: "$59/seat", minSeats: 1 },
+};
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("signin");
+  const searchParams = useSearchParams();
+  const [mode, setMode] = useState<Mode>(
+    searchParams.get("mode") === "signup" ? "signup" : "signin",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [orgName, setOrgName] = useState("");
+  const [plan, setPlan] = useState<Plan>("business");
+  const [seats, setSeats] = useState(PLANS.business.minSeats);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  function selectPlan(next: Plan) {
+    setPlan(next);
+    setSeats(PLANS[next].minSeats);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,6 +53,22 @@ export default function LoginPage() {
           setError(res.error);
           return;
         }
+        // establish a session so the app can load after payment returns
+        await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        const co = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orgId: res.orgId, plan, seats }),
+        }).then((r) => r.json());
+        if (co.url) {
+          location.href = co.url;
+          return;
+        }
+        setError(co.error ?? "Could not start checkout.");
+        return;
       }
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
@@ -108,6 +148,56 @@ export default function LoginPage() {
               placeholder={mode === "signup" ? "At least 8 characters" : "••••••••"}
             />
 
+            {mode === "signup" && (
+              <div className="flex flex-col gap-1.5">
+                <span className="font-sans text-[11.5px] text-ink2 font-medium">Plan</span>
+                <div className="flex gap-2">
+                  {(Object.keys(PLANS) as Plan[]).map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => selectPlan(id)}
+                      aria-pressed={plan === id}
+                      className={`flex-1 flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2 text-left transition-colors ${
+                        plan === id
+                          ? "border-blue bg-bluedim"
+                          : "border-line bg-bg2 hover:border-line2"
+                      }`}
+                    >
+                      <span
+                        className={`font-sans text-[12.5px] font-semibold ${
+                          plan === id ? "text-blue" : "text-ink"
+                        }`}
+                      >
+                        {PLANS[id].label}
+                      </span>
+                      <span className="font-sans text-[10.5px] text-ink4">
+                        {PLANS[id].priceLabel}
+                        {PLANS[id].minSeats > 1 ? ` · min ${PLANS[id].minSeats} seats` : ""}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <span className="font-sans text-[10.5px] text-ink4">
+                  Enterprise?{" "}
+                  <a href="mailto:sales@stileai.com" className="text-blue hover:underline">
+                    contact sales
+                  </a>
+                </span>
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <Field
+                label="Seats"
+                hint={`Minimum ${PLANS[plan].minSeats} for ${PLANS[plan].label}.`}
+                type="number"
+                value={String(seats)}
+                onChange={(v) => setSeats(Math.max(PLANS[plan].minSeats, Number(v) || PLANS[plan].minSeats))}
+                min={PLANS[plan].minSeats}
+              />
+            )}
+
             {error && (
               <div className="font-sans text-[11.5px] text-slate bg-bg3 border border-line2 rounded-lg px-3 py-2">
                 {error}
@@ -122,7 +212,7 @@ export default function LoginPage() {
               {busy
                 ? "Working…"
                 : mode === "signup"
-                  ? "Create account & sign in"
+                  ? "Continue to payment"
                   : "Sign in"}
             </button>
           </form>
@@ -145,6 +235,7 @@ function Field({
   type = "text",
   placeholder,
   autoFocus,
+  min,
 }: {
   label: string;
   hint?: string;
@@ -153,6 +244,7 @@ function Field({
   type?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  min?: number;
 }) {
   return (
     <label className="flex flex-col gap-1.5">
@@ -163,6 +255,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
+        min={min}
         required
         className="font-sans text-[13px] text-ink bg-bg2 border border-line rounded-lg px-3 py-2 outline-none focus:border-blue focus:bg-card transition-colors"
       />
