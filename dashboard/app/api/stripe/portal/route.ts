@@ -1,18 +1,19 @@
 import { stripe } from "@/lib/stripe";
-import { requireProfileContext } from "@/lib/getProfile";
+import { getProfileContext } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
-  const ctx = await requireProfileContext();
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://stileai.vercel.app";
+
+export async function POST() {
+  const ctx = await getProfileContext();
+  if (!ctx) return new Response(JSON.stringify({ error: "Not signed in." }), { status: 401, headers: { "Content-Type": "application/json" } });
+  if (ctx.role !== "admin") return new Response(JSON.stringify({ error: "Only an admin can manage billing." }), { status: 403, headers: { "Content-Type": "application/json" } });
   const admin = createAdminClient();
   const { data: org } = await admin.from("organizations").select("stripe_customer_id").eq("id", ctx.orgId).maybeSingle();
-  if (!org?.stripe_customer_id) {
-    return new Response(JSON.stringify({ error: "No billing account yet." }), { status: 400 });
-  }
-  const origin = req.headers.get("origin") ?? "https://stileai.vercel.app";
-  const s = await stripe.billingPortal.sessions.create({ customer: org.stripe_customer_id, return_url: `${origin}/billing` });
+  if (!org?.stripe_customer_id) return new Response(JSON.stringify({ error: "No billing account yet." }), { status: 400, headers: { "Content-Type": "application/json" } });
+  const s = await stripe.billingPortal.sessions.create({ customer: org.stripe_customer_id, return_url: `${APP_URL}/billing` });
   return new Response(JSON.stringify({ url: s.url }), { headers: { "Content-Type": "application/json" } });
 }
