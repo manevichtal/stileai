@@ -3,6 +3,7 @@ import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/AppShell";
 import { DeployCard } from "@/components/dashboard/DeployCard";
+import { ConnectGuide } from "@/components/dashboard/ConnectGuide";
 import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -45,10 +46,10 @@ export default async function GuidePage() {
     },
     {
       done: audits > 0,
-      title: "Test a request",
-      body: "Type a sample employee prompt and see whether it's approved, denied, or sent for admin approval — with the reason.",
-      href: "/test",
-      cta: "Open the tester",
+      title: "Connect a tool and send a real request",
+      body: "Point one AI tool at StileAI using the guide above, then send a normal request. Watch it get approved, blocked, or held for approval — for real, on real AI.",
+      href: "/audit",
+      cta: "See decisions",
     },
     {
       done: audits > 0,
@@ -92,62 +93,7 @@ export default async function GuidePage() {
           </div>
         </section>
 
-        {/* How to connect */}
-        <section className="bg-card border border-line rounded-2xl p-6">
-          <h3 className="font-sans font-bold text-[15px] text-ink">How to connect your AI — step by step</h3>
-          <p className="font-sans text-[12px] text-ink2 mt-1 max-w-[720px]">
-            StileAI gives you an endpoint that works exactly like the OpenAI API. Point any AI tool or app that lets you
-            set an API base URL at it — nothing to install.
-          </p>
-
-          <div className="mt-4 flex flex-col gap-4">
-            <div>
-              <div className="font-sans font-semibold text-[12.5px] text-ink mb-1">1 · Get your endpoint</div>
-              <p className="font-sans text-[11.5px] text-ink2 mb-1.5">
-                Create a key on <Link href="/keys" className="text-blue hover:underline">API keys</Link>. Your endpoint (base URL) is:
-              </p>
-              <code className="block bg-bg2 border border-line rounded-lg px-3 py-2 text-[12px] text-ink break-all">
-                https://stileai.vercel.app/api/proxy/<span className="text-blue">YOUR_KEY</span>/v1
-              </code>
-            </div>
-
-            <div>
-              <div className="font-sans font-semibold text-[12.5px] text-ink mb-1">2 · Set it in your AI tool</div>
-              <p className="font-sans text-[11.5px] text-ink2 mb-1.5">
-                In your tool&apos;s settings find the <span className="text-ink font-medium">API base URL</span> (a.k.a.
-                &ldquo;OpenAI base URL&rdquo;, &ldquo;endpoint&rdquo;, or &ldquo;custom API host&rdquo;), paste the endpoint above, and keep using
-                your normal AI provider key. For example:
-              </p>
-              <ul className="flex flex-col gap-1 text-[11.5px] text-ink2">
-                <li>• <b>Cursor</b> → Settings → Models → &ldquo;Override OpenAI Base URL&rdquo; → paste it.</li>
-                <li>• <b>Open WebUI / LibreChat</b> → Admin → Connections → add an OpenAI-compatible endpoint → paste it.</li>
-                <li>• <b>Your own app / SDK</b> → set the client&apos;s <span className="text-ink">baseURL</span> (code below).</li>
-              </ul>
-            </div>
-
-            <div>
-              <div className="font-sans font-semibold text-[12.5px] text-ink mb-1">3 · Or drop it into code</div>
-              <pre className="bg-bg2 border border-line rounded-lg px-3 py-2.5 text-[11.5px] text-ink2 overflow-x-auto"><code>{`from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://stileai.vercel.app/api/proxy/YOUR_KEY/v1",
-    api_key="sk-your-openai-key",   # your normal provider key
-)
-
-client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "Write a cold email"}],
-)`}</code></pre>
-            </div>
-
-            <p className="font-sans text-[11px] text-ink4 pt-2 border-t border-line">
-              From here every request is checked against your{" "}
-              <Link href="/policies" className="text-blue hover:underline">policies</Link> — and each decision shows up in the{" "}
-              <Link href="/audit" className="text-blue hover:underline">audit log</Link>.
-            </p>
-          </div>
-        </section>
-
+        <ConnectGuide />
         {/* The pieces */}
         <section>
           <h3 className="font-sans font-bold text-[14px] text-ink mb-3">The four pieces</h3>
