@@ -54,10 +54,14 @@ function LoginPageInner() {
           return;
         }
         // establish a session so the app can load after payment returns
-        await supabase.auth.signInWithPassword({
+        const { error: signInErr } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
           password,
         });
+        if (signInErr) {
+          setError(signInErr.message);
+          return;
+        }
         const co = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
