@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
 <meta name="theme-color" content="#F4F5F6" />
-<title>StileAI — the checkpoint for agentic AI</title>
-<meta name="description" content="StileAI is the security and compliance checkpoint between the AI a company uses and the systems it can reach. Explore it in the console." />
+<title>StileAI — the policy checkpoint between your team and AI</title>
+<meta name="description" content="StileAI checks every AI request your team sends and blocks secrets, customer data, and source code before they reach ChatGPT, Claude, Gemini, or Copilot. Explore it in the console." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22 fill=%22none%22%3E%3Cg stroke=%22%231953F0%22 stroke-width=%222.6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 11V6.5A2.5 2.5 0 0 1 6.5 4H11%22/%3E%3Cpath d=%22M21 4h4.5A2.5 2.5 0 0 1 28 6.5V11%22/%3E%3Cpath d=%22M28 21v4.5a2.5 2.5 0 0 1-2.5 2.5H21%22/%3E%3Cpath d=%22M11 28H6.5A2.5 2.5 0 0 1 4 25.5V21%22/%3E%3C/g%3E%3Crect x=%2211.6%22 y=%2211.6%22 width=%228.8%22 height=%228.8%22 rx=%222%22 transform=%22rotate(45 16 16)%22 fill=%22%231953F0%22/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -134,8 +134,8 @@
       <a class="cta" href="/login?mode=signup" id="ctaBtn">Get started <span class="arw">&#8594;</span></a>
     </div>
   </div>
-  <h1 class="headline"><span class="hl1">Your team is turning on AI agents.</span><canvas id="fuzz" aria-hidden="true"></canvas><span class="sr-only">Your team is turning on AI agents. StileAI decides what they're allowed to do.</span></h1>
-  <p class="tagline">The security and compliance checkpoint for agentic AI</p>
+  <h1 class="headline"><span class="hl1">Your team pastes company data into AI.</span><canvas id="fuzz" aria-hidden="true"></canvas><span class="sr-only">Your team pastes company data into AI. StileAI checks it before it reaches the AI.</span></h1>
+  <p class="tagline">The policy checkpoint between your team and the AI they use</p>
   <div class="app">
     <div class="head"><span class="pdot"></span><span class="t">stileai · console</span><span class="hint">ask, or tap a section ↓</span></div>
     <div class="term" id="term">
@@ -166,158 +166,134 @@ function blank(){print('&nbsp;');}
 const CMDS={
   help(){return `<span class="w">sections</span>  <span class="mut">tap one below to explore</span>
   <span class="g">about</span>  <span class="g">how</span>  <span class="g">why</span>  <span class="g">who</span>  <span class="g">demo</span>  <span class="g">inspect</span>  <span class="g">policy</span>  <span class="g">deploy</span>  <span class="g">standards</span>  <span class="g">pricing</span>  <span class="g">book</span>`;},
-  about(){return `<span class="bl">// the checkpoint for agentic AI</span>
-Companies are handing AI real power: assistants and agents that read
-files, query databases, send email, and run commands on their own.
-That power is the risk. <span class="w">StileAI is the checkpoint in the middle</span>,
-on the connection between the AI and the systems it can reach.
+  about(){return `<span class="bl">// what StileAI is</span>
+Your team uses AI all day, ChatGPT, Claude, Gemini, Copilot, and they
+paste real company data into it: customer lists, source code, contracts,
+passwords. Once it leaves, you can't get it back.
 
-Every prompt and every action is inspected <span class="w">before it happens</span>, then
-one of four things occurs:
+<span class="w">StileAI sits between your team and those AI tools.</span> Every request is
+checked against your policies <span class="w">before it reaches the AI</span>, and one of
+three things happens:
 
-  <span class="tag t-ALLOW">ALLOW</span>   safe and in-policy, passed straight through
-  <span class="tag t-REDACT">REDACT</span>  secrets / PII / PHI stripped out, then passed
-  <span class="tag t-HOLD">HOLD</span>    risky, parked for a human's approval
-  <span class="tag t-BLOCK">BLOCK</span>   dangerous or non-compliant, stopped at the wire
+  <span class="tag t-ALLOW">ALLOW</span>   safe and in-policy, sent straight to the AI
+  <span class="tag t-HOLD">HOLD</span>    sensitive, held for an admin's approval
+  <span class="tag t-BLOCK">BLOCK</span>   against policy, stopped before it leaves
 
-It weighs two things on every request, at once:
-  <span class="bl">&#9656;</span> <span class="w">security</span>     prompt injection, data exfiltration, destructive intent
-  <span class="bl">&#9656;</span> <span class="w">compliance</span>   HIPAA, SOC 2, PCI, GDPR, and your own rules
+It looks for what you can't afford to leak:
+  <span class="bl">&#9656;</span> <span class="w">secrets</span>        API keys, passwords, tokens
+  <span class="bl">&#9656;</span> <span class="w">customer data</span>  names, emails, PII, PHI, card numbers
+  <span class="bl">&#9656;</span> <span class="w">source code</span>    proprietary code and config
+  <span class="bl">&#9656;</span> <span class="w">records</span>        financial, legal, and client documents
 
-You get a tamper-evident audit trail of every decision. Your team gets
-to say yes to AI without betting the company on it.
-<span class="mut">next &#8594;</span> <span class="runchip" data-run="how">how</span> <span class="mut">&#183;</span> <span class="runchip" data-run="why">why</span> <span class="mut">&#183;</span> <span class="runchip" data-run="who">who</span> <span class="mut">&#183;</span> <span class="runchip" data-run="demo">demo</span>`;},
+Every decision is logged. Your team keeps using the AI they like; the
+data you can't lose stays inside the company.
+<span class="mut">next &#8594;</span> <span class="runchip" data-run="how">how</span> <span class="mut">&#183;</span> <span class="runchip" data-run="why">why</span> <span class="mut">&#183;</span> <span class="runchip" data-run="pricing">pricing</span> <span class="mut">&#183;</span> <span class="runchip" data-run="demo">demo</span>`;},
   problem(){return `<span class="bl">// why it matters</span>
-An AI that can only answer is low-risk. An AI that can <span class="w">act</span> is a new
-kind of insider, one that moves at machine speed. On its own, an agent
-can:
+The moment someone pastes into an AI tool, it leaves your company, to a
+server you don't control, sometimes to train a model you'll never see.
+You can't un-send it.
 
-  <span class="bl">&#9656;</span> leak sensitive data to the wrong place, or the wrong model
-  <span class="bl">&#9656;</span> delete, overwrite, or exfiltrate files and records
-  <span class="bl">&#9656;</span> be hijacked by a hidden instruction buried in a document
-  <span class="bl">&#9656;</span> run a destructive command in the time it takes to read this line
+On any given day your team might:
+  <span class="bl">&#9656;</span> drop a customer spreadsheet in to "clean it up"
+  <span class="bl">&#9656;</span> paste source code to debug it faster
+  <span class="bl">&#9656;</span> share a contract or financials to summarize
+  <span class="bl">&#9656;</span> include an API key or password without thinking
 
-The worst part: <span class="w">none of it shows up in your normal security stack</span>.
-Your SIEM, DLP, and firewalls never see what an agent does over its
-own connection. There is no record, and no control, unless something
-is sitting in the middle.
+<span class="w">None of it shows up in your normal security stack.</span> Your DLP and
+firewalls never see what's typed into a chat box. There's no record, and
+no control, unless something checks it first.
 
-Regulators are moving too. Through 2026, new rules require proof of
-what AI did with regulated data, and who approved it.
-<span class="mut">that "something in the middle" is &#8594;</span> <span class="runchip" data-run="how">how</span>`;},
+StileAI is that check, on every request, before it leaves.
+<span class="mut">how it works &#8594;</span> <span class="runchip" data-run="how">how</span>`;},
   how(){return `<span class="bl">// how it works</span>
-Point your AI at StileAI instead of straight at your systems. It
-runs <span class="w">inside your own environment</span>, so your data never leaves your
-boundary, and nothing changes for your team.
-<div class="diagram"><svg viewBox="0 0 820 232" width="100%" fill="none" font-family="JetBrains Mono,ui-monospace,monospace"><defs><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L6 3.5L0 7Z" fill="#C0C4CB"/></marker><marker id="ahb" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L6 3.5L0 7Z" fill="#1953F0"/></marker></defs><rect x="12" y="84" width="128" height="64" rx="9" fill="#F9FAFA" stroke="#D6DADE"/><text x="76" y="112" fill="#181B1E" font-size="13" font-weight="600" text-anchor="middle">user + AI</text><text x="76" y="130" fill="#9197A1" font-size="10" text-anchor="middle">prompt / action</text><line x1="140" y1="116" x2="294" y2="116" stroke="#1953F0" stroke-width="1.5" stroke-dasharray="4 5" marker-end="url(#ahb)"/><text x="217" y="108" fill="#1953F0" font-size="10" text-anchor="middle">request</text><rect x="302" y="64" width="176" height="104" rx="11" fill="rgba(25,83,240,.05)" stroke="#1953F0" stroke-width="1.4"/><text x="390" y="96" fill="#1953F0" font-size="14" font-weight="700" text-anchor="middle">&#9671; STILEAI</text><text x="390" y="118" fill="#5E656E" font-size="11" text-anchor="middle">inspect &#183; decide</text><text x="390" y="135" fill="#9197A1" font-size="10" text-anchor="middle">security + compliance</text><text x="390" y="151" fill="#9197A1" font-size="10" text-anchor="middle">policy engine</text><line x1="478" y1="100" x2="564" y2="75" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><line x1="478" y1="112" x2="564" y2="110" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><line x1="478" y1="124" x2="564" y2="145" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><line x1="478" y1="136" x2="564" y2="180" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><rect x="564" y="62" width="94" height="27" rx="6" fill="rgba(25,83,240,.09)" stroke="rgba(25,83,240,.28)"/><text x="611" y="79.5" fill="#1953F0" font-size="11" font-weight="600" text-anchor="middle">ALLOW</text><rect x="564" y="97" width="94" height="27" rx="6" fill="rgba(76,124,245,.1)" stroke="rgba(76,124,245,.28)"/><text x="611" y="114.5" fill="#4C7CF5" font-size="11" font-weight="600" text-anchor="middle">REDACT</text><rect x="564" y="132" width="94" height="27" rx="6" fill="rgba(145,151,161,.12)" stroke="rgba(145,151,161,.34)"/><text x="611" y="149.5" fill="#6E7681" font-size="11" font-weight="600" text-anchor="middle">HOLD</text><rect x="564" y="167" width="94" height="27" rx="6" fill="rgba(24,27,30,.07)" stroke="rgba(24,27,30,.26)"/><text x="611" y="184.5" fill="#181B1E" font-size="11" font-weight="600" text-anchor="middle">BLOCK</text><line x1="658" y1="75" x2="702" y2="100" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><line x1="658" y1="110" x2="702" y2="108" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><rect x="706" y="86" width="100" height="44" rx="9" fill="#F9FAFA" stroke="#D6DADE"/><text x="756" y="104" fill="#181B1E" font-size="10.5" font-weight="600" text-anchor="middle">your</text><text x="756" y="118" fill="#181B1E" font-size="10.5" font-weight="600" text-anchor="middle">systems</text><rect x="706" y="148" width="100" height="44" rx="9" fill="#F9FAFA" stroke="#D6DADE"/><text x="756" y="166" fill="#5E656E" font-size="10" text-anchor="middle">audit</text><text x="756" y="179" fill="#5E656E" font-size="10" text-anchor="middle">ledger</text><line x1="390" y1="168" x2="390" y2="192" stroke="#D6DADE" stroke-width="1.3"/><line x1="390" y1="192" x2="702" y2="172" stroke="#D6DADE" stroke-width="1.2" stroke-dasharray="3 4" marker-end="url(#ah)"/><text x="390" y="210" fill="#9197A1" font-size="10" text-anchor="middle">every decision logged</text></svg></div>
-Inside the checkpoint, every request runs a pipeline:
-  <span class="bl">&#9656;</span> <span class="w">identity</span>    who is this, and what are they allowed to touch
-  <span class="bl">&#9656;</span> <span class="w">injection</span>   is this a prompt-injection or jailbreak attempt
-  <span class="bl">&#9656;</span> <span class="w">sensitive</span>   does it carry PII, PHI, secrets, or card data
-  <span class="bl">&#9656;</span> <span class="w">policy</span>      does it pass your rules and compliance packs
-  <span class="bl">&#9656;</span> <span class="w">verdict</span>     allow / redact / hold / block, then seal it in the ledger
+Point your AI tools at StileAI instead of straight at the provider. It
+speaks the same API as OpenAI and Anthropic, so you change one setting,
+the base URL, and keep your own keys. Nothing to install on anyone's
+machine.
+<div class="diagram"><svg viewBox="0 0 820 232" width="100%" fill="none" font-family="JetBrains Mono,ui-monospace,monospace"><defs><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L6 3.5L0 7Z" fill="#C0C4CB"/></marker><marker id="ahb" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L6 3.5L0 7Z" fill="#1953F0"/></marker></defs><rect x="12" y="84" width="128" height="64" rx="9" fill="#F9FAFA" stroke="#D6DADE"/><text x="76" y="112" fill="#181B1E" font-size="13" font-weight="600" text-anchor="middle">employee</text><text x="76" y="130" fill="#9197A1" font-size="10" text-anchor="middle">sends a prompt</text><line x1="140" y1="116" x2="294" y2="116" stroke="#1953F0" stroke-width="1.5" stroke-dasharray="4 5" marker-end="url(#ahb)"/><text x="217" y="108" fill="#1953F0" font-size="10" text-anchor="middle">request</text><rect x="302" y="64" width="176" height="104" rx="11" fill="rgba(25,83,240,.05)" stroke="#1953F0" stroke-width="1.4"/><text x="390" y="100" fill="#1953F0" font-size="14" font-weight="700" text-anchor="middle">&#9671; STILEAI</text><text x="390" y="122" fill="#5E656E" font-size="11" text-anchor="middle">checks your policies</text><text x="390" y="139" fill="#9197A1" font-size="10" text-anchor="middle">secrets · PII · code · records</text><line x1="478" y1="104" x2="564" y2="83" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><line x1="478" y1="116" x2="564" y2="125" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><line x1="478" y1="128" x2="564" y2="167" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><rect x="564" y="70" width="94" height="27" rx="6" fill="rgba(25,83,240,.09)" stroke="rgba(25,83,240,.28)"/><text x="611" y="87.5" fill="#1953F0" font-size="11" font-weight="600" text-anchor="middle">APPROVE</text><rect x="564" y="112" width="94" height="27" rx="6" fill="rgba(145,151,161,.12)" stroke="rgba(145,151,161,.34)"/><text x="611" y="129.5" fill="#6E7681" font-size="11" font-weight="600" text-anchor="middle">HOLD</text><rect x="564" y="154" width="94" height="27" rx="6" fill="rgba(24,27,30,.07)" stroke="rgba(24,27,30,.26)"/><text x="611" y="171.5" fill="#181B1E" font-size="11" font-weight="600" text-anchor="middle">BLOCK</text><line x1="658" y1="83" x2="702" y2="80" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><rect x="706" y="60" width="102" height="42" rx="9" fill="#F9FAFA" stroke="#D6DADE"/><text x="757" y="77" fill="#181B1E" font-size="10.5" font-weight="600" text-anchor="middle">AI tool</text><text x="757" y="91" fill="#5E656E" font-size="9" text-anchor="middle">ChatGPT · Claude</text><line x1="658" y1="125" x2="702" y2="125" stroke="#D6DADE" stroke-width="1.4" marker-end="url(#ah)"/><rect x="706" y="111" width="102" height="28" rx="8" fill="#F9FAFA" stroke="#D6DADE"/><text x="757" y="129" fill="#5E656E" font-size="10" text-anchor="middle">admin approval</text><text x="688" y="172" fill="#9197A1" font-size="13" text-anchor="middle">&#10005;</text><line x1="390" y1="168" x2="390" y2="200" stroke="#D6DADE" stroke-width="1.3"/><line x1="390" y1="200" x2="702" y2="176" stroke="#D6DADE" stroke-width="1.2" stroke-dasharray="3 4" marker-end="url(#ah)"/><rect x="706" y="158" width="102" height="34" rx="8" fill="#F9FAFA" stroke="#D6DADE"/><text x="757" y="179" fill="#5E656E" font-size="10" text-anchor="middle">audit log</text><text x="390" y="218" fill="#9197A1" font-size="10" text-anchor="middle">every decision logged</text></svg></div>
+Every request runs a quick check before it's allowed out:
+  <span class="bl">&#9656;</span> <span class="w">scan</span>       does it carry secrets, PII, source code, records
+  <span class="bl">&#9656;</span> <span class="w">policy</span>     match it against the rules you turned on
+  <span class="bl">&#9656;</span> <span class="w">verdict</span>    approve, hold for approval, or block
+  <span class="bl">&#9656;</span> <span class="w">log</span>        record the decision, never the sensitive content
 
-Safe passes through untouched. Risky waits for a named approver.
-Dangerous is stopped at the wire, and the tool never runs.
-<span class="mut">watch it live &#8594;</span> <span class="runchip" data-run="demo">demo</span> <span class="mut">&#183;</span> <span class="runchip" data-run="inspect">inspect a decision</span> <span class="mut">&#183;</span> <span class="runchip" data-run="deploy">where it runs</span>`;},
+Safe requests reach the AI untouched. Sensitive ones wait for a named
+approver. Against-policy ones are stopped before they leave.
+<span class="mut">watch it live &#8594;</span> <span class="runchip" data-run="demo">demo</span> <span class="mut">&#183;</span> <span class="runchip" data-run="inspect">inspect a decision</span> <span class="mut">&#183;</span> <span class="runchip" data-run="deploy">connect a tool</span>`;},
   msp(){return `<span class="bl">// who it's for</span>
-Built for IT companies and MSPs, and ready for any team running AI.
-
-<span class="w">managing many clients?</span>
-  <span class="bl">&#9656;</span> one console across your whole book, tenant by tenant
-  <span class="bl">&#9656;</span> ship a ready-made policy pack (HIPAA, PCI, legal) in one click
-  <span class="bl">&#9656;</span> every block becomes audit evidence you hand clients at review
-  <span class="bl">&#9656;</span> approvals route into ConnectWise, Autotask, Slack, or any system
-  <span class="bl">&#9656;</span> start in watch-only mode, enforce when they are ready
-  <span class="bl">&#9656;</span> compliance becomes a service you can bill for, month over month
+Any company whose team uses AI and has data it can't afford to leak.
 
 <span class="w">running AI in-house?</span>
-  <span class="bl">&#9656;</span> same checkpoint, one tenant, same setup
-  <span class="bl">&#9656;</span> point your own agents at StileAI for the same control,
-    rules, and audit trail. one environment or fifty.
+  <span class="bl">&#9656;</span> one console for your whole team, priced per seat
+  <span class="bl">&#9656;</span> turn on ready-made policy packs (PII, secrets, code) in a click
+  <span class="bl">&#9656;</span> give each employee their own key, see who sent what
+  <span class="bl">&#9656;</span> works with the AI tools they already use
 
-common environments: healthcare, financial services, legal, SaaS.
-<span class="mut">get started &#8594;</span> <span class="runchip" data-run="book">book</span>`;},
-  policy(){return `<span class="bl">// policy in plain english, compiled</span>
-You write the rule the way you would say it out loud. StileAI
-compiles it into enforceable, versioned policy and maps it to the
-compliance control it satisfies. Nobody hand-writes policy code.
+<span class="w">an IT company or MSP?</span>
+  <span class="bl">&#9656;</span> manage policies across the clients you support
+  <span class="bl">&#9656;</span> every block becomes evidence you can hand them
+  <span class="bl">&#9656;</span> make AI safety a service you bill for
 
-<span class="mut">you say:</span>
-<span class="dim">"agents may read patient records, but never export more than 50 at
- once. bulk exports need my approval. destructive commands blocked."</span>
+common in healthcare, financial services, legal, and SaaS.
+<span class="mut">see plans &#8594;</span> <span class="runchip" data-run="pricing">pricing</span> <span class="mut">&#183;</span> <span class="runchip" data-run="book">get started</span>`;},
+  policy(){return `<span class="bl">// your policies decide</span>
+You choose what happens to each kind of sensitive data. Turn on a rule,
+pick what it does, and StileAI enforces it on every request.
 
-<span class="mut">stileai compiles:</span>
-<div class="l pre"><span class="k">package</span> stileai.cedar_ridge
+  <span class="w">secrets</span>        API keys, passwords     &#8594; <span class="tag t-BLOCK">BLOCK</span>
+  <span class="w">customer data</span>  emails, PII, records    &#8594; <span class="tag t-HOLD">approval</span>
+  <span class="w">source code</span>    proprietary code        &#8594; <span class="tag t-HOLD">approval</span>
+  <span class="w">financial</span>      revenue, statements     &#8594; <span class="tag t-HOLD">approval</span>
+  <span class="w">general use</span>    everything else         &#8594; <span class="tag t-ALLOW">ALLOW</span>
 
-<span class="k">default</span> decision <span class="pu">=</span> <span class="str">"allow"</span>
+Start from a ready-made pack and adjust it in plain settings, no code to
+write. When more than one rule matches, the strictest one wins. Every
+request is checked against exactly what you turned on.
+<span class="mut">see it decide &#8594;</span> <span class="runchip" data-run="demo">demo</span>`;},
+  deploy(){return `<span class="bl">// connect a tool</span>
+StileAI gives you an endpoint that works just like the AI's normal API.
+Point your tool at it, keep your own provider key, done.
 
-<span class="cm"># bulk PHI export -> require approval</span>
-decision <span class="pu">=</span> <span class="str">"require_approval"</span> {
-    input.tool <span class="pu">==</span> <span class="str">"db.query"</span>
-    <span class="fn">count</span>(input.result.rows) <span class="pu">></span> <span class="num">50</span>
-    <span class="fn">has_phi</span>(input.result.columns)
-}</div><span class="g">&#10003; compiled 3 rules</span> <span class="mut">&#183; mapped to HIPAA &#167;164.312 &#183; saved as v7</span>
+<span class="w">works today</span>
+  anything on the <span class="w">OpenAI</span> or <span class="w">Anthropic</span> API, Claude Code, Cursor,
+  Open WebUI, and your own apps. Just set the base URL to StileAI.
 
-Every rule is testable in a sandbox before it goes live, and every
-decision records exactly which policy version applied.`;},
-  deploy(){return `<span class="bl">// where it runs</span>
-StileAI deploys as two planes, so your data stays yours:
+<span class="w">coming</span>
+  a browser extension for ChatGPT, Gemini, and Copilot on the web, so
+  the tools with no API setting are covered too.
 
-  <span class="w">enforcement plane</span>   runs inside each client's own environment. it
-                      holds their credentials and keeps their data
-                      local. it sits in front of their systems (the
-                      action boundary) and, when you want it, in front
-                      of the AI's model calls (the prompt boundary).
+<span class="w">your data stays yours</span>
+  requests are checked in transit, blocked content is never stored, and
+  we never train on anything. your keys pass straight through.
+<span class="mut">the full setup guide lives in your dashboard &#183;</span> <span class="runchip" data-run="pricing">see pricing</span>`;},
+  compliance(){return `<span class="bl">// evidence for every review</span>
+Every decision is logged, what was sent, which policy caught it, and what
+happened, so a blocked leak becomes proof you can show an auditor.
 
-  <span class="w">control plane</span>       the central console for policies, approvals,
-                      and cross-client evidence. it sees decisions and
-                      metadata only, never raw sensitive data.
+The categories StileAI enforces line up with the controls you're measured
+against:
 
-<span class="w">connect to anything</span>
-  first-class connectors for Slack, Teams, ServiceNow, Jira,
-  ConnectWise, Autotask, and PagerDuty, plus a signed universal
-  webhook and SDK for any system you run.
+  <span class="w">HIPAA</span>        PHI safeguards
+  <span class="w">PCI-DSS</span>      cardholder data
+  <span class="w">GDPR</span>         personal data protection
+  <span class="w">SOC 2</span>        trust services criteria
+  <span class="w">ISO 42001</span>    AI management systems
+  <span class="w">OWASP LLM</span>    the top AI data-leak risks
 
-<span class="w">provider-agnostic</span>
-  works whether the AI is Claude, ChatGPT, Copilot, or a homegrown
-  agent. swap models freely, the checkpoint does not move.
-<span class="mut">see the flow &#8594;</span> <span class="runchip" data-run="how">how</span>`;},
-  compliance(){return `<span class="bl">// every decision maps to a standard</span>
-A blocked or redacted action isn't just safer, it's <span class="w">evidence</span>, tied to
-the exact framework an auditor measures you against:
-
-  <span class="w">OWASP LLM Top 10</span>       prompt injection, data leakage, and more
-  <span class="w">OWASP Agentic Top 10</span>   risks specific to autonomous agents
-  <span class="w">NIST AI RMF</span>            govern, map, measure, manage
-  <span class="w">MITRE ATLAS</span>            adversarial ML techniques
-  <span class="w">ISO 42001</span>              AI management systems
-  <span class="w">SOC 2</span>                  trust services criteria
-  <span class="w">HIPAA</span>                  PHI safeguards (&#167;164.312)
-  <span class="w">PCI-DSS</span>                cardholder data (req 3.4)
-  <span class="w">GDPR</span>                   data protection (Art. 32)
-  <span class="w">EU AI Act</span>              high-risk obligations
-
-At any review, export a per-framework evidence bundle for the period,
-straight from the ledger.
-
-<span class="mut">honest note: this reduces risk, it does not erase it. no tool makes AI
-perfectly safe. StileAI is defense in depth, and we say so out loud.</span>`;},
+Export the audit log for any period, straight from your dashboard.
+<span class="mut">honest note: this reduces risk, it doesn't erase it. no tool makes AI
+perfectly safe, and we say so out loud.</span>`;},
   book(){return `<span class="bl">// get started</span>
-<span class="g">$</span> stileai init --mode monitor
-<span class="g">&#10003; gateway live &#183; 0 agent changes &#183; watching</span>
+<span class="g">1.</span> pick a plan and add your seats
+<span class="g">2.</span> point your AI tools at StileAI (one setting, keep your keys)
+<span class="g">3.</span> turn on the policies you want
 
-Put StileAI in front of one environment in <span class="w">watch-only mode</span>. Nothing
-to install for anyone, nothing to break. It observes what your AI
-actually does for a week, then hands you a risk report:
+That's it, every request your team sends is checked from that moment on,
+and you can see every decision in your dashboard.
 
-  <span class="bl">&#9656;</span> every AI action it saw, and which would have been held or blocked
-  <span class="bl">&#9656;</span> where sensitive data was moving, and to which models
-  <span class="bl">&#9656;</span> the shadow AI and agents already running that you didn't know about
-
-When you are ready, flip from monitor to enforce. Land small, expand
-safely.
-<span class="w">Ready?</span> <span class="runchip" data-cta="1">Book a walkthrough &#8594;</span> <span class="mut">(or use the button top-right)</span>`;},
+No free tier: the controls are on from day one, so nothing slips through
+while you "evaluate."
+<span class="w">Ready?</span> <span class="runchip" data-cta="1">Get started &#8594;</span> <span class="mut">&#183;</span> <span class="runchip" data-run="pricing">see pricing</span>`;},
   pricing(){return `<span class="bl">// pricing &#183; per seat, per month</span>
 Priced per protected employee. Every request they send to an AI tool
 is checked against your policies. No free tier, the controls are on
@@ -341,20 +317,19 @@ from day one.
 const ALIAS={why:'problem',who:'msp',standards:'compliance',whoami:'about',start:'book',contact:'book',plans:'pricing',price:'pricing',cost:'pricing','?':'help',ls:'help'};
 
 const DEC={
-  allow:{v:'ALLOW',tool:'github.read',req:'path=repo/app/handlers.ts',checks:[['✓','identity & scope','role=dev-read'],['✓','prompt-injection','clean'],['✓','sensitive data','none'],['✓','policy','rule: dev-read']],reason:'read within scope, passed through',ctl:'policy: dev-read'},
-  hold:{v:'HOLD',tool:'db.query',req:'sql="SELECT * FROM patients"',checks:[['✓','identity & scope','svc-analytics'],['⏸','row estimate','≈48,200 · 6 PHI cols'],['✓','prompt-injection','clean'],['⏸','policy','bulk-phi → approval']],reason:'bulk PHI export, held for a human',ctl:'HIPAA §164.312'},
-  redact:{v:'REDACT',tool:'email.send',req:'body="…AKIA1B2C…"',checks:[['✓','identity & scope','support'],['✓','prompt-injection','clean'],['⚠','sensitive data','AWS key → redacted'],['✓','policy','dlp-outbound']],reason:'secret stripped, delivered clean',ctl:'OWASP LLM02'},
-  block:{v:'BLOCK',tool:'shell.exec',req:'cmd="rm -rf /var/prod"',checks:[['✓','identity & scope','svc-ops'],['✓','prompt-injection','clean'],['✕','command','destructive'],['✕','policy','no-destructive → block']],reason:'rejected at the wire, never executed',ctl:'OWASP ASI06'}
+  allow:{v:'ALLOW',tool:'chatgpt',req:'"draft a reminder email to a vendor about invoice #204"',checks:[['✓','secrets','none'],['✓','customer data','none'],['✓','source code','none'],['✓','policy','general-use → allow']],reason:'no sensitive data, sent to the AI',ctl:'policy: general-use'},
+  hold:{v:'HOLD',tool:'chatgpt',req:'"clean up this customer list: 1,240 rows"',checks:[['✓','secrets','none'],['⏸','customer data','1,240 records (PII)'],['✓','source code','none'],['⏸','policy','customer-data → approval']],reason:'customer PII, held for an admin',ctl:'policy: customer-data'},
+  block:{v:'BLOCK',tool:'claude',req:'"here is our prod key AKIA1B2C3D, write a deploy script"',checks:[['✓','customer data','none'],['✕','secrets','AWS key detected'],['✓','source code','none'],['✕','policy','secrets → block']],reason:'blocked, the key never left the company',ctl:'policy: secrets'}
 };
 function inspectCmd(a){a=(a||'').toLowerCase();
-  if(!DEC[a]){print('<span class="mut">usage: inspect [ <span class="runchip" data-run="inspect allow">allow</span> | <span class="runchip" data-run="inspect hold">hold</span> | <span class="runchip" data-run="inspect redact">redact</span> | <span class="runchip" data-run="inspect block">block</span> ]</span>');return;}
+  if(!DEC[a]){print('<span class="mut">usage: inspect [ <span class="runchip" data-run="inspect allow">allow</span> | <span class="runchip" data-run="inspect hold">hold</span> | <span class="runchip" data-run="inspect block">block</span> ]</span>');return;}
   const d=DEC[a];
   print('<span class="bl">// decision · tool='+d.tool+'</span>');
   print('<span class="mut">'+d.tool+' '+esc(d.req)+'</span>');
   d.checks.forEach(c=>{const col=c[0]==='✕'?'r':c[0]==='⚠'||c[0]==='⏸'?'c':'g';print('  <span class="'+col+'">'+c[0]+'</span>  <span class="dim">'+c[1]+'</span>  <span class="mut">'+c[2]+'</span>');});
   print('<span class="tag t-'+d.v+'">'+d.v+'</span>  <span class="dim">'+d.reason+'</span>  <span class="mut">· '+d.ctl+'</span>');
 }
-const SAMP=[['ALLOW','github.read → handlers.ts','read within scope'],['HOLD','db.query → SELECT * FROM patients','bulk PHI, approval'],['REDACT','email.send → body','AWS key stripped'],['BLOCK','shell.exec → rm -rf /prod','destructive, blocked'],['ALLOW','crm.update → contact.status','field allow-listed'],['BLOCK','slack.post → from doc','injection detected'],['HOLD','s3.download → pii-bucket','route to approver'],['ALLOW','calendar.read → 7 days','low-risk read']];
+const SAMP=[['ALLOW','chatgpt → "summarize this public article"','no sensitive data'],['BLOCK','claude → prompt with an AWS secret key','secret blocked'],['HOLD','chatgpt → paste of 1,240 customers','PII, sent for approval'],['ALLOW','copilot → "write a unit test for utils"','no company data'],['BLOCK','gemini → prompt with a password','credential blocked'],['HOLD','chatgpt → proprietary source file','source code, approval'],['ALLOW','claude → "rephrase this paragraph"','safe'],['HOLD','chatgpt → a client contract (PII + legal)','held for approval']];
 let demoOn=false;
 function burst(n){if(demoOn)return;demoOn=true;print('&nbsp;');print('<span class="bl">// happening right now, live</span>');let i=0;const iv=setInterval(()=>{const s2=SAMP[i%SAMP.length];i++;const t=new Date().toLocaleTimeString('en-GB');print('<span class="mut">'+t+'</span> <span class="tag t-'+s2[0]+'">'+s2[0]+'</span> <span class="dim">'+esc(s2[1])+'</span> <span class="mut">'+s2[2]+'</span>');if(i>=n){clearInterval(iv);demoOn=false;print('<span class="mut">full stream &#8594;</span> <span class="runchip" data-run="demo">demo</span>');}},reduce?40:700);}
 function demoCmd(){if(demoOn)return;demoOn=true;print('<span class="bl">// live decision stream</span>');let i=0;const iv=setInterval(()=>{const s=SAMP[i%SAMP.length];i++;const t=new Date().toLocaleTimeString('en-GB');print('<span class="mut">'+t+'</span> <span class="tag t-'+s[0]+'">'+s[0]+'</span> <span class="dim">'+esc(s[1])+'</span> <span class="mut">'+s[2]+'</span>');if(i>=8){clearInterval(iv);demoOn=false;print('<span class="g">✓ 8 actions adjudicated</span> <span class="mut">· 4 allowed · 2 held · 2 blocked/redacted · 38ms avg</span>');}},reduce?40:520);}
@@ -368,22 +343,22 @@ function run(raw){const cmd=(raw||'').trim();lineN=0;const first=cmd.split(/\s+/
 let busy=false;
 const CMDSET=new Set(['about','how','why','who','demo','inspect','policy','deploy','standards','pricing','plans','price','cost','book','clear','help']);
 const QA=[
- {k:['what is','what does','tell me','explain','overview','purpose'],a:`StileAI is a <span class="w">security and compliance checkpoint</span> between the AI a company uses and the systems it can reach. Every prompt and action is inspected, gets a verdict (<span class="tag t-ALLOW">ALLOW</span> <span class="tag t-REDACT">REDACT</span> <span class="tag t-HOLD">HOLD</span> <span class="tag t-BLOCK">BLOCK</span>), and is logged as evidence. <span class="mut">more &#8594;</span> <span class="runchip" data-run="about">about</span>`},
- {k:['how does','how do','how it','works','work','mechanism','pipeline','process','function'],a:`Point your AI at StileAI instead of straight at your systems. Each request runs a pipeline, identity, injection, sensitive-data, policy, verdict, before anything executes, then it allows, redacts, holds, or blocks and seals the decision. <span class="mut">see the diagram &#8594;</span> <span class="runchip" data-run="how">how</span>`},
- {k:['who is it','who uses','who for','audience','customer','msp','managed service','it company'],a:`Built for IT companies and MSPs (multi-tenant, one console, per-client policy packs, PSA-routed approvals) and for any team running AI in-house (same product, one tenant). <span class="mut">more &#8594;</span> <span class="runchip" data-run="who">who</span>`},
+ {k:['what is','what does','tell me','explain','overview','purpose'],a:`StileAI is a <span class="w">policy checkpoint</span> between your team and the AI tools they use. Every request they send is checked, gets a verdict (<span class="tag t-ALLOW">ALLOW</span> <span class="tag t-HOLD">HOLD</span> <span class="tag t-BLOCK">BLOCK</span>), and is logged, before it reaches the AI. <span class="mut">more &#8594;</span> <span class="runchip" data-run="about">about</span>`},
+ {k:['how does','how do','how it','works','work','mechanism','pipeline','process','function'],a:`Point your AI tools at StileAI instead of the provider (same API, one base-URL change). Each request is scanned for secrets, PII, source code and records, checked against your policies, then allowed, held, or blocked, and logged. <span class="mut">see the diagram &#8594;</span> <span class="runchip" data-run="how">how</span>`},
+ {k:['who is it','who uses','who for','audience','customer','msp','managed service','it company'],a:`Built for any company whose team uses AI, in-house teams (per seat, one console, per-employee keys) and IT companies / MSPs managing several clients. <span class="mut">more &#8594;</span> <span class="runchip" data-run="who">who</span>`},
  {k:['price','pricing','cost','how much','expensive','license','fee','pay','budget'],a:`Priced <span class="w">per seat, per month</span>: <span class="a">$25</span> Starter, <span class="a">$59</span> Business, custom Enterprise. No free tier, the controls are on from day one. <span class="mut">see the plans &#8594;</span> <span class="runchip" data-run="pricing">pricing</span>`},
- {k:['hipaa','soc 2','soc2','pci','gdpr','compliance','standard','audit','evidence','framework','iso','regulat'],a:`Every decision maps to the control it satisfies (HIPAA, SOC 2, PCI-DSS, GDPR, ISO 42001, OWASP, NIST, EU AI Act) and is sealed in a tamper-evident ledger. Export a per-framework evidence bundle at any review. <span class="mut">more &#8594;</span> <span class="runchip" data-run="standards">standards</span>`},
- {k:['deploy','install','setup','set up','where does it run','where do','cloud','on-prem','on prem','self-host','self host','architecture','vpc','environment'],a:`Runs as two planes: an <span class="w">enforcement plane</span> inside your own environment (data and credentials stay local) and a central <span class="w">control plane</span> that sees metadata only. <span class="mut">more &#8594;</span> <span class="runchip" data-run="deploy">deploy</span>`},
+ {k:['hipaa','soc 2','soc2','pci','gdpr','compliance','standard','audit','evidence','framework','iso','regulat'],a:`Every decision is logged, what was sent, which policy caught it, and what happened, and the categories map to HIPAA, PCI-DSS, GDPR, SOC 2, ISO 42001 and OWASP. Export the audit log at any review. <span class="mut">more &#8594;</span> <span class="runchip" data-run="standards">standards</span>`},
+ {k:['deploy','install','setup','set up','where does it run','where do','cloud','on-prem','on prem','self-host','self host','architecture','vpc','environment'],a:`Point your tool at a StileAI endpoint that speaks the OpenAI or Anthropic API, one base-URL change, keep your own key. Works today with Claude Code, Cursor and your apps; a browser extension for ChatGPT/Gemini/Copilot is coming. <span class="mut">more &#8594;</span> <span class="runchip" data-run="deploy">deploy</span>`},
  {k:['latency','slow','speed','fast','performance','overhead','lag','delay'],a:`The fast path adds <span class="w">under 50ms</span> (identity, policy, pattern checks). Heavier model checks run async or sampled, so normal traffic is not held up.`},
- {k:['injection','prompt injection','jailbreak','attack','malicious','hijack','poison'],a:`Detects prompt-injection and jailbreak attempts with a local classifier plus heuristics, including <span class="w">indirect</span> injection hidden in retrieved documents or tool output. Suspicious actions are held or blocked. <span class="mut">honest: no detector is perfect, so it is one layer of several.</span>`},
- {k:['data','privacy','sensitive','phi','pii','secret','leak','exfil','private','confidential'],a:`StileAI runs inside your environment, so raw data never leaves your boundary. It detects and strips PII, PHI, secrets, and card data (<span class="tag t-REDACT">REDACT</span>) before anything reaches an external model, and the control plane only ever sees metadata.`},
+ {k:['injection','prompt injection','jailbreak','attack','malicious','hijack','poison'],a:`StileAI's job is stopping sensitive company data, secrets, PII, source code, from leaving in an AI prompt; it detects those by content and blocks or holds them. <span class="mut">(broader prompt-injection defense is on the roadmap.)</span>`},
+ {k:['data','privacy','sensitive','phi','pii','secret','leak','exfil','private','confidential'],a:`Requests are checked in transit; content that's blocked or held is <span class="w">never stored</span>, only the decision and category are. Your AI provider keys pass straight through and are never saved. We don't train on anything.`},
  {k:['bypass','evade','100','perfect','guarantee','foolproof','fully safe','completely safe','unbreakable'],a:`Straight answer: it <span class="w">reduces</span> risk, it does not erase it. No tool makes AI perfectly safe. StileAI is defense in depth, fails closed on destructive actions, and logs everything so nothing is invisible.`},
- {k:['chatgpt','claude','openai','copilot','gemini','anthropic','model','provider','llm','which ai','what ai'],a:`Provider-agnostic. It works whether the AI is Claude, ChatGPT, Copilot, or a homegrown agent, because it enforces at the action boundary in front of your systems. Swap models freely, the checkpoint does not move.`},
- {k:['mcp','connect','integrate','integration','slack','teams','connectwise','autotask','jira','servicenow','pagerduty','webhook','api'],a:`First-class connectors for Slack, Teams, ServiceNow, Jira, ConnectWise, Autotask, and PagerDuty, plus a signed universal webhook and SDK for anything else. Approvals and alerts route into the tools you already use.`},
- {k:['try','trial','free','get started','start','monitor','watch-only','pilot','poc'],a:`Start in <span class="w">watch-only mode</span> in front of one environment. Nothing to install, nothing to break. After a week you get a risk report of what your AI actually did. <span class="mut">more &#8594;</span> <span class="runchip" data-run="book">book</span>`},
- {k:['contact','talk','sales','book','walkthrough','call','meeting','get in touch','demo call'],a:`Book a walkthrough from the button at the top and we will set up a short call. <span class="mut">where to start &#8594;</span> <span class="runchip" data-run="book">book</span>`},
- {k:['different','competitor','vs','lakera','why you','alternative','better than','compare'],a:`Most AI-security tools filter the prompt. StileAI also enforces at the <span class="w">action boundary</span>, in front of your real systems, so it controls what the AI actually does, provider-agnostically, and turns every decision into compliance evidence. Multi-tenant and MSP-priced from the ground up.`},
- {k:['verdict','allow','redact','hold','block','difference between'],a:`Four verdicts: <span class="tag t-ALLOW">ALLOW</span> safe, passed through. <span class="tag t-REDACT">REDACT</span> sensitive data stripped, then passed. <span class="tag t-HOLD">HOLD</span> risky, waits for a human. <span class="tag t-BLOCK">BLOCK</span> dangerous or non-compliant, stopped at the wire.`}
+ {k:['chatgpt','claude','openai','copilot','gemini','anthropic','model','provider','llm','which ai','what ai'],a:`Works with any tool that uses the OpenAI or Anthropic API, Claude Code, Cursor, your own apps, by pointing its base URL at StileAI. ChatGPT, Gemini and Copilot on the web are covered by a browser extension (coming).`},
+ {k:['mcp','connect','integrate','integration','slack','teams','connectwise','autotask','jira','servicenow','pagerduty','webhook','api'],a:`You connect the AI tools your team already uses by changing one setting (the base URL). Approvals and every decision live in your StileAI dashboard, nothing else to wire up.`},
+ {k:['try','trial','free','get started','start','monitor','watch-only','pilot','poc'],a:`No free tier, the controls are on from day one. Pick a plan, point your tools at StileAI, and turn on your policies. <span class="mut">more &#8594;</span> <span class="runchip" data-run="pricing">pricing</span>`},
+ {k:['contact','talk','sales','book','walkthrough','call','meeting','get in touch','demo call'],a:`Use "Get started" at the top to create an account and pick a plan. <span class="mut">where to start &#8594;</span> <span class="runchip" data-run="book">book</span>`},
+ {k:['different','competitor','vs','lakera','why you','alternative','better than','compare'],a:`Most AI tools filter the model's answer. StileAI checks the <span class="w">request</span> before it leaves your company, catching secrets, PII and source code, and logs every decision as evidence. Per-seat, multi-tenant.`},
+ {k:['verdict','allow','redact','hold','block','difference between'],a:`Three verdicts: <span class="tag t-ALLOW">ALLOW</span> safe, sent to the AI. <span class="tag t-HOLD">HOLD</span> sensitive, waits for an admin. <span class="tag t-BLOCK">BLOCK</span> against policy, stopped before it leaves.`}
 ];
 function answerFor(q){var s=q.toLowerCase(),best=null,sc=0;for(var i=0;i<QA.length;i++){var e=QA[i],c=0;for(var j=0;j<e.k.length;j++){if(s.indexOf(e.k[j])>-1)c+=e.k[j].length>4?2:1;}if(c>sc){sc=c;best=e;}}return (best&&sc>0)?best.a:`<span class="dim">I can answer questions about what StileAI is, how it works, security, compliance, deployment, and pricing.</span>
 <span class="mut">try: "does it work with ChatGPT?" &#183; "how much does it cost?" &#183; "is my data safe?"</span>
@@ -450,7 +425,7 @@ document.getElementById('loginLink').addEventListener('click',()=>{AUTH=false;lo
   const cv=document.getElementById('fuzz'); if(!cv) return;
   const hl1=document.querySelector('.hl1');
   const ctx=cv.getContext('2d');
-  const BLUE={t:"StileAI decides what they're allowed to do.",c:'#1953F0'};
+  const BLUE={t:"StileAI checks it before it reaches the AI.",c:'#1953F0'};
   const FW=800, FAM='Inter, system-ui, sans-serif', FUZZ=12, BASE=0.085, HOVER=0.34, STEP=95;
   const dpr=Math.min(window.devicePixelRatio||1,2);
   const mc=document.createElement('canvas').getContext('2d');
