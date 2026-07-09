@@ -2,6 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
+import { isActiveStatus } from "@/lib/seats";
 
 export type ProfileContext = {
   userId: string;
@@ -60,7 +61,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
     orgName: org?.name ?? "",
     checkpointUrl: org?.checkpoint_url ?? null,
     isPlatformAdmin: isPlatformAdmin(email),
-    subscriptionActive: (org?.subscription_status ?? "") === "active",
+    subscriptionActive: isActiveStatus(org?.subscription_status),
   };
 });
 

@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/apiKeys";
 import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
 import { resolveEmployeeByKey, listEmployees } from "@/lib/employees";
-import { seatedIds } from "@/lib/seats";
+import { seatedIds, isActiveStatus } from "@/lib/seats";
 
 export type { CheckResult } from "@/lib/promptCheck";
 
@@ -33,11 +33,25 @@ export async function resolveCaller(rawKey: string): Promise<{
   const orgId = emp?.orgId ?? (await orgForKey(rawKey)); // admin/legacy key fallback
   if (!orgId) return null;
   const { data: org } = await admin.from("organizations").select("subscription_status, plan_seats").eq("id", orgId).maybeSingle();
-  const subscriptionActive = (org?.subscription_status ?? "") === "active";
+  const subscriptionActive = isActiveStatus(org?.subscription_status);
   if (!emp) return { orgId, employeeId: null as string | null, isAdmin: true, subscriptionActive, seated: true };
   const actives = (await listEmployees(orgId)).filter((e) => e.status === "active");
   const seated = seatedIds(actives, org?.plan_seats ?? 0).has(emp.employeeId);
   return { orgId, employeeId: emp.employeeId as string | null, isAdmin: false, subscriptionActive, seated };
+}
+
+// Records a proxy request refused by the caller gate (no active seat, or the org's
+// subscription is inactive) — this happens BEFORE any policy check, so gate() never
+// runs for it. Mirrors gate()'s audit row so blocked seat/billing attempts still
+// leave a trail. No prompt content is stored.
+export async function auditCallerBlock(orgId: string, employeeId: string | null, model: string, reason: string): Promise<void> {
+  const admin = createAdminClient();
+  await admin.from("audit_log").insert({
+    org_id: orgId, decision_id: "ai-" + crypto.randomUUID(), ts: new Date().toISOString(),
+    actor: "employee", action: "ai.request", resource: model,
+    params: { categories: [], preview: "(blocked before policy check)" },
+    effect: "deny", matched_policy: null, reason, status: "denied", employee_id: employeeId ?? null,
+  });
 }
 
 // The decision-maker: the org's enabled Policies drive the outcome per content

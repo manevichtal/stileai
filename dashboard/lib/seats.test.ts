@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { seatedIds, callerDecision } from "./seats";
+import { seatedIds, callerDecision, isActiveStatus } from "./seats";
 
 const emp = (id: string, t: string) => ({ id, created_at: t });
 
@@ -28,5 +28,19 @@ describe("callerDecision", () => {
   });
   it("seated employee passes", () => {
     expect(callerDecision({ subscriptionActive: true, isAdmin: false, seated: true }).allowed).toBe(true);
+  });
+});
+
+describe("isActiveStatus", () => {
+  it("treats active and trialing as active", () => {
+    expect(isActiveStatus("active")).toBe(true);
+    expect(isActiveStatus("trialing")).toBe(true);
+  });
+  it("treats everything else (incomplete/past_due/canceled/null) as inactive", () => {
+    expect(isActiveStatus("incomplete")).toBe(false);
+    expect(isActiveStatus("past_due")).toBe(false);
+    expect(isActiveStatus("canceled")).toBe(false);
+    expect(isActiveStatus(null)).toBe(false);
+    expect(isActiveStatus(undefined)).toBe(false);
   });
 });

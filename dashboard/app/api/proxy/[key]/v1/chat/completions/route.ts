@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category } from "@/lib/promptCheck";
-import { resolveCaller } from "@/lib/aiGate";
+import { resolveCaller, auditCallerBlock } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
 
 // StileAI's real interception point. A company points its AI tool (anything that
@@ -76,6 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   // blocked here, before any policy check runs or the request is forwarded.
   const gatePass = callerDecision(caller);
   if (!gatePass.allowed) {
+    await auditCallerBlock(caller.orgId, caller.employeeId, model, gatePass.reason);
     if (body?.stream) {
       return new Response(sseBlock(model, gatePass.reason), {
         headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },

@@ -9,3 +9,10 @@ export function callerDecision(x: { subscriptionActive: boolean; isAdmin: boolea
   if (!x.seated) return { allowed: false, reason: "No active seat — ask your admin to add one." };
   return { allowed: true, reason: "" };
 }
+
+// A subscription counts as active for app + proxy access when Stripe reports it
+// as "active" OR "trialing" — used by both the app access gate (getProfile) and
+// the proxy caller resolution (aiGate) so they never disagree.
+export function isActiveStatus(status: string | null | undefined): boolean {
+  return status === "active" || status === "trialing";
+}

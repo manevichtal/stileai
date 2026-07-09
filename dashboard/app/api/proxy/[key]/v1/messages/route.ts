@@ -1,4 +1,4 @@
-import { resolveCaller, gate, blockMessage } from "@/lib/aiGate";
+import { resolveCaller, gate, blockMessage, auditCallerBlock } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
 
 // Anthropic-compatible interception (for Claude Code, the Claude SDK, and any tool
@@ -83,6 +83,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   // blocked here, before any policy check runs or the request is forwarded.
   const gatePass = callerDecision(caller);
   if (!gatePass.allowed) {
+    await auditCallerBlock(caller.orgId, caller.employeeId, model, gatePass.reason);
     if (body?.stream) {
       return new Response(anthropicSSE(model, gatePass.reason), { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
     }

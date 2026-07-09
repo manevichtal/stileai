@@ -2,7 +2,8 @@
 
 import { requireProfileContext } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createEmployee, activeSeatCount } from "@/lib/employees";
+import { createEmployee, activeSeatCount, listEmployees } from "@/lib/employees";
+import { seatedIds } from "@/lib/seats";
 
 // Both actions use the service-role admin client (bypasses RLS), so each one
 // enforces its own auth: caller must be an org admin, and every employee
@@ -27,6 +28,14 @@ export async function addEmployeeAction(
     return { ok: false, error: "You're using all your seats. Add seats from Billing to add more employees." };
   }
   const emp = await createEmployee(ctx.orgId, clean);
+  // Close the check-then-act race: if a concurrent add pushed us past the cap,
+  // this new employee wouldn't be seated by the proxy (oldest-N wins), so roll it
+  // back instead of leaving a dead, unusable seat.
+  const actives = (await listEmployees(ctx.orgId)).filter((e) => e.status === "active") as { id: string; created_at: string }[];
+  if (!seatedIds(actives, seats).has(emp.id)) {
+    await admin.from("employees").update({ status: "disabled" }).eq("id", emp.id).eq("org_id", ctx.orgId);
+    return { ok: false, error: "You're using all your seats. Add seats from Billing to add more employees." };
+  }
   return { ok: true, key: emp.key, prefix: emp.prefix };
 }
 
