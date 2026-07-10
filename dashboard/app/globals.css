@@ -82,3 +82,93 @@ body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Rendered Markdown (blog posts) */
+.blogprose h2 {
+  font-weight: 700;
+  font-size: 19px;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink);
+}
+
+.blogprose h3 {
+  font-weight: 700;
+  font-size: 15.5px;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink);
+}
+
+.blogprose p {
+  font-size: 14.5px;
+  color: var(--ink2);
+  line-height: 1.7;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.blogprose ul,
+.blogprose ol {
+  list-style: revert;
+  padding-left: 1.25rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--ink2);
+  font-size: 14.5px;
+}
+
+.blogprose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.7;
+}
+
+.blogprose a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.blogprose a:hover {
+  text-decoration: underline;
+}
+
+.blogprose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.blogprose blockquote {
+  border-left: 3px solid var(--line2);
+  padding-left: 1rem;
+  font-style: italic;
+  color: var(--ink3);
+  margin: 1rem 0;
+}
+
+.blogprose code {
+  background: var(--bg3);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.blogprose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 13.5px;
+}
+
+.blogprose th,
+.blogprose td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.blogprose h2:first-child,
+.blogprose p:first-child {
+  margin-top: 0;
+}
