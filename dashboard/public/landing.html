@@ -483,8 +483,8 @@ function highlight(cmd){if(!cbar)return;[].forEach.call(cbar.children,x=>x.class
 /* boot the console (runs whether or not it's on screen) */
 (function(){
   const B=['<span class="mut">booting stileai console…</span>','<span class="g">[ ok ]</span> <span class="dim">policy engine · trust-boundary online</span>','<span class="g">ready.</span>'];
-  if(reduce){B.forEach(l=>print(l));blank();run('about');burst(4);return;}
-  let i=0;(function s(){if(i<B.length){print(B[i]);i++;setTimeout(s,240);}else{blank();setTimeout(()=>{run('about');setTimeout(()=>burst(4),2400);},260);}})();
+  if(reduce){B.forEach(l=>print(l));blank();run('about');return;}
+  let i=0;(function s(){if(i<B.length){print(B[i]);i++;setTimeout(s,240);}else{blank();setTimeout(()=>{run('about');},260);}})();
 })();
 </script>
 </body>
