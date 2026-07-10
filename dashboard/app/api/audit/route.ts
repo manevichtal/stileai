@@ -57,11 +57,14 @@ export async function GET(req: Request) {
 
   const admin = createAdminClient();
 
-  const { data: org } = await admin
+  // Fail closed: if we can't read the org's plan, we cannot safely compute the
+  // retention floor, so refuse rather than default to unlimited history.
+  const { data: org, error: orgErr } = await admin
     .from("organizations")
     .select("plan")
     .eq("id", orgId)
     .maybeSingle();
+  if (orgErr) return apiError(orgErr);
   const floor = auditFloorISO(org?.plan ?? null, Date.now());
 
   let q = admin
