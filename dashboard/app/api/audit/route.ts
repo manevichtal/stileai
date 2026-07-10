@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveOrgId, unauthorized } from "@/lib/apiAuth";
 import { apiError } from "@/lib/apiError";
+import { auditFloorISO } from "@/lib/tiers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +56,14 @@ export async function GET(req: Request) {
   const effect = url.searchParams.get("effect");
 
   const admin = createAdminClient();
+
+  const { data: org } = await admin
+    .from("organizations")
+    .select("plan")
+    .eq("id", orgId)
+    .maybeSingle();
+  const floor = auditFloorISO(org?.plan ?? null, Date.now());
+
   let q = admin
     .from("audit_log")
     .select(
@@ -65,6 +74,9 @@ export async function GET(req: Request) {
     .limit(limit);
   if (actor) q = q.eq("actor", actor);
   if (effect) q = q.eq("effect", effect);
+  // Retention floor: a Starter org's API key must never be able to read rows
+  // older than its plan allows, regardless of `limit`.
+  if (floor) q = q.gte("ts", floor);
 
   const { data, error } = await q;
   if (error) {

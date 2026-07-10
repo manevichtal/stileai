@@ -12,6 +12,7 @@ import {
   type Condition,
 } from "./actions";
 import { POLICY_PACKS, type PolicyPack } from "@/lib/policyTemplates";
+import { packAllowed } from "@/lib/tiers";
 
 const OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "regex", "exists"];
 const EFFECTS = ["allow", "deny", "require_approval"];
@@ -35,12 +36,14 @@ export function PoliciesClient({
   defaultReason,
   existingIds,
   initialTab = "rules",
+  plan,
 }: {
   policies: PolicyInput[];
   defaultEffect: string;
   defaultReason: string;
   existingIds: string[];
   initialTab?: "rules" | "library";
+  plan: string | null;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<PolicyInput | null>(null);
@@ -63,7 +66,7 @@ export function PoliciesClient({
       </div>
 
       {tab === "library" ? (
-        <PolicyLibrary existingIds={new Set(existingIds)} onChanged={() => router.refresh()} />
+        <PolicyLibrary existingIds={new Set(existingIds)} onChanged={() => router.refresh()} plan={plan} />
       ) : (
         <RulesTab
           policies={policies}
@@ -310,7 +313,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
   );
 }
 
-function PolicyLibrary({ existingIds, onChanged }: { existingIds: Set<string>; onChanged: () => void }) {
+function PolicyLibrary({ existingIds, onChanged, plan }: { existingIds: Set<string>; onChanged: () => void; plan: string | null }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="font-sans text-[12px] text-ink3 max-w-[640px]">
@@ -319,18 +322,19 @@ function PolicyLibrary({ existingIds, onChanged }: { existingIds: Set<string>; o
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {POLICY_PACKS.map((pack) => (
-          <PackCard key={pack.key} pack={pack} existingIds={existingIds} onChanged={onChanged} />
+          <PackCard key={pack.key} pack={pack} existingIds={existingIds} onChanged={onChanged} plan={plan} />
         ))}
       </div>
     </div>
   );
 }
 
-function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existingIds: Set<string>; onChanged: () => void }) {
+function PackCard({ pack, existingIds, onChanged, plan }: { pack: PolicyPack; existingIds: Set<string>; onChanged: () => void; plan: string | null }) {
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const addedCount = pack.templates.filter((t) => existingIds.has(t.policy_id)).length;
   const fullyAdded = addedCount === pack.templates.length;
+  const locked = !packAllowed(plan, pack.key);
 
   async function add() {
     setBusy(true);
@@ -348,6 +352,11 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
             {pack.recommended && (
               <span className="font-sans text-[9.5px] uppercase tracking-wide text-blue bg-bluedim border border-blue/30 rounded px-1.5 py-0.5">
                 Recommended
+              </span>
+            )}
+            {locked && (
+              <span className="font-sans text-[9.5px] uppercase tracking-wide text-ink3 bg-bg2 border border-line2 rounded px-1.5 py-0.5">
+                Business
               </span>
             )}
           </div>
@@ -379,15 +388,24 @@ function PackCard({ pack, existingIds, onChanged }: { pack: PolicyPack; existing
         <span className="font-sans text-[10.5px] text-ink3">
           {addedCount > 0 ? `${addedCount}/${pack.templates.length} enabled` : "not enabled"}
         </span>
-        <button
-          onClick={add}
-          disabled={busy}
-          className={`font-sans font-semibold text-[12px] rounded-xl px-4 py-2 transition-colors disabled:opacity-50 ${
-            fullyAdded ? "bg-bg2 border border-line text-ink2 hover:bg-bg3" : "bg-blue text-white hover:opacity-90"
-          }`}
-        >
-          {busy ? "Adding…" : fullyAdded ? "Re-apply" : addedCount > 0 ? "Add the rest" : "Add pack"}
-        </button>
+        {locked ? (
+          <a
+            href="/billing"
+            className="font-sans font-semibold text-[12px] rounded-xl px-4 py-2 transition-colors bg-bg2 border border-line text-ink3 hover:bg-bg3"
+          >
+            Business plan
+          </a>
+        ) : (
+          <button
+            onClick={add}
+            disabled={busy}
+            className={`font-sans font-semibold text-[12px] rounded-xl px-4 py-2 transition-colors disabled:opacity-50 ${
+              fullyAdded ? "bg-bg2 border border-line text-ink2 hover:bg-bg3" : "bg-blue text-white hover:opacity-90"
+            }`}
+          >
+            {busy ? "Adding…" : fullyAdded ? "Re-apply" : addedCount > 0 ? "Add the rest" : "Add pack"}
+          </button>
+        )}
       </div>
     </div>
   );

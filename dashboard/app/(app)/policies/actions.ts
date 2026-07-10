@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileContext } from "@/lib/getProfile";
 import { packByKey } from "@/lib/policyTemplates";
+import { packAllowed } from "@/lib/tiers";
 
 export type Condition = { field: string; op: string; value: unknown };
 export type PolicyInput = {
@@ -100,6 +101,8 @@ export async function addPack(packKey: string): Promise<Result & { added?: numbe
   if (!ctx) return { ok: false, error: "Not signed in." };
   const pack = packByKey(packKey);
   if (!pack) return { ok: false, error: "Unknown pack." };
+  if (!packAllowed(ctx.plan, packKey))
+    return { ok: false, error: "This pack is on the Business plan. Upgrade in Billing to enable it." };
 
   const supabase = await createClient();
   const rows = pack.templates.map((t) => ({

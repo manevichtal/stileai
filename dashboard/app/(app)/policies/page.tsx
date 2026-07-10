@@ -54,6 +54,7 @@ export default async function PoliciesPage({
         defaultReason={settings?.default_reason ?? "No policy matched — defaulting to human approval."}
         existingIds={policies.map((p) => p.policy_id)}
         initialTab={tab === "library" ? "library" : "rules"}
+        plan={ctx.plan}
       />
     </>
   );

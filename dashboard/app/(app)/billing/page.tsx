@@ -2,6 +2,7 @@ import { requireProfileContext } from "@/lib/getProfile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { activeSeatCount } from "@/lib/employees";
 import { PLANS, type PlanId } from "@/lib/stripe";
+import { capabilitiesFor } from "@/lib/tiers";
 import { PageHeader } from "@/components/AppShell";
 import { ManageBillingButton } from "./ManageBillingButton";
 
@@ -29,6 +30,13 @@ export default async function BillingPage() {
     : null;
 
   const isAdmin = ctx.role === "admin";
+  const caps = capabilitiesFor(ctx.plan);
+  const retentionLabel =
+    caps.auditRetentionDays == null
+      ? "Unlimited audit history"
+      : caps.auditRetentionDays === 365
+        ? "1-year audit history"
+        : `${caps.auditRetentionDays}-day audit history`;
 
   return (
     <>
@@ -79,6 +87,21 @@ export default async function BillingPage() {
               Only an admin can manage billing.
             </p>
           )}
+        </section>
+
+        <section className="bg-card border border-line rounded-2xl p-6">
+          <div className="font-sans text-[11px] text-ink3 uppercase tracking-wide font-medium">
+            What your plan includes
+          </div>
+          <ul className="mt-3 flex flex-col gap-2">
+            <li className="font-sans text-[13px] text-ink2">
+              {caps.policyPacks === "all" ? "All policy packs" : "Core policy packs"}
+            </li>
+            <li className="font-sans text-[13px] text-ink2">{retentionLabel}</li>
+            <li className="font-sans text-[13px] text-ink2">
+              {caps.perEmployeeAudit ? "Per-employee audit" : "Per-employee audit — Business"}
+            </li>
+          </ul>
         </section>
       </div>
     </>

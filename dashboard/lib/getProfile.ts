@@ -13,6 +13,7 @@ export type ProfileContext = {
   checkpointUrl: string | null;
   isPlatformAdmin: boolean;
   subscriptionActive: boolean;
+  plan: string | null; // 'starter' | 'business' | 'enterprise' | null (drives tier capabilities)
 };
 
 // Loads the logged-in admin's profile + organization. Returns null if there is
@@ -27,7 +28,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("org_id, role, email, organizations(name, checkpoint_url, subscription_status)")
+    .select("org_id, role, email, organizations(name, checkpoint_url, subscription_status, plan)")
     .eq("id", user.id)
     .single();
 
@@ -44,6 +45,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
       checkpointUrl: null,
       isPlatformAdmin: isPlatformAdmin(user.email),
       subscriptionActive: false,
+      plan: null,
     };
   }
 
@@ -51,6 +53,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
     name: string;
     checkpoint_url: string | null;
     subscription_status: string | null;
+    plan: string | null;
   } | null;
   const email = profile.email ?? user.email ?? null;
   return {
@@ -62,6 +65,7 @@ export const getProfileContext = cache(async (): Promise<ProfileContext | null> 
     checkpointUrl: org?.checkpoint_url ?? null,
     isPlatformAdmin: isPlatformAdmin(email),
     subscriptionActive: isActiveStatus(org?.subscription_status),
+    plan: org?.plan ?? null,
   };
 });
 
