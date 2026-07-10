@@ -1,5 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Brand } from "@/components/Brand";
+
+export const metadata: Metadata = {
+  alternates: {
+    types: {
+      "application/rss+xml": "https://stileai.vercel.app/feed.xml",
+    },
+  },
+};
 
 export default function BlogLayout({
   children,

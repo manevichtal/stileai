@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getAllSlugs, getPostBySlug } from "@/lib/blog";
+import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 
 const SITE_URL = "https://stileai.vercel.app";
 
@@ -34,13 +34,11 @@ export async function generateMetadata({
       siteName: "StileAI",
       publishedTime: meta.date,
       authors: [meta.author],
-      images: ["/brandmark.png"],
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: ["/brandmark.png"],
     },
   };
 }
@@ -64,6 +62,9 @@ export default async function BlogPostPage({
 
   const { meta, html } = post;
   const url = `${SITE_URL}/blog/${slug}`;
+  const relatedPosts = getAllPosts()
+    .filter((p) => p.slug !== slug)
+    .slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -110,6 +111,33 @@ export default async function BlogPostPage({
 
         <div className="blogprose" dangerouslySetInnerHTML={{ __html: html }} />
       </article>
+
+      {relatedPosts.length > 0 && (
+        <div className="mt-12">
+          <h2 className="font-sans text-[15px] font-bold text-ink mb-4">
+            More from the blog
+          </h2>
+          <div className="flex flex-col gap-4">
+            {relatedPosts.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/blog/${p.slug}`}
+                className="block bg-card border border-line rounded-2xl p-6 hover:border-line2 transition-colors"
+              >
+                <h3 className="font-sans text-[15px] font-bold text-ink mb-1.5 hover:text-blue transition-colors">
+                  {p.title}
+                </h3>
+                <time
+                  dateTime={p.date}
+                  className="font-sans text-[12px] text-ink3"
+                >
+                  {formatDate(p.date)}
+                </time>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-12 bg-card border border-line rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <p className="font-sans text-[14.5px] font-semibold text-ink">

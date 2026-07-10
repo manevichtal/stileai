@@ -40,6 +40,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/blog") ||
     path === "/sitemap.xml" ||
     path === "/robots.txt" ||
+    path === "/feed.xml" ||
     path.startsWith("/api") ||
     path.startsWith("/auth");
 
