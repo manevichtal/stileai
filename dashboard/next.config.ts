@@ -12,4 +12,3 @@ export default nextConfig;
 
 // build: framework preset = Next.js
 
-// redeploy: purge CDN cache for new /blog, /sitemap.xml, /robots.txt routes
