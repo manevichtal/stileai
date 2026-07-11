@@ -112,6 +112,7 @@ export default function TrustPage() {
             {[
               ["Vercel", "Runs the StileAI application and the policy checkpoint."],
               ["Supabase (PostgreSQL)", "Stores your account, policies, and the redacted audit trail."],
+              ["Stripe", "Processes subscription billing. Sees your billing details, never your AI requests or audit data."],
               ["Your AI providers (OpenAI, Anthropic, and others you connect)", "Receive only the requests your policies approve — using your own keys, exactly as they do today."],
             ].map(([name, role], i) => (
               <div key={i} className="flex items-start justify-between gap-4 py-3">
