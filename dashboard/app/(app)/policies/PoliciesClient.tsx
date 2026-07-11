@@ -11,7 +11,7 @@ import {
   type PolicyInput,
   type Condition,
 } from "./actions";
-import { POLICY_PACKS, type PolicyPack } from "@/lib/policyTemplates";
+import { POLICY_PACKS, PACK_CATEGORIES, type PolicyPack } from "@/lib/policyTemplates";
 import { packAllowed } from "@/lib/tiers";
 
 const OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "regex", "exists"];
@@ -314,17 +314,40 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 }
 
 function PolicyLibrary({ existingIds, onChanged, plan }: { existingIds: Set<string>; onChanged: () => void; plan: string | null }) {
+  const byKey = new Map(POLICY_PACKS.map((p) => [p.key, p]));
+  const total = POLICY_PACKS.reduce((n, p) => n + p.templates.length, 0);
+
+  // Group into the named categories, in order; anything uncategorized falls to "More".
+  const grouped = PACK_CATEGORIES.map((cat) => ({
+    name: cat.name,
+    packs: cat.keys.map((k) => byKey.get(k)).filter((p): p is PolicyPack => Boolean(p)),
+  })).filter((g) => g.packs.length > 0);
+  const categorized = new Set(PACK_CATEGORIES.flatMap((c) => c.keys));
+  const leftover = POLICY_PACKS.filter((p) => !categorized.has(p.key));
+  if (leftover.length) grouped.push({ name: "More", packs: leftover });
+
   return (
-    <div className="flex flex-col gap-4">
-      <p className="font-sans text-[12px] text-ink3 max-w-[640px]">
-        Turn on a ready-made set of rules. Each pack maps to real controls; enabling one adds its
-        policies to yours, which you can then edit or disable individually under <span className="text-ink2">Your policies</span>.
+    <div className="flex flex-col gap-8">
+      <p className="font-sans text-[12px] text-ink3 max-w-[680px]">
+        {total} ready-made policies across {POLICY_PACKS.length} packs. Turn on a set and each pack maps
+        to real controls; enabling one adds its policies to yours, which you can then edit or disable
+        individually under <span className="text-ink2">Your policies</span>.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {POLICY_PACKS.map((pack) => (
-          <PackCard key={pack.key} pack={pack} existingIds={existingIds} onChanged={onChanged} plan={plan} />
-        ))}
-      </div>
+      {grouped.map((group) => (
+        <div key={group.name} className="flex flex-col gap-4">
+          <div className="flex items-baseline gap-2 border-b border-line pb-2">
+            <h2 className="font-sans font-semibold text-[13px] text-ink">{group.name}</h2>
+            <span className="font-sans text-[11px] text-ink4">
+              {group.packs.length} {group.packs.length === 1 ? "pack" : "packs"}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {group.packs.map((pack) => (
+              <PackCard key={pack.key} pack={pack} existingIds={existingIds} onChanged={onChanged} plan={plan} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
