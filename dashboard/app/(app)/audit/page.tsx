@@ -1,9 +1,8 @@
 import { requireProfileContext } from "@/lib/getProfile";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/AppShell";
-import { EffectBadge, StatusBadge, Empty } from "@/components/ui";
-import { LocalTime } from "@/components/LocalTime";
 import { AuditFilters } from "./AuditFilters";
+import { AuditTable, type AuditRow } from "./AuditTable";
 import { auditFloorISO, capabilitiesFor } from "@/lib/tiers";
 import { listEmployees } from "@/lib/employees";
 
@@ -46,57 +45,19 @@ export default async function AuditPage({
     q,
     showEmployee ? listEmployees(ctx.orgId) : Promise.resolve([]),
   ]);
-  const employeeLabel = new Map(employees.map((e) => [e.id, e.label]));
+  const employeeLabels: Record<string, string | null> = {};
+  for (const e of employees) employeeLabels[e.id] = e.label;
 
   return (
     <>
-      <PageHeader title="Audit log" subtitle="Every decision the checkpoint has made. Secrets are redacted." />
+      <PageHeader title="Audit log" subtitle="Every decision the checkpoint has made. Click any row for the full detail; secrets stay masked." />
       <div className="p-7 flex flex-col gap-4 max-w-[1000px]">
         <AuditFilters />
-        <div className="border border-line rounded-[14px] overflow-hidden bg-card">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-bg2 border-b border-line">
-                {[
-                  "Time",
-                  "Actor",
-                  ...(showEmployee ? ["Employee"] : []),
-                  "Action",
-                  "Resource",
-                  "Effect",
-                  "Status",
-                  "Rule",
-                ].map((h) => (
-                  <th key={h} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(!rows || rows.length === 0) && (
-                <tr><td colSpan={showEmployee ? 8 : 7}><Empty>No decisions yet. Once your checkpoint is live, they appear here.</Empty></td></tr>
-              )}
-              {(rows ?? []).map((r) => (
-                <tr key={r.decision_id + r.ts} className="border-b border-line last:border-0 align-top">
-                  <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink3 whitespace-nowrap"><LocalTime ts={r.ts} /></td>
-                  <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{r.actor}</td>
-                  {showEmployee && (
-                    <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">
-                      {(() => {
-                        const employeeId = (r as { employee_id?: string | null }).employee_id;
-                        return employeeId ? (employeeLabel.get(employeeId) ?? "—") : "admin key";
-                      })()}
-                    </td>
-                  )}
-                  <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink">{r.action}</td>
-                  <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{r.resource}</td>
-                  <td className="px-3.5 py-2.5"><EffectBadge effect={r.effect} /></td>
-                  <td className="px-3.5 py-2.5">{r.status ? <StatusBadge status={r.status} /> : null}</td>
-                  <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink3">{r.matched_policy ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AuditTable
+          rows={(rows ?? []) as AuditRow[]}
+          employeeLabels={employeeLabels}
+          showEmployee={showEmployee}
+        />
         {rows && rows.length === 200 && (
           <p className="font-sans text-[11px] text-ink4">Showing the most recent 200 entries. Narrow with the filters above.</p>
         )}

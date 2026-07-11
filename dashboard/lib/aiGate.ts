@@ -3,7 +3,7 @@
 // through the org's policies, log the decision, and queue an approval if needed.
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/apiKeys";
-import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
+import { checkPrompt, redactSensitive, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
 import { resolveEmployeeByKey, listEmployees } from "@/lib/employees";
 import { seatedIds, isActiveStatus } from "@/lib/seats";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
@@ -82,11 +82,15 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   const effect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
   const status = result.decision === "approved" ? "allowed" : result.decision === "denied" ? "denied" : "pending";
   const categories = result.hits.map((h) => h.category);
-  const preview = result.decision === "approved" ? promptText.slice(0, 80) : "(restricted content hidden)";
+  // Allowed: nothing sensitive was detected, so a plain preview is safe. Blocked/held:
+  // store a REDACTED preview (sensitive spans masked) — context without raw secrets.
+  const preview =
+    result.decision === "approved" ? promptText.slice(0, 280) : redactSensitive(promptText);
+  const evidence = result.hits.map((h) => ({ category: h.category, label: h.label, why: h.evidence }));
   await admin.from("audit_log").insert({
     org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
     actor: "employee", action: "ai.request", resource: model,
-    params: { categories, preview }, effect, matched_policy: result.hits[0]?.label ?? null,
+    params: { categories, evidence, preview }, effect, matched_policy: result.hits[0]?.label ?? null,
     reason: result.reason, status, employee_id: employeeId ?? null,
   });
   if (result.decision === "admin_approval") {

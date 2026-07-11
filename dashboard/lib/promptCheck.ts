@@ -25,7 +25,7 @@ export type CheckResult = {
   profile: string;
 };
 
-const CATEGORY_LABEL: Record<Category, string> = {
+export const CATEGORY_LABEL: Record<Category, string> = {
   secrets: "Passwords / API keys / secrets",
   pii: "Personal data (PII)",
   client_data: "Customer / client data",
@@ -125,6 +125,22 @@ export function decisionFromEffect(effect: string): Decision {
 }
 
 const SEVERITY: Record<Decision, number> = { approved: 0, admin_approval: 1, denied: 2 };
+
+// A privacy-preserving preview for the audit trail: the prompt with every detected
+// sensitive span masked to "••••", so an admin sees the context and intent of a
+// blocked message WITHOUT the raw secret/PII ever being stored. Truncated for size.
+// (The unmasked remainder is, by definition, text no detector flagged as sensitive —
+// the same risk level as an allowed preview.)
+export function redactSensitive(text: string, maxLen = 280): string {
+  let out = text ?? "";
+  for (const det of DETECTORS) {
+    for (const re of det.patterns) {
+      const flags = re.flags.includes("g") ? re.flags : re.flags + "g";
+      out = out.replace(new RegExp(re.source, flags), "••••");
+    }
+  }
+  return out.length > maxLen ? out.slice(0, maxLen) + "…" : out;
+}
 
 // The core check: detect restricted content, then decide per the org's policy
 // rules. Deterministic and side-effect-free. `rules` comes straight from the
