@@ -32,12 +32,14 @@ export function TeamClient({
   seats,
   connected,
   isAdmin,
+  unlimited = false,
 }: {
   employees: EmployeeRow[];
   used: number;
   seats: number;
   connected: number;
   isAdmin: boolean;
+  unlimited?: boolean;
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -80,12 +82,18 @@ export function TeamClient({
       {/* Seat usage — this is the per-user billing view */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
         <span className="font-sans text-[12.5px] text-ink">
-          <b>{used}</b> of <b>{seats}</b> seats used
+          {unlimited ? (
+            <><b>{used}</b> seats · <b>unlimited</b> (platform admin)</>
+          ) : (
+            <><b>{used}</b> of <b>{seats}</b> seats used</>
+          )}
         </span>
         <span className="font-sans text-[12px] text-ink3">{connected} connected · {used - connected} invited</span>
-        <Link href="/billing" className="font-sans text-[12px] text-blue hover:underline ml-auto">
-          Add seats from Billing
-        </Link>
+        {!unlimited && (
+          <Link href="/billing" className="font-sans text-[12px] text-blue hover:underline ml-auto">
+            Add seats from Billing
+          </Link>
+        )}
       </div>
 
       {isAdmin && (

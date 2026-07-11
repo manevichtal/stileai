@@ -32,6 +32,7 @@ export default async function TeamPage() {
         seats={seats}
         connected={connected}
         isAdmin={ctx.role === "admin"}
+        unlimited={ctx.isPlatformAdmin}
       />
     </>
   );

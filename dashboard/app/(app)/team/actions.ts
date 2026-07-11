@@ -64,11 +64,14 @@ export async function inviteUserAction(
   const cleanLabel = (label ?? "").trim() || cleanEmail;
   if (!cleanLabel) return { ok: false, error: "Enter the person's name or email." };
 
-  const capErr = await seatGuard(ctx.orgId);
-  if (capErr) return { ok: false, error: capErr };
+  // Platform-owner's own tenant: unlimited free seats, skip the plan cap entirely.
+  if (!ctx.isPlatformAdmin) {
+    const capErr = await seatGuard(ctx.orgId);
+    if (capErr) return { ok: false, error: capErr };
+  }
 
   const { id, inviteToken } = await inviteEmployee(ctx.orgId, cleanLabel, cleanEmail || null);
-  if (await rollbackIfOverCap(ctx.orgId, id)) {
+  if (!ctx.isPlatformAdmin && (await rollbackIfOverCap(ctx.orgId, id))) {
     return { ok: false, error: "You're using all your seats. Add seats from Billing to invite more people." };
   }
   return { ok: true, url: connectUrl(inviteToken) };
@@ -95,11 +98,13 @@ export async function addEmployeeAction(
   const clean = (label ?? "").trim();
   if (!clean) return { ok: false, error: "Enter a name or email for the user." };
 
-  const capErr = await seatGuard(ctx.orgId);
-  if (capErr) return { ok: false, error: capErr };
+  if (!ctx.isPlatformAdmin) {
+    const capErr = await seatGuard(ctx.orgId);
+    if (capErr) return { ok: false, error: capErr };
+  }
 
   const emp = await createEmployee(ctx.orgId, clean);
-  if (await rollbackIfOverCap(ctx.orgId, emp.id)) {
+  if (!ctx.isPlatformAdmin && (await rollbackIfOverCap(ctx.orgId, emp.id))) {
     return { ok: false, error: "You're using all your seats. Add seats from Billing to add more people." };
   }
   return { ok: true, key: emp.key, prefix: emp.prefix };

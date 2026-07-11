@@ -6,10 +6,19 @@ import { hashApiKey } from "@/lib/apiKeys";
 import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
 import { resolveEmployeeByKey, listEmployees } from "@/lib/employees";
 import { seatedIds, isActiveStatus } from "@/lib/seats";
+import { isPlatformAdmin } from "@/lib/platformAdmin";
 
 export type { CheckResult } from "@/lib/promptCheck";
 
 const AI_CATEGORIES = new Set<Category>(["secrets", "pii", "client_data", "financial", "legal", "phi", "source_code"]);
+
+// The platform-owner's OWN tenant gets unlimited free seats and never needs a
+// paid subscription. An org counts as the platform org when one of its members'
+// emails is in PLATFORM_ADMIN_EMAILS (server-side env; a tenant can't set this).
+async function isPlatformOrg(admin: ReturnType<typeof createAdminClient>, orgId: string): Promise<boolean> {
+  const { data } = await admin.from("profiles").select("email").eq("org_id", orgId);
+  return (data ?? []).some((p) => isPlatformAdmin(p.email as string | null));
+}
 
 export async function orgForKey(rawKey: string): Promise<string | null> {
   if (!rawKey) return null;
@@ -33,8 +42,11 @@ export async function resolveCaller(rawKey: string): Promise<{
   const orgId = emp?.orgId ?? (await orgForKey(rawKey)); // admin/legacy key fallback
   if (!orgId) return null;
   const { data: org } = await admin.from("organizations").select("subscription_status, plan_seats").eq("id", orgId).maybeSingle();
-  const subscriptionActive = isActiveStatus(org?.subscription_status);
+  const platformOrg = await isPlatformOrg(admin, orgId);
+  // Platform org: always active, every seat free — never gated by plan/subscription.
+  const subscriptionActive = platformOrg || isActiveStatus(org?.subscription_status);
   if (!emp) return { orgId, employeeId: null as string | null, isAdmin: true, subscriptionActive, seated: true };
+  if (platformOrg) return { orgId, employeeId: emp.employeeId as string | null, isAdmin: false, subscriptionActive, seated: true };
   const actives = (await listEmployees(orgId)).filter((e) => e.status === "active");
   const seated = seatedIds(actives, org?.plan_seats ?? 0).has(emp.employeeId);
   return { orgId, employeeId: emp.employeeId as string | null, isAdmin: false, subscriptionActive, seated };
