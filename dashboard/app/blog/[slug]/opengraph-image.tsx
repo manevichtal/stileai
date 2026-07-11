@@ -41,16 +41,15 @@ export default async function OgImage({
             fontWeight: 800,
           }}
         >
-          <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z" fill="#1953F0" />
-            <path
-              d="M9 12l2 2 4-4"
-              stroke="#fff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <div
+            style={{
+              display: "flex",
+              width: 26,
+              height: 26,
+              border: "4px solid #1953F0",
+              transform: "rotate(45deg)",
+            }}
+          />
           <span>StileAI</span>
         </div>
         <div
