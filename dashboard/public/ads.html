@@ -1,0 +1,471 @@
+<title>StileAI Ad Creatives</title>
+<style>
+  :root{
+    --ground:#EDF1F8; --panel:#FFFFFF; --ink:#0B1220; --ink2:#47536B; --ink3:#6B7788;
+    --line:#DBE2EE; --blue:#1953F0; --blueDk:#1140C0; --blueDim:#EAF0FF;
+    --red:#E5484D; --gold:#E0B33A;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI","Inter",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --ground:#0A111E; --panel:#111B2B; --ink:#EAF0FB; --ink2:#9DAAC0; --ink3:#7E8AA0; --line:#22304A; --blueDim:#152744; }
+  }
+  :root[data-theme="light"]{ --ground:#EDF1F8; --panel:#FFFFFF; --ink:#0B1220; --ink2:#47536B; --ink3:#6B7788; --line:#DBE2EE; --blueDim:#EAF0FF; }
+  :root[data-theme="dark"]{ --ground:#0A111E; --panel:#111B2B; --ink:#EAF0FB; --ink2:#9DAAC0; --ink3:#7E8AA0; --line:#22304A; --blueDim:#152744; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:56px 24px 96px}
+
+  /* ---- page header ---- */
+  .lockup{display:flex;align-items:center;gap:10px}
+  .lockup svg{width:30px;height:30px;display:block}
+  .lockup .wm{font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .lockup .wm b{color:var(--blue)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+  h1{font-size:clamp(30px,4.4vw,46px);line-height:1.04;letter-spacing:-.03em;margin:18px 0 12px;text-wrap:balance;font-weight:800}
+  .lede{max-width:64ch;color:var(--ink2);font-size:16px;margin:0}
+  .meta-note{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink2);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+
+  hr.rule{border:0;border-top:1px solid var(--line);margin:44px 0}
+
+  /* ---- section ---- */
+  .sec-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 20px}
+  .sec-num{font-family:var(--mono);font-size:12px;color:var(--blue);letter-spacing:.1em}
+  .sec-head h2{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:750}
+  .sec-head .angle{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+  .sec-sub{color:var(--ink2);font-size:14px;max-width:70ch;margin:-8px 0 24px}
+
+  .grid{display:grid;gap:26px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){ .g2{grid-template-columns:1fr} .wrap{padding:40px 16px 72px} }
+
+  /* ---- creative card (artboard + caption) ---- */
+  .cre{display:flex;flex-direction:column;gap:12px}
+  .board-frame{border:1px solid var(--line);border-radius:16px;padding:10px;background:var(--panel);
+    box-shadow:0 1px 2px rgba(11,18,32,.04),0 26px 50px -34px rgba(11,18,32,.30)}
+  .fmt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 4px 10px}
+  .fmt .ch{font-weight:650;font-size:12.5px}
+  .fmt .dim{font-family:var(--mono);font-size:11px;color:var(--ink3);letter-spacing:.03em}
+
+  /* ARTBOARDS are a fixed light creative, constant across themes */
+  .art{position:relative;overflow:hidden;border-radius:9px;background:#FFFFFF;color:#0B1220;
+    border:1px solid #E7ECF5}
+  .sq{aspect-ratio:1/1} .tall{aspect-ratio:4/5} .link{aspect-ratio:1200/628} .wide{aspect-ratio:16/9}
+  .art .pad{position:absolute;inset:0;display:flex;flex-direction:column;padding:28px}
+  .tall .pad,.sq .pad{padding:30px}
+  .art .brand{display:flex;align-items:center;gap:8px}
+  .art .brand svg{width:22px;height:22px}
+  .art .brand .wm{font-weight:800;font-size:15px;letter-spacing:-.02em;color:#0B1220}
+  .art .brand .wm b{color:#1953F0}
+  .art .kick{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#7A879C;margin-top:2px}
+  .art h3{font-weight:800;letter-spacing:-.03em;line-height:1.03;margin:0;color:#0B1220;text-wrap:balance}
+  .art .sub{color:#47536B;line-height:1.4}
+  .spacer{flex:1}
+  .cta{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:#1953F0;color:#fff;
+    font-weight:700;border-radius:9px;padding:10px 16px;font-size:13.5px}
+  .cta.ghost{background:transparent;color:#1953F0;border:1.5px solid #1953F0}
+  .cta svg{width:13px;height:13px}
+
+  /* blocked-prompt chip: the recurring hero motif */
+  .chip{background:#F5F8FE;border:1px solid #E1E9F7;border-radius:11px;padding:13px 14px;font-family:var(--mono);
+    box-shadow:0 12px 30px -22px rgba(17,64,192,.5)}
+  .chip .dots{display:flex;gap:5px;margin-bottom:11px}
+  .chip .dots i{width:8px;height:8px;border-radius:50%;display:block}
+  .chip .prompt{font-size:12.5px;color:#26324a;line-height:1.55}
+  .chip .prompt .red{color:#c0343a}
+  .chip .mask{background:#0B1220;color:#0B1220;border-radius:3px;padding:0 2px;letter-spacing:1px;user-select:none}
+  .chip .verdict{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:11px;border-top:1px dashed #E1E9F7}
+  .badge{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;padding:4px 9px;border-radius:6px}
+  .badge.block{background:#FCEBEC;color:#c0343a}
+  .badge.allow{background:#E7F0FF;color:#1140C0}
+  .chip .reason{font-size:11px;color:#6B7788}
+
+  /* audit-row motif (compliance ad) */
+  .log{display:flex;flex-direction:column;gap:7px;font-family:var(--mono);font-size:11px}
+  .logrow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;
+    background:#F5F8FE;border:1px solid #E1E9F7;border-radius:8px;padding:9px 11px}
+  .logrow .t{color:#8592a6}
+  .logrow .a{color:#26324a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .logrow .v{font-weight:700;font-size:10px;letter-spacing:.08em}
+  .logrow .v.b{color:#c0343a} .logrow .v.a2{color:#1140C0}
+
+  /* tenants motif (msp ad) */
+  .tenants{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .tcard{background:#F5F8FE;border:1px solid #E1E9F7;border-radius:9px;padding:11px 10px;text-align:center}
+  .tcard .nm{font-weight:700;font-size:11.5px;color:#26324a}
+  .tcard .st{font-family:var(--mono);font-size:9.5px;color:#1140C0;margin-top:3px;letter-spacing:.06em}
+
+  /* caption / paste copy */
+  .cap{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+  .cap .row{display:flex;gap:8px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .cap .row:last-child{border-bottom:0}
+  .cap .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);
+    min-width:74px;padding-top:2px}
+  .cap .val{font-size:13px;color:var(--ink);flex:1;min-width:200px}
+  .cap .val.post{color:var(--ink2);white-space:pre-line;line-height:1.5}
+  .pill{font-family:var(--mono);font-size:10.5px;color:var(--blueDk);background:var(--blueDim);
+    border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+
+  footer{margin-top:60px;color:var(--ink3);font-size:12.5px;font-family:var(--mono);text-align:center;letter-spacing:.03em}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="shBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2E8CE8"/><stop offset="1" stop-color="#1140C0"/>
+    </linearGradient>
+    <linearGradient id="shEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F4DA86"/><stop offset=".5" stop-color="#E0B33A"/><stop offset="1" stop-color="#B9862A"/>
+    </linearGradient>
+    <symbol id="shield" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="13" fill="#070A10"/>
+      <path d="M14 12C14 10.5 15 10 16.5 10L47.5 10C49 10 50 10.5 50 12C50 20 51 26 50 32C49 42 41.5 49 32 54.5C22.5 49 15 42 14 32C13 26 14 20 14 12Z"
+        fill="url(#shBody)" stroke="url(#shEdge)" stroke-width="3" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <header>
+    <div class="lockup"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+    <p class="eyebrow" style="margin-top:26px">Paid creative · v1</p>
+    <h1>Ad creatives, ready to run.</h1>
+    <p class="lede">Five angles, one product truth: you can see it block a leak. Each board carries minimal on-image copy so it reads in a feed at a glance. The strip under every board has the channel, the exact format, where it points, and the paste-ready post text. One visual system: white ground, the shield, the brand blue, mono voice.</p>
+    <div class="meta-note">
+      <span class="tag">1:1 feed</span>
+      <span class="tag">4:5 feed tall</span>
+      <span class="tag">1.91:1 link + display</span>
+      <span class="tag">16:9 video thumb</span>
+      <span class="tag">#1953F0</span>
+      <span class="tag">no sales-speak</span>
+    </div>
+  </header>
+
+  <hr class="rule"/>
+
+  <!-- ============ 01 FEAR ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>The paste you can't take back</h2>
+      <span class="angle">Angle · Fear</span>
+    </div>
+    <p class="sec-sub">Cold audiences who have never heard of us. Lead with the loss, not the feature. The blocked-prompt chip is the hook and it recurs across the whole set.</p>
+    <div class="grid g2">
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">Meta · Instagram feed</span><span class="dim">1080×1080 · 1:1</span></div>
+          <div class="art sq">
+            <div class="pad">
+              <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+              <div class="spacer"></div>
+              <h3 style="font-size:31px">One paste, and it's gone.</h3>
+              <p class="sub" style="font-size:14px;margin:12px 0 16px">Your customer list can leave for ChatGPT in a single message. You cannot un-send it.</p>
+              <div class="chip">
+                <div class="dots"><i style="background:#e5806f"></i><i style="background:#e7c14e"></i><i style="background:#57b06f"></i></div>
+                <div class="prompt">Draft an onboarding email for Acme using key <span class="red">sk-live-<span class="mask">7f3a9b21c8</span></span></div>
+                <div class="verdict"><span class="badge block">BLOCKED</span><span class="reason">Live API key detected · never left the browser</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com</span> or the policy-template page</span></div>
+          <div class="row"><span class="k">Post text</span><span class="val post">One paste into ChatGPT and your customer list has left the building, to a server you do not control. You cannot un-send it.
+
+StileAI checks every prompt your team sends to AI and blocks the risky stuff before it leaves, with an audit trail for compliance. Live in 5 minutes.</span></div>
+          <div class="row"><span class="k">CTA</span><span class="val"><span class="pill">Learn more</span></span></div>
+        </div>
+      </div>
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">Meta · feed (tall)</span><span class="dim">1080×1350 · 4:5</span></div>
+          <div class="art tall">
+            <div class="pad">
+              <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+              <div class="kick" style="margin-top:20px">Shadow AI · the leak nobody logs</div>
+              <h3 style="font-size:34px;margin-top:10px">73% of AI use at work is invisible to IT.</h3>
+              <div class="spacer"></div>
+              <div class="chip">
+                <div class="dots"><i style="background:#e5806f"></i><i style="background:#e7c14e"></i><i style="background:#57b06f"></i></div>
+                <div class="prompt">Summarize this contract: <span class="red">Patient <span class="mask">Dana R.</span>, DOB <span class="mask">04/xx/19xx</span>, MRN <span class="mask">88213</span></span></div>
+                <div class="verdict"><span class="badge block">BLOCKED</span><span class="reason">PHI detected · HIPAA policy</span></div>
+              </div>
+              <p class="sub" style="font-size:13.5px;margin:16px 0 14px">See it, and stop it, before it leaves.</p>
+              <a class="cta">Get started<svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com</span></span></div>
+          <div class="row"><span class="k">Post text</span><span class="val post">Most of what your team sends to ChatGPT, Claude and Gemini never touches your DLP. It goes straight from the browser to someone else's model.
+
+StileAI is the checkpoint in between: every prompt checked against your policy, secrets and PII blocked, every decision logged. Live in 5 minutes, per seat.</span></div>
+          <div class="row"><span class="k">CTA</span><span class="val"><span class="pill">Get started</span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ============ 02 ANTI-ENTERPRISE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>Enterprise governance, without the enterprise</h2>
+      <span class="angle">Angle · Positioning</span>
+    </div>
+    <p class="sec-sub">Our sharpest wedge against the Fortune-500 tools: self-serve, per seat, no six-figure contract. This is the link-preview and display workhorse.</p>
+    <div class="grid">
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">Link preview · Google display</span><span class="dim">1200×628 · 1.91:1</span></div>
+          <div class="art link">
+            <div class="pad" style="padding:34px 40px">
+              <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+              <div class="spacer"></div>
+              <h3 style="font-size:40px;max-width:15ch">Enterprise AI governance. Without the enterprise.</h3>
+              <p class="sub" style="font-size:16px;margin:14px 0 0;max-width:52ch">See and stop what your team sends to ChatGPT, Claude and Gemini. Live in 5 minutes, per seat, no sales call.</p>
+              <div class="spacer"></div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <a class="cta">Start free trial</a>
+                <span class="kick" style="margin:0">Chrome extension + API gateway</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Channel</span><span class="val">Google Display · Meta link ad · Twitter/X card</span></div>
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com</span></span></div>
+          <div class="row"><span class="k">Headline</span><span class="val">Enterprise AI governance. Without the enterprise.</span></div>
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="cre">
+          <div class="board-frame">
+            <div class="fmt"><span class="ch">LinkedIn · sponsored</span><span class="dim">1200×1200 · 1:1</span></div>
+            <div class="art sq">
+              <div class="pad">
+                <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+                <div class="spacer"></div>
+                <div class="kick">The free download IT teams are missing</div>
+                <h3 style="font-size:30px;margin-top:10px">The AI-Usage Policy your team doesn't have yet.</h3>
+                <p class="sub" style="font-size:14px;margin:12px 0 18px">A ready-to-adopt template, plus how to actually enforce it.</p>
+                <a class="cta ghost">Download the template</a>
+              </div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">Lead magnet</span> policy-template capture page</span></div>
+            <div class="row"><span class="k">Post text</span><span class="val post">Your team is already using ChatGPT, Claude and Gemini every day, and pasting customer data, source code and credentials into them. Traditional DLP never sees it.
+
+Grab our free AI-Usage Policy template and see exactly what a modern AI policy should cover, and how to actually enforce it.</span></div>
+            <div class="row"><span class="k">CTA</span><span class="val"><span class="pill">Download</span></span></div>
+          </div>
+        </div>
+
+        <div class="cre">
+          <div class="board-frame">
+            <div class="fmt"><span class="ch">Reddit · promoted</span><span class="dim">1200×1200 · 1:1</span></div>
+            <div class="art sq">
+              <div class="pad">
+                <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+                <div class="spacer"></div>
+                <h3 style="font-size:29px">We built the AI security tool that doesn't need a sales team.</h3>
+                <p class="sub" style="font-size:14px;margin:12px 0 16px">Self-serve. Per seat. Live in minutes. Browser extension for ChatGPT/Claude/Gemini plus an API gateway for Cursor and Claude Code.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span class="badge allow" style="font-size:11px">No demo required</span>
+                  <span class="badge allow" style="font-size:11px">No annual contract</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com</span> or blog</span></div>
+            <div class="row"><span class="k">Title</span><span class="val">We built a per-seat AI governance tool that installs in 5 minutes (no enterprise sales)</span></div>
+            <div class="row"><span class="k">Subs</span><span class="val">r/msp · r/sysadmin · r/cybersecurity</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ============ 03 COMPLIANCE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Every prompt, logged</h2>
+      <span class="angle">Angle · Compliance proof</span>
+    </div>
+    <p class="sec-sub">For the buyer whose trigger is a SOC 2 / HIPAA push or a client security questionnaire. The audit trail is the product they can hand to an auditor.</p>
+    <div class="grid g2">
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">LinkedIn · sponsored</span><span class="dim">1200×1200 · 1:1</span></div>
+          <div class="art sq">
+            <div class="pad">
+              <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+              <div class="kick" style="margin-top:18px">Audit log · exportable</div>
+              <div class="log" style="margin-top:14px">
+                <div class="logrow"><span class="t">09:41</span><span class="a">m.chen@ · summarize contract</span><span class="v b">BLOCKED</span></div>
+                <div class="logrow"><span class="t">09:44</span><span class="a">design@ · rewrite this copy</span><span class="v a2">ALLOWED</span></div>
+                <div class="logrow"><span class="t">09:52</span><span class="a">sri@ · debug stack trace</span><span class="v b">BLOCKED</span></div>
+              </div>
+              <div class="spacer"></div>
+              <h3 style="font-size:27px">Proof for your next audit, written automatically.</h3>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com</span></span></div>
+          <div class="row"><span class="k">Post text</span><span class="val post">"How do you govern staff use of AI?" is now a line item in every security questionnaire. Most teams have a policy doc and no evidence.
+
+StileAI logs every prompt decision, allowed or blocked, with the reason and the redacted content. One export, and the answer is on paper.</span></div>
+          <div class="row"><span class="k">CTA</span><span class="val"><span class="pill">See the audit trail</span></span></div>
+        </div>
+      </div>
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">Meta · feed</span><span class="dim">1080×1080 · 1:1</span></div>
+          <div class="art sq">
+            <div class="pad">
+              <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+              <div class="spacer"></div>
+              <h3 style="font-size:33px">Your AI policy is a PDF. Where's the enforcement?</h3>
+              <p class="sub" style="font-size:14px;margin:14px 0 16px">A written policy no tool enforces is a liability with a date on it. StileAI turns the policy into a live checkpoint, on every prompt.</p>
+              <a class="cta">Turn policy into control<svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com</span> or lead magnet</span></div>
+          <div class="row"><span class="k">Headline</span><span class="val">From policy document to live control</span></div>
+          <div class="row"><span class="k">Best for</span><span class="val">Regulated-adjacent: health, fintech, legal-tech</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ============ 04 MSP ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>Bill it to every client</h2>
+      <span class="angle">Angle · MSP revenue</span>
+    </div>
+    <p class="sec-sub">Our highest-leverage audience. One MSP is many orgs. The pitch is not safety, it is a new recurring revenue line with zero infrastructure to run.</p>
+    <div class="grid">
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">LinkedIn · sponsored (r/msp variant)</span><span class="dim">1200×628 · 1.91:1</span></div>
+          <div class="art link">
+            <div class="pad" style="padding:32px 40px">
+              <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+              <div style="display:flex;gap:26px;align-items:center;flex:1;margin-top:8px">
+                <div style="flex:1">
+                  <h3 style="font-size:31px">Add AI governance to your stack. Bill every client.</h3>
+                  <p class="sub" style="font-size:14.5px;margin:12px 0 16px">One multi-tenant console. Per seat across your whole book. Zero infrastructure to run.</p>
+                  <a class="cta">Become a partner</a>
+                </div>
+                <div style="width:210px;flex:none">
+                  <div class="tenants">
+                    <div class="tcard"><div class="nm">Northwind</div><div class="st">42 seats</div></div>
+                    <div class="tcard"><div class="nm">Acme</div><div class="st">18 seats</div></div>
+                    <div class="tcard"><div class="nm">Volt</div><div class="st">31 seats</div></div>
+                    <div class="tcard"><div class="nm">Meridian</div><div class="st">27 seats</div></div>
+                    <div class="tcard"><div class="nm">Cedar</div><div class="st">9 seats</div></div>
+                    <div class="tcard" style="background:#EAF0FF;border-color:#cfe0ff"><div class="nm" style="color:#1140C0">+ new</div><div class="st">1 click</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">stileai.com/partners</span></span></div>
+          <div class="row"><span class="k">Post text</span><span class="val post">One multi-tenant console. Per seat. Roll StileAI out across your whole book, turn each blocked leak into evidence you hand the client, and add a new recurring revenue line, with zero infrastructure to run.</span></div>
+          <div class="row"><span class="k">CTA</span><span class="val"><span class="pill">Become a partner</span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ============ 05 LIVE DEMO ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h2>Watch it block a live leak</h2>
+      <span class="angle">Angle · The demo · retargeting</span>
+    </div>
+    <p class="sec-sub">The single most important creative: warm visitors who already came to the site. Show the product doing the one thing, in 30 seconds. This is the thumbnail for the demo clip.</p>
+    <div class="grid">
+
+      <div class="cre">
+        <div class="board-frame">
+          <div class="fmt"><span class="ch">Video thumb · retargeting</span><span class="dim">1280×720 · 16:9</span></div>
+          <div class="art wide">
+            <div class="pad" style="padding:30px 40px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="brand"><svg><use href="#shield"/></svg><span class="wm">Stile<b>AI</b></span></div>
+                <span class="kick" style="margin:0">0:30 demo</span>
+              </div>
+              <div style="display:flex;gap:26px;align-items:center;flex:1;margin-top:6px">
+                <div style="flex:1.1">
+                  <h3 style="font-size:33px">See it block a real secret in ChatGPT.</h3>
+                  <p class="sub" style="font-size:15px;margin:12px 0 18px;max-width:34ch">Live, in 30 seconds. Then turn it on for your team today.</p>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span style="width:46px;height:46px;border-radius:50%;background:#1953F0;display:inline-flex;align-items:center;justify-content:center">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                    </span>
+                    <span style="font-weight:700;font-size:14px">Play the demo</span>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div class="chip">
+                    <div class="dots"><i style="background:#e5806f"></i><i style="background:#e7c14e"></i><i style="background:#57b06f"></i></div>
+                    <div class="prompt">Here's our full customer export, find the top accounts: <span class="red"><span class="mask">name,email,plan,mrr…</span></span></div>
+                    <div class="verdict"><span class="badge block">BLOCKED</span><span class="reason">Bulk PII · 1,240 rows</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="row"><span class="k">Channel</span><span class="val">Meta + Google retargeting · YouTube pre-roll thumb</span></div>
+          <div class="row"><span class="k">Points to</span><span class="val"><span class="pill">Get started</span></span></div>
+          <div class="row"><span class="k">Post text</span><span class="val post">Still deciding? Watch StileAI block a real secret in ChatGPT, live, in 30 seconds. Then turn it on for your team today.</span></div>
+          <div class="row"><span class="k">CTA</span><span class="val"><span class="pill">Get started</span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>StileAI · paid creative v1 · white ground, #1953F0, shield mark, mono voice</footer>
+
+</div>
