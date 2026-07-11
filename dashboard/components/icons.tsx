@@ -62,6 +62,8 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
       return <svg {...common}><rect x="5" y="8" width="14" height="11" rx="3" /><path d="M12 8V4M9 3h6" /><circle cx="9.5" cy="13" r="1" /><circle cx="14.5" cy="13" r="1" /></svg>;
     case "circle":
       return <svg {...common}><circle cx="12" cy="12" r="9" /></svg>;
+    case "chevron":
+      return <svg {...common}><path d="m6 9 6 6 6-6" /></svg>;
     default:
       return <svg {...common}><circle cx="12" cy="12" r="9" /></svg>;
   }
