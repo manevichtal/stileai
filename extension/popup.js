@@ -1,6 +1,11 @@
 "use strict";
 
-const DEFAULTS = { endpoint: "https://stileai.com", key: "", enabled: true, failClosed: true };
+const DEFAULTS = { endpoint: "https://stileai.com", key: "", enabled: true, fallback: "availability" };
+const OUTAGE = {
+  availability: "If StileAI is ever unreachable, on-device checks keep protecting you.",
+  flag: "If StileAI is ever unreachable, on-device checks keep protecting you.",
+  hold: "Your admin has set this workspace to block everything if StileAI is unreachable.",
+};
 const $ = (id) => document.getElementById(id);
 const status = (msg, cls) => {
   const el = $("status");
@@ -13,7 +18,8 @@ async function load() {
   $("key").value = cfg.key;
   $("endpoint").value = cfg.endpoint;
   $("enabled").checked = cfg.enabled;
-  $("failClosed").checked = cfg.failClosed;
+  const note = $("outage");
+  if (note) note.textContent = OUTAGE[cfg.fallback] || OUTAGE.availability;
   if (!cfg.key) status("Not linked yet — paste your key and Save.", "muted");
   else status(cfg.enabled ? "Protection is on." : "Protection is off.", cfg.enabled ? "ok" : "muted");
 }
@@ -24,7 +30,6 @@ async function save() {
     key: $("key").value.trim(),
     endpoint,
     enabled: $("enabled").checked,
-    failClosed: $("failClosed").checked,
   });
   status("Saved.", "ok");
 }

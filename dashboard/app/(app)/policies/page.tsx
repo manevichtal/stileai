@@ -23,7 +23,7 @@ export default async function PoliciesPage({
       .order("priority", { ascending: true }),
     supabase
       .from("org_policy_settings")
-      .select("default_effect, default_reason")
+      .select("default_effect, default_reason, ai_fallback_mode")
       .eq("org_id", ctx.orgId)
       .maybeSingle(),
   ]);
@@ -52,6 +52,7 @@ export default async function PoliciesPage({
         policies={policies}
         defaultEffect={settings?.default_effect ?? "require_approval"}
         defaultReason={settings?.default_reason ?? "No policy matched — defaulting to human approval."}
+        fallbackMode={(settings?.ai_fallback_mode as "availability" | "hold" | "flag") ?? "availability"}
         existingIds={policies.map((p) => p.policy_id)}
         initialTab={tab === "library" ? "library" : "rules"}
         plan={ctx.plan}

@@ -2,16 +2,24 @@
 // place that talks to the StileAI backend. It answers verdict requests from the
 // bridge by POSTing the prompt to /api/inspect and returning the decision.
 //
-// Fail-closed: if StileAI can't be reached and the admin hasn't opted into
-// fail-open, a prompt we couldn't verify is BLOCKED (never silently allowed) — the
-// same guarantee the server-side proxy makes.
+// Resilience: when the backend is reachable it decides (full engine + the org's
+// policies + the AI second opinion). When it is UNREACHABLE, the extension does not
+// go dark: it runs a local copy of the deterministic checks on-device (detectors.js)
+// and blocks anything it can detect, allowing clean prompts through in a "degraded"
+// state. Orgs that prefer maximum safety can choose "hold" (block everything when
+// unreachable) from the dashboard; that choice is cached here from server responses.
 "use strict";
+
+importScripts("detectors.js"); // provides self.StileAIDetect(prompt)
 
 const DEFAULTS = {
   endpoint: "https://stileai.com",
   key: "",
   enabled: true,
-  failClosed: true,
+  // The org's outage policy, cached from /api/inspect responses:
+  //   "availability" (default) / "flag" → run the on-device checks when unreachable
+  //   "hold" → block everything when unreachable (maximum safety)
+  fallback: "availability",
 };
 
 async function getConfig() {
@@ -41,22 +49,41 @@ async function inspect(prompt, label) {
       signal: ctrl.signal,
     });
     const v = await r.json();
-    if (v && v.effect) return v;
-    // Malformed answer → treat as unverifiable.
+    if (v && v.effect) {
+      // Cache the org's outage policy for the next time we can't reach the backend.
+      if (v.fallback && v.fallback !== cfg.fallback) {
+        chrome.storage.sync.set({ fallback: v.fallback });
+      }
+      return v;
+    }
+    // Malformed answer → treat as unreachable.
     throw new Error("bad response");
   } catch (_) {
-    return cfg.failClosed
-      ? {
-          effect: "deny",
-          reason:
-            "StileAI couldn't verify this message (the policy service was unreachable), so it was blocked to protect company data.",
-          categories: [],
-          unreachable: true,
-        }
-      : { effect: "allow", reason: "", categories: [], unreachable: true };
+    return offlineVerdict(prompt, cfg);
   } finally {
     clearTimeout(timer);
   }
+}
+
+// The backend was unreachable. Degrade the way the admin chose.
+function offlineVerdict(prompt, cfg) {
+  if (cfg.fallback === "hold") {
+    return {
+      effect: "deny",
+      reason:
+        "StileAI is temporarily unreachable and your organization holds unverified requests, so this was blocked to protect company data.",
+      categories: [],
+      unreachable: true,
+    };
+  }
+  // Run the on-device checks: block what we can detect locally, allow clean prompts.
+  try {
+    const local = self.StileAIDetect ? self.StileAIDetect(prompt) : { categories: [], reason: "" };
+    if (local.categories && local.categories.length) {
+      return { effect: "deny", reason: local.reason, categories: local.categories, unreachable: true, degraded: true };
+    }
+  } catch (_) {}
+  return { effect: "allow", reason: "", categories: [], unreachable: true, degraded: true };
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -66,7 +93,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg && msg.type === "getStatus") {
     getConfig().then((c) =>
-      sendResponse({ enabled: c.enabled, configured: !!c.key, endpoint: c.endpoint, failClosed: c.failClosed })
+      sendResponse({ enabled: c.enabled, configured: !!c.key, endpoint: c.endpoint, fallback: c.fallback })
     );
     return true;
   }

@@ -1,4 +1,5 @@
 import { resolveCaller, gate, auditCallerBlock } from "@/lib/aiGate";
+import { getFallbackMode } from "@/lib/deepInspect";
 import { callerDecision } from "@/lib/seats";
 import { rateLimit, keyBucket } from "@/lib/rateLimit";
 
@@ -95,10 +96,15 @@ export async function POST(req: Request) {
   const effect =
     result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
 
+  // Tell the extension this org's outage policy, so if StileAI ever becomes
+  // unreachable the extension can degrade the way the admin chose (see background.js).
+  const fallback = await getFallbackMode(caller.orgId);
+
   return json({
     effect,
     reason: result.reason,
     categories: result.hits.map((h) => h.category),
     profile: result.profile,
+    fallback,
   });
 }

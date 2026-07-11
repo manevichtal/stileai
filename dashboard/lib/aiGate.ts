@@ -95,7 +95,8 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   await admin.from("audit_log").insert({
     org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
     actor: "employee", action: "ai.request", resource: model,
-    params: { categories, evidence, preview }, effect, matched_policy: result.hits[0]?.label ?? null,
+    params: { categories, evidence, preview, ai_verified: result.unverified ? false : undefined },
+    effect, matched_policy: result.hits[0]?.label ?? null,
     reason: result.reason, status, employee_id: employeeId ?? null,
   });
   if (result.decision === "admin_approval") {

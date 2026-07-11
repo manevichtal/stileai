@@ -124,7 +124,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   await admin.from("audit_log").insert({
     org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
     actor: "employee", action: "ai.request", resource: model,
-    params: { categories, preview: safePreview },
+    params: { categories, preview: safePreview, ai_verified: result.unverified ? false : undefined },
     effect, matched_policy: result.hits[0]?.label ?? null, reason: result.reason, status,
     employee_id: caller.employeeId,
   });

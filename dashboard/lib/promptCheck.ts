@@ -31,6 +31,10 @@ export type CheckResult = {
   reason: string;
   hits: CategoryHit[];
   profile: string;
+  // Set when the request was allowed but the optional AI deep-inspection step could
+  // not run (service unavailable / budget spent). Surfaced in the audit trail so an
+  // admin knows this one wasn't AI-verified. The local checks still ran.
+  unverified?: boolean;
 };
 
 export const CATEGORY_LABEL: Record<Category, string> = {

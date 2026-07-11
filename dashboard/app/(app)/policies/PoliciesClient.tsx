@@ -7,6 +7,7 @@ import {
   savePolicy,
   deletePolicy,
   updateDefaults,
+  updateFallbackMode,
   addPack,
   type PolicyInput,
   type Condition,
@@ -34,6 +35,7 @@ export function PoliciesClient({
   policies,
   defaultEffect,
   defaultReason,
+  fallbackMode,
   existingIds,
   initialTab = "rules",
   plan,
@@ -41,6 +43,7 @@ export function PoliciesClient({
   policies: PolicyInput[];
   defaultEffect: string;
   defaultReason: string;
+  fallbackMode: "availability" | "hold" | "flag";
   existingIds: string[];
   initialTab?: "rules" | "library";
   plan: string | null;
@@ -72,6 +75,7 @@ export function PoliciesClient({
           policies={policies}
           defaultEffect={defaultEffect}
           defaultReason={defaultReason}
+          fallbackMode={fallbackMode}
           editing={editing}
           setEditing={setEditing}
           router={router}
@@ -85,6 +89,7 @@ function RulesTab({
   policies,
   defaultEffect,
   defaultReason,
+  fallbackMode,
   editing,
   setEditing,
   router,
@@ -92,6 +97,7 @@ function RulesTab({
   policies: PolicyInput[];
   defaultEffect: string;
   defaultReason: string;
+  fallbackMode: "availability" | "hold" | "flag";
   editing: PolicyInput | null;
   setEditing: (p: PolicyInput | null) => void;
   router: ReturnType<typeof useRouter>;
@@ -103,6 +109,7 @@ function RulesTab({
         defaultReason={defaultReason}
         onSaved={() => router.refresh()}
       />
+      <FallbackBar mode={fallbackMode} onSaved={() => router.refresh()} />
 
       <div className="flex items-center justify-between">
         <p className="font-sans text-[12px] text-ink3">
@@ -198,6 +205,41 @@ function DefaultsBar({ defaultEffect, defaultReason, onSaved }: { defaultEffect:
         className="font-sans text-[11.5px] text-blue disabled:text-ink4 hover:underline"
       >
         {busy ? "Saving…" : "Save default"}
+      </button>
+    </div>
+  );
+}
+
+const FALLBACK_OPTS: { id: "availability" | "hold" | "flag"; label: string; hint: string }[] = [
+  { id: "availability", label: "Stay available", hint: "Allow it (the local checks already cleared it)." },
+  { id: "hold", label: "Hold for approval", hint: "Send it to an admin instead of allowing it. Most strict." },
+  { id: "flag", label: "Allow but flag", hint: "Allow it, and mark it in the audit log as not AI-verified." },
+];
+
+function FallbackBar({ mode, onSaved }: { mode: "availability" | "hold" | "flag"; onSaved: () => void }) {
+  const [val, setVal] = useState(mode);
+  const [busy, setBusy] = useState(false);
+  const dirty = val !== mode;
+  return (
+    <div className="bg-bg2 border border-line rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col">
+        <span className="font-sans text-[12px] text-ink2">If the extra AI check ever cannot run, then</span>
+        <span className="font-sans text-[10.5px] text-ink4">Your local checks always run first. This only covers the small allowed-but-unverified slice.</span>
+      </div>
+      <select value={val} onChange={(e) => setVal(e.target.value as typeof val)} className={inputCls()} title={FALLBACK_OPTS.find((o) => o.id === val)?.hint}>
+        {FALLBACK_OPTS.map((o) => (
+          <option key={o.id} value={o.id}>{o.label}</option>
+        ))}
+      </select>
+      <span className="font-sans text-[10.5px] text-ink4 flex-1 min-w-[200px]">
+        {FALLBACK_OPTS.find((o) => o.id === val)?.hint}
+      </span>
+      <button
+        disabled={!dirty || busy}
+        onClick={async () => { setBusy(true); await updateFallbackMode(val); setBusy(false); onSaved(); }}
+        className="font-sans text-[11.5px] text-blue disabled:text-ink4 hover:underline"
+      >
+        {busy ? "Saving…" : "Save"}
       </button>
     </div>
   );

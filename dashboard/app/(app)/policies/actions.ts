@@ -146,3 +146,18 @@ export async function updateDefaults(
   revalidatePath("/policies");
   return { ok: true };
 }
+
+// How this org handles a gray-zone request when the AI verification step can't run.
+export async function updateFallbackMode(mode: string): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  if (!["availability", "hold", "flag"].includes(mode))
+    return { ok: false, error: "Unknown mode." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("org_policy_settings")
+    .upsert({ org_id: ctx.orgId, ai_fallback_mode: mode }, { onConflict: "org_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  return { ok: true };
+}
