@@ -28,25 +28,6 @@
   .req .fl{font-size:.62em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-left:14px;opacity:0;transition:opacity .2s}
   .req.show .fl{opacity:.9}
 
-  .gateline{position:absolute;top:540px;left:0;right:0;height:2px;transform-origin:center;opacity:0;
-    background:linear-gradient(90deg,transparent,var(--blue) 28%,#cddcff 50%,var(--blue) 72%,transparent);
-    box-shadow:0 0 38px 6px rgba(46,107,255,.6)}
-  .gateband{position:absolute;top:460px;left:0;right:0;height:160px;opacity:0;pointer-events:none;
-    background:linear-gradient(180deg,transparent,rgba(46,107,255,.09),transparent)}
-  .stage.playing .gateline{animation:gateOn 1s ease 7.3s forwards}
-  .stage.playing .gateband{animation:gateOn 1s ease 7.3s forwards}
-  @keyframes gateOn{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:scaleX(1)}}
-  /* dramatic ignition: a screen flash and a shockwave burst from the gate */
-  .flash{position:absolute;inset:0;opacity:0;pointer-events:none;mix-blend-mode:screen;
-    background:radial-gradient(circle at 50% 540px, rgba(150,190,255,.95), rgba(46,107,255,.5) 26%, transparent 58%)}
-  .shock{position:absolute;top:534px;left:0;right:0;height:12px;opacity:0;pointer-events:none;transform-origin:center;
-    background:linear-gradient(90deg,transparent,rgba(120,175,255,.9) 30%,#eaf1ff 50%,rgba(120,175,255,.9) 70%,transparent);
-    box-shadow:0 0 80px 20px rgba(46,107,255,.7);border-radius:12px}
-  .stage.playing .flash{animation:flashPulse .85s ease 7.25s both}
-  .stage.playing .shock{animation:shockwave 1s cubic-bezier(.15,.7,.2,1) 7.28s both}
-  @keyframes flashPulse{0%{opacity:0}10%{opacity:.9}55%{opacity:.12}100%{opacity:0}}
-  @keyframes shockwave{0%{opacity:0;transform:scaleY(1) scaleX(.6)}12%{opacity:1}100%{opacity:0;transform:scaleY(26) scaleX(1)}}
-
   .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;padding:110px;text-align:center}
   .grp{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:150px 110px}
 
@@ -168,10 +149,6 @@
   <div class="vscale" id="vscale">
     <div class="stage playing" id="stage">
       <div class="reqfield" id="reqfield"></div>
-      <div class="gateband"></div>
-      <div class="gateline"></div>
-      <div class="shock"></div>
-      <div class="flash"></div>
       <div class="vig"></div>
 
       <!-- S1 COLD OPEN 0-4 -->
@@ -323,47 +300,27 @@
   }
   for(var i=0;i<N;i++){ pool.push(mk()); }
 
-  // during the intro the request wall is full-strength; once the headline
-  // arrives it dims back so it reads as ambient background behind the copy.
+  // The wall runs full strength during the intro, then dims down. It dims the
+  // most whenever a big headline or the metrics are on screen, so the ambient
+  // requests never fight the main text.
   function fieldLevel(t){ var I=INTRO/1000, st=t-I;
     if(t<I) return 1;
-    if(st>21.2){ if(st<21.9) return 0.42-((st-21.2)/0.7)*0.28; return 0.14; } // calm behind the metrics + CTA
-    var r=(t-I)/0.9; return r>=1?0.42:(1-r*0.58); }
-  function gateActive(st){ return st>=7.3 && st<21.2; }
-  var slammed=false;
-  function slam(){ // the moment the checkpoint ignites: everything rushes the gate at once
-    for(var i=0;i<pool.length;i++){ var p=pool[i];
-      if(p.state===0 && p.y>GATE){ p.sp = 780 + Math.random()*420; } }
-  }
+    var base;
+    if(st<11) base=0.24;          // behind the big opening headlines
+    else if(st<21.2) base=0.32;   // behind the story cards
+    else if(st<21.9) return 0.32-((st-21.2)/0.7)*0.18; // ramp down into the metrics
+    else base=0.14;               // behind metrics + CTA
+    var r=(t-I)/0.9; if(r<1) return 1-(1-0.24)*r;   // smooth intro handoff
+    return base; }
   function updateField(dt,t){
-    var st=t-INTRO/1000, flvl=fieldLevel(t);
+    var flvl=fieldLevel(t);
     for(var i=0;i<pool.length;i++){ var p=pool[i];
-      if(p.state===2){ // caught: hold then fade
-        p.life+=dt;
-        var cf=1; if(p.life>0.75){ cf=Math.max(0, 1-(p.life-0.75)*1.4); }
-        p.el.style.opacity = cf*Math.max(flvl,0.8);
-        if(p.life>1.6){ reset(p,false); continue; }
-        p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
-        continue;
-      }
-      var prev=p.y; p.y -= p.sp*dt;
-      // gate crossing
-      if(gateActive(st) && prev>GATE && p.y<=GATE && p.state===0){
-        if(p.sens){
-          var block = Math.random()<0.62;
-          p.state=2; p.life=0; p.y=GATE-2;
-          p.el.classList.add('show');
-          if(block){ p.el.style.color='rgba(255,77,87,.85)'; p.fl.textContent='blocked'; }
-          else { p.el.style.color='rgba(31,206,124,.8)'; p.fl.textContent='approved'; }
-          p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
-          continue;
-        } else { p.state=1; p.el.style.color='rgba(31,206,124,.30)'; }
-      }
-      if(p.y<-60){ reset(p,false); continue; }
+      p.y -= p.sp*dt;                                 // rise all the way up
+      if(p.y<-70){ reset(p,false); continue; }        // recycle at the bottom
       // soft fade in near the bottom and out near the top so nothing pops abruptly
       var edge=1;
-      if(p.y > H-180) edge=(H - p.y)/180;
-      else if(p.y < 170) edge=p.y/170;
+      if(p.y > H-160) edge=(H - p.y)/160;
+      else if(p.y < 120) edge=p.y/120;
       if(edge<0)edge=0; if(edge>1)edge=1;
       p.el.style.opacity = edge*flvl;
       p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
@@ -375,7 +332,6 @@
     if(!playing){ return; }
     var t=(now-startT)/1000, st=t-INTRO/1000;
     var dt=Math.min((now-lastT)/1000, 0.05); lastT=now;
-    if(!slammed && st>=7.28){ slammed=true; slam(); }
     updateField(dt,t);
     if(st>22 && st<26.4){ var e=function(x){x=Math.max(0,Math.min(1,x));return 1-Math.pow(1-x,3);};
       ctA.textContent=Math.round(e((st-22.3)/2.4)*2481).toLocaleString();
@@ -389,7 +345,6 @@
     stage.classList.remove('playing'); wrap.classList.remove('playing');
     void stage.offsetWidth;
     for(var i=0;i<pool.length;i++){ reset(pool[i], true); }
-    slammed=false;
     startT=performance.now(); lastT=startT; playing=true;
     ctA.textContent='0'; ctB.textContent='0';
     // Phase 1: intro (request wall only). Progress bar + hidden UI start now.
