@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { signUpAction } from "./actions";
-import { Brand } from "@/components/Brand";
 
 type Mode = "signin" | "signup";
 type Plan = "starter" | "business";
@@ -93,7 +92,8 @@ function LoginPageInner() {
     <main className="flex-1 flex flex-col items-center justify-center px-5 py-16">
       <div className="w-full max-w-[400px]">
         <div className="flex flex-col items-center mb-7">
-          <Brand />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brandmark.png" alt="StileAI" style={{ height: 30, width: "auto" }} />
           <p className="font-sans text-[12.5px] text-ink3 mt-2.5 text-center">
             The checkpoint for agentic AI.
           </p>

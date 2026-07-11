@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#F4F5F6" />
 <title>StileAI · the AI security checkpoint for your team</title>
 <meta name="description" content="StileAI checks every AI request your team sends and blocks secrets, customer data, and source code before they reach ChatGPT, Claude, or Gemini. A Chrome extension for the browser plus an API gateway for developer tools. Explore it in the console." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22 fill=%22none%22%3E%3Cg stroke=%22%231953F0%22 stroke-width=%222.6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 11V6.5A2.5 2.5 0 0 1 6.5 4H11%22/%3E%3Cpath d=%22M21 4h4.5A2.5 2.5 0 0 1 28 6.5V11%22/%3E%3Cpath d=%22M28 21v4.5a2.5 2.5 0 0 1-2.5 2.5H21%22/%3E%3Cpath d=%22M11 28H6.5A2.5 2.5 0 0 1 4 25.5V21%22/%3E%3C/g%3E%3Crect x=%2211.6%22 y=%2211.6%22 width=%228.8%22 height=%228.8%22 rx=%222%22 transform=%22rotate(45 16 16)%22 fill=%22%231953F0%22/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%232E8CE8'/%3E%3Cstop offset='1' stop-color='%231157AE'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F4DA86'/%3E%3Cstop offset='.5' stop-color='%23E0B33A'/%3E%3Cstop offset='1' stop-color='%23B9862A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='10' fill='%23050608'/%3E%3Cpath d='M14 12C14 10.5 15 10 16.5 10L47.5 10C49 10 50 10.5 50 12C50 20 51 26 50 32C49 42 41.5 49 32 54.5C22.5 49 15 42 14 32C13 26 14 20 14 12Z' fill='url(%23b)' stroke='url(%23g)' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -20,10 +20,9 @@
     --mono:"JetBrains Mono",ui-monospace,monospace; --ui:"Inter",system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  html{-webkit-text-size-adjust:100%}
+  html{min-height:100%;-webkit-text-size-adjust:100%}
   body{color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;
-    background:radial-gradient(120% 90% at 50% 25%,#FFFFFF 0%,#F4F5F6 100%)}
+    background:radial-gradient(120% 90% at 50% 25%,#FFFFFF 0%,#F4F5F6 100%) fixed}
   ::selection{background:rgba(25,83,240,.14)}
   ::-webkit-scrollbar{width:9px;height:9px}
   ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px;border:2px solid var(--card);background-clip:padding-box}
@@ -32,7 +31,7 @@
   .stage{margin:auto;width:100%;max-width:1080px;padding:clamp(14px,2.4vh,22px) 20px clamp(24px,4vh,40px);display:flex;flex-direction:column;align-items:center}
   .brand{display:flex;align-items:center;gap:11px;font-family:var(--ui);font-weight:800;font-size:23px;letter-spacing:-.025em;color:var(--ink)}
   .brand svg{width:31px;height:31px;flex:none}
-  .app{width:100%;height:min(690px,82vh);margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  .app{width:100%;height:min(624px,76vh);margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:14px;
     box-shadow:0 1px 2px rgba(16,24,40,.04),0 30px 60px -34px rgba(16,24,40,.28);display:flex;flex-direction:column;overflow:hidden}
   .head{flex:none;display:flex;align-items:center;gap:9px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg2)}
   .head .pdot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
@@ -40,7 +39,7 @@
   .head .hint{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--ink3)}
 
   .term{flex:1;display:flex;flex-direction:column;min-height:0}
-  .term-out{flex:1;overflow-y:auto;padding:28px 32px 12px;min-height:0;font-family:var(--mono);font-size:15px;line-height:1.78;color:var(--ink)}
+  .term-out{flex:1;overflow-y:auto;padding:22px 24px 10px;min-height:0;font-family:var(--mono);font-size:13.5px;line-height:1.68;color:var(--ink)}
   @keyframes lineIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .l{white-space:pre-wrap;word-break:break-word;margin:1px 0;animation:lineIn .32s cubic-bezier(.2,.7,.2,1) both}
   .l.pre{white-space:pre;overflow-x:auto}
@@ -78,10 +77,10 @@
   .chip:hover{color:var(--blue);background:var(--card)}
   .chip.on{color:var(--blue);background:var(--bluedim);font-weight:600}
   .chip:active{transform:scale(.95)}
-  .prompt{flex:none;display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid var(--line);background:var(--card)}
-  .prompt .p{font-family:var(--mono);font-size:14px;color:var(--blue);white-space:nowrap}
+  .prompt{flex:none;display:flex;align-items:center;gap:9px;padding:14px 18px;border-top:1px solid var(--line);background:var(--card)}
+  .prompt .p{font-family:var(--mono);font-size:13px;color:var(--blue);white-space:nowrap}
   .prompt .arr{color:var(--blue)}
-  .cin{flex:1;background:none;border:none;color:var(--ink);font-family:var(--mono);font-size:14px;caret-color:var(--blue);outline:none;min-width:0}
+  .cin{flex:1;background:none;border:none;color:var(--ink);font-family:var(--mono);font-size:13px;caret-color:var(--blue);outline:none;min-width:0}
   .cin::placeholder{color:var(--ink4)}
   .legal{font-family:var(--mono);font-size:11px;color:var(--ink4);margin-top:18px}
   .topbar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px}
@@ -113,10 +112,14 @@
   .proof{font-family:var(--ui);font-size:13px;color:var(--ink3);margin-top:16px;display:flex;align-items:center;gap:8px}
   .proof svg{flex:none}
   .tools{width:100%;margin-top:22px;text-align:center}
-  .tools-cap{font-family:var(--mono);font-size:12px;letter-spacing:.01em;color:var(--ink3);text-align:center;margin-bottom:13px}
-  .tools-row{display:flex;flex-wrap:wrap;justify-content:center;gap:9px 10px}
-  .tools-row span{font-family:var(--ui);font-weight:600;font-size:13px;color:var(--ink2);background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;transition:border-color .18s,color .18s}
-  .tools-row span:hover{color:var(--ink);border-color:var(--line2)}
+  .tools-cap{font-family:var(--mono);font-size:12px;letter-spacing:.01em;color:var(--ink3);text-align:center;margin-bottom:15px}
+  .tools-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+  .tlogo{display:inline-flex;align-items:center;gap:8px;font-family:var(--ui);font-weight:600;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 15px 7px 12px;box-shadow:0 1px 2px rgba(16,24,40,.05);animation:tbob 5s ease-in-out infinite;transition:box-shadow .2s,border-color .2s,color .2s}
+  .tlogo:hover{color:var(--ink);border-color:var(--line2);box-shadow:0 9px 20px -10px rgba(16,24,40,.4)}
+  .tlogo svg{width:16px;height:16px;flex:none;display:block}
+  .tlogo:nth-child(2){animation-delay:.5s}.tlogo:nth-child(3){animation-delay:1s}.tlogo:nth-child(4){animation-delay:1.5s}
+  .tlogo:nth-child(5){animation-delay:2s}.tlogo:nth-child(6){animation-delay:2.5s}.tlogo:nth-child(7){animation-delay:3s}
+  @keyframes tbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
   @media(max-width:640px){ .stage{padding:20px 12px 24px} .app{height:72vh;margin-top:18px} .term-out{padding:18px 15px 10px} .cmdbar{gap:3px;padding:8px} .chip{padding:8px 10px;font-size:12px} .brand{font-size:19px} .cta{padding:9px 14px;font-size:13px} .headline{margin-top:18px} }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -147,7 +150,7 @@
   </div>
   <div class="tools">
     <div class="tools-cap">A Chrome extension for ChatGPT, Claude &amp; Gemini, plus an API gateway for Cursor, Claude Code &amp; your apps.</div>
-    <div class="tools-row"><span>ChatGPT</span><span>Claude</span><span>Gemini</span><span>Copilot</span><span>Cursor</span><span>Claude Code</span><span>OpenAI API</span></div>
+    <div class="tools-row" id="toolrow"></div>
   </div>
   <p class="proof"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1953F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg>Built by MSP operators and enterprise security leaders</p>
   <p class="legal">© 2026 StileAI</p>
@@ -410,12 +413,18 @@ async function doLogin(ev){
 }
 document.getElementById('loginLink').addEventListener('click',()=>{AUTH=false;loginStart();});
 
-/* AI-tool trust ticker */
+/* AI-tool logo chips (gently animated) */
 (function(){
-  const track=document.getElementById('track'); if(!track) return;
-  const NAMES=['ChatGPT','Claude','Gemini','Copilot','Llama','Grok','Mistral','Perplexity','Cohere','Hugging Face','Midjourney','DeepSeek','Command R','Stable Diffusion','Databricks','LangChain','Cursor','Replit','GitHub Copilot','Notion AI','Glean','Poe','Character.AI','ElevenLabs'];
-  const row=()=>NAMES.map(n=>'<span class="tlogo">'+n+'</span>').join('');
-  track.innerHTML=row()+row();
+  const row=document.getElementById('toolrow'); if(!row) return;
+  const G={
+    openai:'<svg viewBox="0 0 24 24" fill="#0F0F0F"><path d="M21 9.6a5.4 5.4 0 0 0-.5-4.5 5.5 5.5 0 0 0-5.9-2.6A5.4 5.4 0 0 0 5.4 4a5.4 5.4 0 0 0-3.6 2.6 5.5 5.5 0 0 0 .7 6.4 5.4 5.4 0 0 0 .5 4.5 5.5 5.5 0 0 0 5.9 2.6A5.4 5.4 0 0 0 18.6 20a5.4 5.4 0 0 0 3.6-2.6 5.5 5.5 0 0 0-.7-6.4Zm-8 11.2a4 4 0 0 1-2.6-.9l3.6-2.1a.6.6 0 0 0 .3-.5v-5.1l1.5.9v4.2a4 4 0 0 1-2.8 3.5ZM5.2 17a4 4 0 0 1-.5-2.7l3.6 2.1a.6.6 0 0 0 .6 0l4.4-2.6v1.8L9.7 18a4 4 0 0 1-4.5-1Zm-1-8.7a4 4 0 0 1 2.1-1.8v4.3a.6.6 0 0 0 .3.5l4.4 2.6-1.5.9-3.7-2.1a4 4 0 0 1-1.6-4.3Zm12.4 2.9L12.2 8.6 13.7 7.8l3.7 2.1a4 4 0 0 1-.6 7.2v-4.3a.6.6 0 0 0-.3-.5Zm1.5-2.2-3.6-2.1a.6.6 0 0 0-.6 0L9.9 9.5V7.7l3.8-2.2a4 4 0 0 1 5.9 4.1Zm-9.5 3-1.5-.9V6.9a4 4 0 0 1 6.6-3.1L10.7 5.9a.6.6 0 0 0-.3.5Zm.8-1.8L12 10.9l2 1.1v2.3l-2 1.1-2-1.1v-2.3Z"/></svg>',
+    claude:'<svg viewBox="0 0 24 24" fill="#D97757"><path d="M4.7 15.3 9 5.1c.2-.5.6-.7 1.1-.7.6 0 1 .3 1.2.8l4.2 10.1c.2.6-.1 1.2-.7 1.4-.5.2-1.1-.1-1.3-.6l-.9-2.3H7.6l-.9 2.2c-.2.6-.8.9-1.4.7-.6-.2-.9-.8-.6-1.4Zm3.6-3.9h3.4L10 7Z"/><path d="M14.5 4.6c.2-.5.7-.8 1.2-.6.5.1.8.7.6 1.2l-3.9 10.4c-.2.5-.7.8-1.2.6-.5-.2-.8-.7-.6-1.2Z" opacity=".55"/></svg>',
+    gemini:'<svg viewBox="0 0 24 24" fill="#3B82F6"><path d="M12 2c.4 5.3 4.7 9.6 10 10-5.3.4-9.6 4.7-10 10-.4-5.3-4.7-9.6-10-10 5.3-.4 9.6-4.7 10-10Z"/></svg>',
+    copilot:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5" fill="#F25022"/><rect x="13" y="3" width="8" height="8" rx="1.5" fill="#7FBA00"/><rect x="3" y="13" width="8" height="8" rx="1.5" fill="#00A4EF"/><rect x="13" y="13" width="8" height="8" rx="1.5" fill="#FFB900"/></svg>',
+    cursor:'<svg viewBox="0 0 24 24" fill="#111"><path d="M5 3l14 8-6 1.6L11.4 19 5 3Z"/></svg>'
+  };
+  const CHIPS=[['ChatGPT','openai'],['Claude','claude'],['Gemini','gemini'],['Copilot','copilot'],['Cursor','cursor'],['Claude Code','claude'],['OpenAI API','openai']];
+  row.innerHTML=CHIPS.map(c=>'<span class="tlogo">'+(G[c[1]]||'')+c[0]+'</span>').join('');
 })();
 
 /* ===== fuzzy glitch on the blue headline line (slower, single line) ===== */
