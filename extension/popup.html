@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root { color-scheme: light; }
+      body {
+        width: 320px;
+        margin: 0;
+        font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #1a2230;
+        background: #fff;
+      }
+      header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 14px 16px; border-bottom: 1px solid #eef0f3;
+      }
+      header .mark { font-size: 18px; }
+      header h1 { font-size: 14px; margin: 0; font-weight: 700; }
+      header .tag { margin-left: auto; font-size: 11px; color: #6b7686; }
+      .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+      label { font-weight: 600; display: block; margin-bottom: 4px; }
+      input[type="text"], input[type="password"] {
+        width: 100%; box-sizing: border-box; padding: 8px 10px;
+        border: 1px solid #d6dae1; border-radius: 8px; font: inherit;
+      }
+      .hint { color: #6b7686; font-size: 11px; margin-top: 3px; }
+      .row { display: flex; align-items: center; gap: 8px; }
+      .row input { margin: 0; }
+      .row label { margin: 0; font-weight: 500; }
+      button {
+        width: 100%; padding: 9px 12px; border: 0; border-radius: 8px;
+        background: #1a56db; color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+      }
+      button:hover { background: #1749c0; }
+      button.secondary { background: #eef1f6; color: #1a2230; }
+      button.secondary:hover { background: #e3e8f0; }
+      #status { font-size: 12px; min-height: 16px; }
+      .ok { color: #0f7a3d; } .err { color: #b02a37; } .muted { color: #6b7686; }
+      .divider { height: 1px; background: #eef0f3; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="mark">🛡️</span>
+      <h1>StileAI</h1>
+      <span class="tag">AI policy checkpoint</span>
+    </header>
+    <div class="body">
+      <div>
+        <label for="key">Your StileAI key</label>
+        <input id="key" type="password" placeholder="paste your workspace key" autocomplete="off" />
+        <div class="hint">From your StileAI dashboard → Team &amp; seats (or Keys).</div>
+      </div>
+      <div>
+        <label for="endpoint">Workspace URL</label>
+        <input id="endpoint" type="text" placeholder="https://stileai.vercel.app" />
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <input id="enabled" type="checkbox" />
+        <label for="enabled">Protection on</label>
+      </div>
+      <div class="row">
+        <input id="failClosed" type="checkbox" />
+        <label for="failClosed">Block if StileAI is unreachable (fail-closed)</label>
+      </div>
+      <button id="save">Save</button>
+      <button id="test" class="secondary">Test connection</button>
+      <div id="status" class="muted"></div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
