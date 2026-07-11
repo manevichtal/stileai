@@ -141,7 +141,7 @@
   .rbtn svg{width:16px;height:16px}
   .track{flex:1;height:5px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden}
   .bar-fill{height:100%;width:0;background:var(--blue);border-radius:5px}
-  .vwrap.playing .bar-fill{animation:prog 30s linear both}
+  .vwrap.playing .bar-fill{animation:prog 32.6s linear both}
   @keyframes prog{from{width:0}to{width:100%}}
   .hint{flex:none;color:rgba(255,255,255,.7);font-size:13px;font-weight:500}
 
@@ -255,7 +255,7 @@
   <div class="controls" id="controls">
     <button class="rbtn" id="replay"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button>
     <div class="track"><div class="bar-fill" id="bar"></div></div>
-    <span class="hint">30s · screen-record this frame for your MP4 · press R to replay</span>
+    <span class="hint">33s · screen-record this frame for your MP4 · press R to replay</span>
   </div>
 </div>
 
@@ -265,7 +265,7 @@
       scaleEl=document.getElementById('vscale'), replay=document.getElementById('replay'),
       field=document.getElementById('reqfield'),
       ctA=document.getElementById('ctA'), ctB=document.getElementById('ctB');
-  var W=1920, H=1080, DUR=30000, GATE=540, endT=null, hideT=null, startT=0, lastT=0, playing=false;
+  var W=1920, H=1080, INTRO=2600, DUR=32600, GATE=540, endT=null, hideT=null, startT=0, lastT=0, playing=false, sceneStarted=false, sceneT0=null;
 
   function fit(){
     var availH=window.innerHeight-70, availW=window.innerWidth;
@@ -287,7 +287,7 @@
     ['dedupe this export of 12,000 user emails','PII'],['here is our source code, find the bug','source code'],
     ['summarize these 400 support tickets with names','customer data'],['break down our cap table and options','financial']];
   var COLS=[80,300,520,1420,1630,1840, 760, 1160]; // side-weighted columns
-  var pool=[], N=22;
+  var pool=[], N=30;
   function mk(){ var el=document.createElement('div'); el.className='req';
     var cs=document.createElement('span'); cs.className='cs'; cs.textContent='›';
     var tx=document.createElement('span'); var fl=document.createElement('span'); fl.className='fl';
@@ -299,7 +299,7 @@
     if(sens){ var s=SENS[(Math.random()*SENS.length)|0]; p.tx.textContent=s[0]; p.tag=s[1]; p.fl.textContent=s[1]; }
     else { p.tx.textContent=SAFE[(Math.random()*SAFE.length)|0]; p.tag=''; p.fl.textContent=''; }
     p.el.classList.remove('show');
-    p.el.style.color = sens ? 'rgba(245,178,70,.24)' : 'rgba(150,170,205,.12)';
+    p.el.style.color = sens ? 'rgba(245,178,70,.34)' : 'rgba(150,170,205,.22)';
     p.el.style.opacity='0';
     p.x = COLS[(Math.random()*COLS.length)|0] + (Math.random()*80-40);
     p.sp = 54 + Math.random()*50;                 // px per second, upward (gentle)
@@ -308,19 +308,24 @@
   }
   for(var i=0;i<N;i++){ pool.push(mk()); }
 
-  function gateActive(t){ return t>=7.4 && t<25.9; }
+  // during the intro the request wall is full-strength; once the headline
+  // arrives it dims back so it reads as ambient background behind the copy.
+  function fieldLevel(t){ var I=INTRO/1000; if(t<I) return 1; var r=(t-I)/0.9; return r>=1?0.42:(1-r*0.58); }
+  function gateActive(st){ return st>=7.4 && st<25.9; }
   function updateField(dt,t){
+    var st=t-INTRO/1000, flvl=fieldLevel(t);
     for(var i=0;i<pool.length;i++){ var p=pool[i];
       if(p.state===2){ // caught: hold then fade
         p.life+=dt;
-        if(p.life>0.75){ p.el.style.opacity = Math.max(0, 1-(p.life-0.75)*1.4);
-          if(p.life>1.6){ reset(p,false); continue; } }
+        var cf=1; if(p.life>0.75){ cf=Math.max(0, 1-(p.life-0.75)*1.4); }
+        p.el.style.opacity = cf*Math.max(flvl,0.8);
+        if(p.life>1.6){ reset(p,false); continue; }
         p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
         continue;
       }
       var prev=p.y; p.y -= p.sp*dt;
       // gate crossing
-      if(gateActive(t) && prev>GATE && p.y<=GATE && p.state===0){
+      if(gateActive(st) && prev>GATE && p.y<=GATE && p.state===0){
         if(p.sens){
           var block = Math.random()<0.62;
           p.state=2; p.life=0; p.y=GATE-2;
@@ -336,7 +341,8 @@
       var edge=1;
       if(p.y > H-180) edge=(H - p.y)/180;
       else if(p.y < 170) edge=p.y/170;
-      p.el.style.opacity = edge<0?0:(edge>1?1:edge);
+      if(edge<0)edge=0; if(edge>1)edge=1;
+      p.el.style.opacity = edge*flvl;
       p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
     }
   }
@@ -344,23 +350,27 @@
   function frame(now){
     requestAnimationFrame(frame);
     if(!playing){ return; }
-    var t=(now-startT)/1000;
+    var t=(now-startT)/1000, st=t-INTRO/1000;
     var dt=Math.min((now-lastT)/1000, 0.05); lastT=now;
     updateField(dt,t);
-    if(t>22 && t<26.4){ var e=function(x){x=Math.max(0,Math.min(1,x));return 1-Math.pow(1-x,3);};
-      ctA.textContent=Math.round(e((t-22.3)/2.4)*2481).toLocaleString();
-      ctB.textContent=Math.round(e((t-22.5)/2.4)*312).toLocaleString(); }
+    if(st>22 && st<26.4){ var e=function(x){x=Math.max(0,Math.min(1,x));return 1-Math.pow(1-x,3);};
+      ctA.textContent=Math.round(e((st-22.3)/2.4)*2481).toLocaleString();
+      ctB.textContent=Math.round(e((st-22.5)/2.4)*312).toLocaleString(); }
   }
   requestAnimationFrame(frame);
 
+  var introT=null;
   function play(){
-    clearTimeout(endT); clearTimeout(hideT);
+    clearTimeout(endT); clearTimeout(hideT); clearTimeout(introT);
     stage.classList.remove('playing'); wrap.classList.remove('playing');
     void stage.offsetWidth;
     for(var i=0;i<pool.length;i++){ reset(pool[i], true); }
     startT=performance.now(); lastT=startT; playing=true;
     ctA.textContent='0'; ctB.textContent='0';
-    wrap.classList.add('hideui'); stage.classList.add('playing'); wrap.classList.add('playing');
+    // Phase 1: intro (request wall only). Progress bar + hidden UI start now.
+    wrap.classList.add('hideui'); wrap.classList.add('playing');
+    // Phase 2: after the intro, start the narrative scenes.
+    introT=setTimeout(function(){ stage.classList.add('playing'); }, INTRO);
     endT=setTimeout(function(){ wrap.classList.remove('hideui'); }, DUR);
   }
   replay.addEventListener('click',play);
