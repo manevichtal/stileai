@@ -17,17 +17,20 @@ export default async function TeamPage() {
   ]);
 
   const seats = org?.plan_seats ?? 0;
+  const rows = employees as EmployeeRow[];
+  const connected = rows.filter((e) => e.status === "active" && e.connected_at).length;
 
   return (
     <>
       <PageHeader
         title="Team & seats"
-        subtitle="Each employee gets their own personal API key to connect their AI tools through StileAI."
+        subtitle="Invite each user by email — they connect their browser (and AI tools) to your company's policy. One seat per user."
       />
       <TeamClient
-        employees={employees as EmployeeRow[]}
+        employees={rows}
         used={used}
         seats={seats}
+        connected={connected}
         isAdmin={ctx.role === "admin"}
       />
     </>

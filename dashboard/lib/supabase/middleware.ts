@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
     path === "/sitemap.xml" ||
     path === "/robots.txt" ||
     path === "/feed.xml" ||
+    path.startsWith("/extension") || // public connect page (auth is the one-time token)
     path.startsWith("/api") ||
     path.startsWith("/auth");
 

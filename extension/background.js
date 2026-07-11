@@ -62,4 +62,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     );
     return true;
   }
+  // The connect page hands us the seat's key after the user redeems their invite
+  // link — store it (and the workspace URL) so the extension is bound going forward.
+  if (msg && msg.type === "setKey" && msg.key) {
+    const patch = { key: msg.key, enabled: true };
+    if (msg.endpoint) patch.endpoint = String(msg.endpoint).replace(/\/+$/, "");
+    chrome.storage.sync.set(patch).then(() => sendResponse({ ok: true }));
+    return true;
+  }
 });

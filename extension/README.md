@@ -24,14 +24,25 @@ You type in ChatGPT/Claude/Gemini
 - **Fail-closed by default**: if StileAI can't be reached, an unverifiable prompt is
   blocked (toggleable in the popup).
 
+## How a user gets connected (the normal flow)
+
+1. An **admin invites the user** from the StileAI dashboard → *Team & seats* → enter
+   name + work email → **Invite user**. This consumes one seat (billing is per user)
+   and produces a **one-time connect link**.
+2. The user **installs the extension** (see below), then **opens the connect link**.
+3. The connect page redeems the link and hands the seat's key to the extension
+   automatically — the browser is now bound to that user's seat + org. Done.
+
+Everything after that (which policies apply, approvals, audit) resolves from the key
+to that user and their org — no configuration by the employee.
+
 ## Install (unpacked, for testing / pilots)
 
 1. Open `chrome://extensions` in Chrome or Edge.
 2. Turn on **Developer mode** (top right).
 3. Click **Load unpacked** and select this `extension/` folder.
-4. Click the StileAI icon → paste your **workspace key** (StileAI dashboard →
-   *Team & seats* for a per-employee key, or *Keys* for an admin key) → **Save** →
-   **Test connection** (expect “Connected ✓”).
+4. Open the **connect link** your admin sent → the popup should show connected. (Or,
+   as a fallback, click the icon → paste the key from the connect page → **Save**.)
 
 For an org rollout, publish to the Chrome Web Store (a one-time $5 developer account)
 so employees install with one click and are managed centrally.
