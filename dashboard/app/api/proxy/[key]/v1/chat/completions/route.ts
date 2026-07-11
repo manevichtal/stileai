@@ -2,6 +2,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category } from "@/lib/promptCheck";
 import { resolveCaller, auditCallerBlock } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
+import { rateLimit, keyBucket } from "@/lib/rateLimit";
+
+const MAX_BODY_BYTES = 1024 * 1024; // 1 MB: prompts + tool context can be large
 
 // StileAI's real interception point. A company points its AI tool (anything that
 // speaks the OpenAI API — a custom app, Cursor, an SDK, etc.) at:
@@ -62,6 +65,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   const { key } = await params;
   const caller = await resolveCaller(key);
   if (!caller) return json({ error: { message: "Invalid StileAI key.", type: "stileai_auth" } }, 401);
+
+  const rl = await rateLimit(keyBucket("proxy", key), 240, 60);
+  if (!rl.allowed) {
+    return json({ error: { message: "Rate limit exceeded for this StileAI key.", type: "stileai_rate_limit" } }, 429);
+  }
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+    return json({ error: { message: "Request body too large." } }, 413);
+  }
 
   let body: { messages?: unknown; model?: string; stream?: boolean };
   try {

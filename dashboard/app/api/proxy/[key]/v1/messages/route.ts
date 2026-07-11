@@ -1,5 +1,8 @@
 import { resolveCaller, gate, blockMessage, auditCallerBlock } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
+import { rateLimit, keyBucket } from "@/lib/rateLimit";
+
+const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
 
 // Anthropic-compatible interception (for Claude Code, the Claude SDK, and any tool
 // that speaks the Anthropic Messages API). Point ANTHROPIC_BASE_URL at:
@@ -68,6 +71,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   const caller = await resolveCaller(key);
   if (!caller) {
     return new Response(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "Invalid StileAI key." } }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+
+  const rl = await rateLimit(keyBucket("proxy", key), 240, 60);
+  if (!rl.allowed) {
+    return new Response(JSON.stringify({ type: "error", error: { type: "rate_limit_error", message: "Rate limit exceeded for this StileAI key." } }), { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(rl.retryAfter) } });
+  }
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+    return new Response(JSON.stringify({ type: "error", error: { type: "invalid_request_error", message: "Request body too large." } }), { status: 413, headers: { "Content-Type": "application/json" } });
   }
 
   let body: { model?: string; system?: unknown; messages?: unknown; stream?: boolean };

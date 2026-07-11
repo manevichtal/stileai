@@ -1,4 +1,5 @@
 import { redeemInvite } from "@/lib/employees";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 // POST /api/extension/redeem  <- { token }
 // Redeems a one-time connect link: mints the seat's key and returns it once so the
@@ -8,6 +9,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // The token is the only credential here, so throttle by IP to stop guessing.
+  const rl = await rateLimit(`redeem:${clientIp(req)}`, 20, 60);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: "Too many attempts. Please wait a minute and try again." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   let body: { token?: unknown };
   try {
     body = await req.json();

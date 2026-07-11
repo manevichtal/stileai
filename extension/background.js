@@ -28,11 +28,17 @@ async function inspect(prompt, label) {
   if (!cfg.key) return { effect: "allow", reason: "", categories: [], unconfigured: true };
 
   const url = cfg.endpoint.replace(/\/+$/, "") + "/api/inspect";
+  // Bound the check so a slow/hung backend resolves to our fail-closed path
+  // BEFORE the page-side 8s safety timeout can fail open. 6s < 8s guarantees the
+  // deliberate decision (deny when unverifiable) wins.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
   try {
     const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + cfg.key },
       body: JSON.stringify({ prompt, site: label, model: label }),
+      signal: ctrl.signal,
     });
     const v = await r.json();
     if (v && v.effect) return v;
@@ -48,6 +54,8 @@ async function inspect(prompt, label) {
           unreachable: true,
         }
       : { effect: "allow", reason: "", categories: [], unreachable: true };
+  } finally {
+    clearTimeout(timer);
   }
 }
 

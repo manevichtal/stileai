@@ -1,5 +1,10 @@
 import { resolveCaller, gate, auditCallerBlock } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
+import { rateLimit, keyBucket } from "@/lib/rateLimit";
+
+// Reject oversized bodies before parsing (a prompt is small; anything large is
+// abuse or a bug). 256 KB is generous for a chat message.
+const MAX_BODY_BYTES = 256 * 1024;
 
 // POST /api/inspect  <- { prompt, model?, site? }   (Authorization: Bearer <STILEAI_KEY>)
 //
@@ -51,6 +56,18 @@ export async function POST(req: Request) {
   const caller = await resolveCaller(key);
   if (!caller) {
     return json({ effect: "deny", reason: "This browser isn't linked to an active StileAI workspace. Ask your admin for your StileAI key.", categories: [] }, 401);
+  }
+
+  // Per-key rate limit: generous for real typing, tight enough to stop a runaway
+  // loop or a stolen key hammering the endpoint. Fails open if the limiter errors.
+  const rl = await rateLimit(keyBucket("inspect", key), 120, 60);
+  if (!rl.allowed) {
+    return json({ effect: "deny", reason: "StileAI is rate limiting this workspace. Try again in a moment.", categories: [] }, 429);
+  }
+
+  const len = Number(req.headers.get("content-length") ?? 0);
+  if (len > MAX_BODY_BYTES) {
+    return json({ effect: "deny", reason: "Request too large to inspect.", categories: [] }, 413);
   }
 
   let body: { prompt?: unknown; model?: unknown; site?: unknown };
