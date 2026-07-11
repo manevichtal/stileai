@@ -226,7 +226,7 @@
       <div class="stat"><span class="num" data-to="2400000" data-suffix="+">0</span><span class="lbl">prompts inspected</span></div>
       <div class="stat"><span class="num" data-to="800000" data-suffix="+">0</span><span class="lbl">leaks blocked</span></div>
       <div class="stat"><span class="num" data-to="38" data-suffix="ms">0</span><span class="lbl">avg decision</span></div>
-      <div class="stat"><span class="num" data-to="200" data-suffix="+">0</span><span class="lbl">policies available</span></div>
+      <div class="stat"><span class="num" data-to="300" data-suffix="+">0</span><span class="lbl">policies available</span></div>
     </aside>
   </div>
   <div class="tools">
@@ -358,8 +358,14 @@ against:
   <span class="w">HIPAA</span>        PHI safeguards
   <span class="w">PCI-DSS</span>      cardholder data
   <span class="w">GDPR</span>         personal data protection
+  <span class="w">CCPA</span>         california consumer privacy
   <span class="w">SOC 2</span>        trust services criteria
+  <span class="w">ISO 27001</span>    information security
   <span class="w">ISO 42001</span>    AI management systems
+  <span class="w">FERPA</span>        student education records
+  <span class="w">GLBA</span>         consumer financial data
+  <span class="w">EU AI Act</span>    high-risk AI obligations
+  <span class="w">NIST AI RMF</span>  AI risk management
   <span class="w">OWASP LLM</span>    the top AI data-leak risks
 
 Export the audit log for any period, straight from your dashboard.
@@ -429,7 +435,7 @@ const QA=[
  {k:['how does','how do','how it','works','work','mechanism','pipeline','process','function'],a:`Point your AI tools at StileAI instead of the provider (same API, one base-URL change). Each request is scanned for secrets, PII, source code and records, checked against your policies, then allowed, held, or blocked, and logged. <span class="mut">see the diagram &#8594;</span> <span class="runchip" data-run="how">how</span>`},
  {k:['who is it','who uses','who for','audience','customer','msp','managed service','it company'],a:`Built for any company whose team uses AI, in-house teams (per seat, one console, per-employee keys) and IT companies / MSPs managing several clients. <span class="mut">more &#8594;</span> <span class="runchip" data-run="who">who</span>`},
  {k:['price','pricing','cost','how much','expensive','license','fee','pay','budget'],a:`Priced <span class="w">per seat, per month</span>: <span class="a">$25</span> Starter, <span class="a">$59</span> Business, custom Enterprise. No free tier, the controls are on from day one. <span class="mut">see the plans &#8594;</span> <span class="runchip" data-run="pricing">pricing</span>`},
- {k:['hipaa','soc 2','soc2','pci','gdpr','compliance','standard','audit','evidence','framework','iso','regulat'],a:`Every decision is logged, what was sent, which policy caught it, and what happened, and the categories map to HIPAA, PCI-DSS, GDPR, SOC 2, ISO 42001 and OWASP. Export the audit log at any review. <span class="mut">more &#8594;</span> <span class="runchip" data-run="standards">standards</span>`},
+ {k:['hipaa','soc 2','soc2','pci','gdpr','compliance','standard','audit','evidence','framework','iso','regulat'],a:`Every decision is logged, what was sent, which policy caught it, and what happened, and the categories map to HIPAA, PCI-DSS, GDPR, CCPA, SOC 2, ISO 27001, ISO 42001, FERPA, GLBA, the EU AI Act, NIST AI RMF and OWASP. Export the audit log at any review. <span class="mut">more &#8594;</span> <span class="runchip" data-run="standards">standards</span>`},
  {k:['deploy','install','setup','set up','where does it run','where do','cloud','on-prem','on prem','self-host','self host','architecture','vpc','environment'],a:`Two ways. A Chrome extension covers ChatGPT, Claude and Gemini on the web. An API gateway covers Claude Code, Cursor and anything on the OpenAI or Anthropic API (one base-URL change, keep your own key). <span class="mut">more &#8594;</span> <span class="runchip" data-run="deploy">deploy</span>`},
  {k:['latency','slow','speed','fast','performance','overhead','lag','delay'],a:`The fast path adds <span class="w">under 50ms</span> (identity, policy, pattern checks). Heavier model checks run async or sampled, so normal traffic is not held up.`},
  {k:['injection','prompt injection','jailbreak','attack','malicious','hijack','poison'],a:`StileAI's job is stopping sensitive company data, secrets, PII, source code, from leaving in an AI prompt; it detects those by content and blocks or holds them. <span class="mut">(broader prompt-injection defense is on the roadmap.)</span>`},
