@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://stileai.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://stileai.com";
 const json = (body: object, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 

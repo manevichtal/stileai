@@ -16,7 +16,7 @@ services:
       - key: INTERLOCK_TRANSPORT
         value: http
       - key: INTERLOCK_DASHBOARD_URL
-        value: https://stileai.vercel.app
+        value: https://stileai.com
       - key: INTERLOCK_UNAVAILABLE_EFFECT
         value: deny                  # fail-safe: never allow when the dashboard is unreachable
       - key: INTERLOCK_API_KEY

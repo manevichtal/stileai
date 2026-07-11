@@ -13,7 +13,7 @@ docker build -t stileai-checkpoint ./interlock-mcp
 docker run -p 8000:8000 \\
   -e INTERLOCK_STORE=api \\
   -e INTERLOCK_TRANSPORT=http \\
-  -e INTERLOCK_DASHBOARD_URL=https://stileai.vercel.app \\
+  -e INTERLOCK_DASHBOARD_URL=https://stileai.com \\
   -e INTERLOCK_API_KEY=<your API key> \\
   -e INTERLOCK_MCP_AUTH_TOKEN=<a long random secret> \\
   -e INTERLOCK_PUBLIC_URL=<this container's public URL> \\

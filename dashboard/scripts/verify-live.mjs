@@ -13,7 +13,7 @@ for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SVC = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const BASE = process.argv[2] || "https://stileai.vercel.app";
+const BASE = process.argv[2] || "https://stileai.com";
 
 const admin = createClient(URL, SVC, { auth: { persistSession: false } });
 const email = `live-${Date.now()}@stileai-verify.local`;

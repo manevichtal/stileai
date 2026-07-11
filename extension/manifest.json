@@ -1,10 +1,12 @@
 {
   "manifest_version": 3,
   "name": "StileAI — AI policy checkpoint",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Checks what your team sends to ChatGPT, Claude, and Gemini against your company's AI policy before it leaves the browser.",
   "permissions": ["storage"],
   "host_permissions": [
+    "https://stileai.com/*",
+    "https://www.stileai.com/*",
     "https://stileai.vercel.app/*",
     "http://localhost:3000/*"
   ],
@@ -40,6 +42,8 @@
     },
     {
       "matches": [
+        "https://stileai.com/extension/connect*",
+        "https://www.stileai.com/extension/connect*",
         "https://stileai.vercel.app/extension/connect*",
         "http://localhost:3000/extension/connect*"
       ],

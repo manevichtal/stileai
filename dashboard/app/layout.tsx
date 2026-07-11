@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://stileai.vercel.app"),
+  metadataBase: new URL("https://stileai.com"),
   title: {
     default: "StileAI — the policy checkpoint between your team and AI",
     template: "%s · StileAI",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "StileAI",
-    url: "https://stileai.vercel.app",
+    url: "https://stileai.com",
     title: "StileAI — the policy checkpoint between your team and AI",
     description:
       "Check every AI request against your policies before it reaches ChatGPT, Claude, Gemini, or Copilot.",

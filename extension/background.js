@@ -8,7 +8,7 @@
 "use strict";
 
 const DEFAULTS = {
-  endpoint: "https://stileai.vercel.app",
+  endpoint: "https://stileai.com",
   key: "",
   enabled: true,
   failClosed: true,

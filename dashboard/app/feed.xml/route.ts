@@ -2,7 +2,7 @@ import { getAllPosts } from "@/lib/blog";
 
 export const dynamic = "force-static";
 
-const SITE = "https://stileai.vercel.app";
+const SITE = "https://stileai.com";
 
 function esc(s: string) {
   return s

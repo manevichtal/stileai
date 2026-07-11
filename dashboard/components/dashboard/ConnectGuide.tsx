@@ -14,7 +14,7 @@ type Tool = {
   notes?: string[];
 };
 
-const BASE = "https://stileai.vercel.app/api/proxy/YOUR_KEY";
+const BASE = "https://stileai.com/api/proxy/YOUR_KEY";
 
 const TOOLS: Tool[] = [
   {

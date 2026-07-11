@@ -5,7 +5,7 @@ import { Brand } from "@/components/Brand";
 export const metadata: Metadata = {
   alternates: {
     types: {
-      "application/rss+xml": "https://stileai.vercel.app/feed.xml",
+      "application/rss+xml": "https://stileai.com/feed.xml",
     },
   },
 };

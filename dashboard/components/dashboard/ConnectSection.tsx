@@ -30,7 +30,7 @@ function CopyField({ value, mono = true }: { value: string; mono?: boolean }) {
 
 export function ConnectSection({ checkpointUrl: _checkpointUrl }: { checkpointUrl: string | null }) {
   const [client, setClient] = useState(CLIENTS[0]);
-  const base = typeof window !== "undefined" ? window.location.origin : "https://stileai.vercel.app";
+  const base = typeof window !== "undefined" ? window.location.origin : "https://stileai.com";
   const proxyUrl = `${base}/api/proxy/YOUR_STILEAI_KEY/v1`;
 
   return (

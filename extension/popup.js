@@ -1,6 +1,6 @@
 "use strict";
 
-const DEFAULTS = { endpoint: "https://stileai.vercel.app", key: "", enabled: true, failClosed: true };
+const DEFAULTS = { endpoint: "https://stileai.com", key: "", enabled: true, failClosed: true };
 const $ = (id) => document.getElementById(id);
 const status = (msg, cls) => {
   const el = $("status");

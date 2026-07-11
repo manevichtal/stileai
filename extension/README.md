@@ -52,7 +52,7 @@ so employees install with one click and are managed centrally.
 | Field | Meaning |
 |-------|---------|
 | **Your StileAI key** | Links this browser to your workspace + seat. |
-| **Workspace URL** | Your StileAI deployment (default `https://stileai.vercel.app`). |
+| **Workspace URL** | Your StileAI deployment (default `https://stileai.com`). |
 | **Protection on** | Master on/off. |
 | **Block if StileAI is unreachable** | Fail-closed (recommended) vs. fail-open. |
 

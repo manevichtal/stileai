@@ -16,7 +16,7 @@ import { seatedIds } from "@/lib/seats";
 // query/update is scoped by org_id so a crafted id can never touch another
 // org's row.
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://stileai.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://stileai.com";
 
 function connectUrl(token: string): string {
   return `${APP_URL.replace(/\/+$/, "")}/extension/connect?token=${token}`;

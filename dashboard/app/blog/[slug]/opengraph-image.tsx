@@ -73,7 +73,7 @@ export default async function OgImage({
             color: "#5E656E",
           }}
         >
-          <span style={{ color: "#9197A1" }}>stileai.vercel.app</span>
+          <span style={{ color: "#9197A1" }}>stileai.com</span>
           <span style={{ color: "#C0C4CB" }}>·</span>
           <span>The policy checkpoint between your team and AI</span>
         </div>

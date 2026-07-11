@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 
-const SITE_URL = "https://stileai.vercel.app";
+const SITE_URL = "https://stileai.com";
 
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
