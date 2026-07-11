@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category } from "@/lib/promptCheck";
 import { resolveCaller, auditCallerBlock } from "@/lib/aiGate";
+import { escalateIfNeeded } from "@/lib/deepInspect";
 import { callerDecision } from "@/lib/seats";
 import { rateLimit, keyBucket } from "@/lib/rateLimit";
 
@@ -109,7 +110,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
   }
-  const result = checkPrompt(promptText, rules);
+  // Free deterministic layer, then an AI second opinion on the gray zone. Applies
+  // this org's own rules, only ever tightens, never crosses tenants, never fails open.
+  const result = await escalateIfNeeded(orgId, promptText, rules, checkPrompt(promptText, rules));
 
   // Record the decision. We never store restricted prompt content — only the
   // detected categories + reason (and a short preview for SAFE requests).

@@ -50,8 +50,12 @@ HSTS, a Content-Security-Policy, `X-Content-Type-Options: nosniff`,
 
 Vercel (application hosting), Supabase (Postgres, auth, storage), Stripe
 (billing), and the AI providers a customer connects (which receive only the
-requests that pass policy, using the customer's own keys). See the in-product
-Trust & security page for details.
+requests that pass policy, using the customer's own keys). When deep inspection
+is enabled, Anthropic's Claude Haiku model receives only the small share of
+requests the local checks cannot classify with confidence, for a second
+opinion; that content is not stored and not used for training. Each tenant's
+verdict cache and usage budget are scoped by organization and never shared. See
+the in-product Trust & security page for details.
 
 ## Scope and honest limits
 

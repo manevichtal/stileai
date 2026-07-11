@@ -4,6 +4,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/apiKeys";
 import { checkPrompt, redactSensitive, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
+import { escalateIfNeeded } from "@/lib/deepInspect";
 import { resolveEmployeeByKey, listEmployees } from "@/lib/employees";
 import { seatedIds, isActiveStatus } from "@/lib/seats";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
@@ -76,7 +77,11 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
   }
-  const result = checkPrompt(promptText, rules);
+  // Free deterministic layer first, then an AI second opinion on the gray zone
+  // (allowed-but-risky prompts). escalateIfNeeded applies THIS org's own rules and
+  // can only tighten the decision; it never crosses tenants and never fails open.
+  const free = checkPrompt(promptText, rules);
+  const result = await escalateIfNeeded(orgId, promptText, rules, free);
 
   const decisionId = "ai-" + crypto.randomUUID();
   const effect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
