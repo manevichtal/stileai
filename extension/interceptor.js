@@ -184,7 +184,9 @@
 
   // ---- Status badge (proof it's active) ------------------------------------
   let badgeEl = null;
+  let badgeInited = false;
   let flashTimer = null;
+  let baseState = "active";
   const BADGE_STATE = {
     active: { text: "🛡️ StileAI on", bg: "#0f7a3d" },
     nokey: { text: "🛡️ StileAI — add key", bg: "#9a6206" },
@@ -194,19 +196,29 @@
     held: { text: "🟠 needs approval", bg: "#b8791a" },
   };
 
+  // Create once, then re-attach whenever the AI site's SPA re-render removes our
+  // node (they replace large DOM subtrees on navigation). A keep-alive interval
+  // below re-runs this so the badge never stays gone.
   function ensureBadge() {
-    if (badgeEl || !document.body) return;
-    badgeEl = document.createElement("div");
-    badgeEl.style.cssText =
-      "position:fixed;bottom:14px;right:14px;z-index:2147483647;padding:6px 11px;border-radius:999px;" +
-      "font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#fff;" +
-      "box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:.92;pointer-events:none;transition:background .2s";
+    if (!document.body) return;
+    if (!badgeEl) {
+      badgeEl = document.createElement("div");
+      badgeEl.style.cssText =
+        "position:fixed;bottom:14px;right:14px;z-index:2147483647;padding:6px 11px;border-radius:999px;" +
+        "font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#fff;" +
+        "box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:.92;pointer-events:none;transition:background .2s";
+    }
+    if (badgeEl.isConnected) return; // already present — don't disturb an in-flight flash
     document.body.appendChild(badgeEl);
-    setBadge("checking"); // until status comes back
-    requestStatus();
+    if (!badgeInited) {
+      badgeInited = true;
+      paint("checking"); // until status comes back
+      requestStatus();
+    } else {
+      paint(baseState);
+    }
   }
 
-  let baseState = "active";
   function setBadge(state) {
     if (state === "active" || state === "nokey") baseState = state;
     paint(state);
@@ -225,11 +237,9 @@
 
   if (document.body) ensureBadge();
   else document.addEventListener("DOMContentLoaded", ensureBadge);
-  // Re-assert status a moment after load (worker may have been asleep).
-  setTimeout(() => {
-    ensureBadge();
-    requestStatus();
-  }, 1500);
+  // Keep the badge alive across SPA re-renders, and re-assert status after load.
+  setInterval(ensureBadge, 2000);
+  setTimeout(requestStatus, 1500);
 
   // ---- Inline banner -------------------------------------------------------
   let styleInjected = false;

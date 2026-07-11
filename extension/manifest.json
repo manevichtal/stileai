@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "StileAI — AI policy checkpoint",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Checks what your team sends to ChatGPT, Claude, and Gemini against your company's AI policy before it leaves the browser.",
   "permissions": ["storage"],
   "host_permissions": [
