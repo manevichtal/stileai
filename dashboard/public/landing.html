@@ -123,6 +123,46 @@
 
   @media(max-width:640px){ .stage{padding:20px 12px 24px} .app{height:72vh;margin-top:18px} .term-out{padding:18px 15px 10px} .cmdbar{gap:3px;padding:8px} .chip{padding:8px 10px;font-size:12px} .brand{font-size:19px} .cta{padding:9px 14px;font-size:13px} .headline{margin-top:18px} }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ===== dark terminal look, console only (page stays light) ===== */
+  .app{background:#15212F;border-color:#28394B;box-shadow:0 1px 2px rgba(2,8,23,.25),0 40px 84px -42px rgba(2,8,23,.6)}
+  .app .head{background:#101A25;border-bottom-color:#22323F}
+  .app .head .t{color:#647688}
+  .app .head .hint{color:#4C5D6E}
+  .app .head .dots{display:flex;gap:7px}
+  .app .head .dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .app .head .dots i:nth-child(1){background:#FF5F56}
+  .app .head .dots i:nth-child(2){background:#FEBC2E}
+  .app .head .dots i:nth-child(3){background:#27C93F}
+  .app .term-out{color:#C3CFDD}
+  .app .term-out::-webkit-scrollbar-thumb{background:#2C3F52;border-color:#15212F}
+  .app .echo{color:#5C6E80}
+  .app .echo .p{color:#5B9DFF}
+  .app .w{color:#FFFFFF;font-weight:600}
+  .app .dim{color:#AEBBCB}
+  .app .mut{color:#647587}
+  .app .bl{color:#7C93AC}
+  .app .g{color:#46D07E}
+  .app .a{color:#6BA5FF}
+  .app .c{color:#E3B341}
+  .app .r{color:#FF7B72}
+  .app .k,.app .fn{color:#6BA5FF}
+  .app .str,.app .num{color:#AEBBCB}
+  .app .cm,.app .pu{color:#6B7C90}
+  .app .rule{color:#5A6C7E}
+  .app .runchip{color:#6BA5FF;border-bottom-color:rgba(107,165,255,.45)}
+  .app .runchip:hover{color:#FFFFFF;border-bottom-color:#FFFFFF}
+  .app .t-ALLOW{color:#46D07E;background:rgba(70,208,126,.13);border-color:rgba(70,208,126,.32)}
+  .app .t-HOLD{color:#E3B341;background:rgba(227,179,65,.13);border-color:rgba(227,179,65,.32)}
+  .app .t-BLOCK{color:#FF8078;background:rgba(255,123,114,.13);border-color:rgba(255,123,114,.32)}
+  .app .cmdbar{background:#101A25;border-top-color:#22323F}
+  .app .chip{color:#93A4B7;background:transparent;border-color:#2B3E51;box-shadow:none}
+  .app .chip:hover{color:#DBE6F5;background:#1B2A3A;border-color:#3A5169}
+  .app .chip.on{color:#6BA5FF;background:rgba(107,165,255,.14);border-color:rgba(107,165,255,.5)}
+  .app .prompt{background:#12202E;border-top-color:#22323F}
+  .app .prompt .p,.app .prompt .arr{color:#5B9DFF}
+  .app .cin{color:#E6EDF5;caret-color:#5B9DFF}
+  .app .cin::placeholder{color:#55677A}
 </style>
 </head>
 <body>
@@ -138,7 +178,7 @@
   <h1 class="headline"><span class="hl1">Your team pastes company data into AI.</span><canvas id="fuzz" aria-hidden="true"></canvas><span class="sr-only">Your team pastes company data into AI. StileAI checks it before it reaches the AI.</span></h1>
   <p class="tagline">The security checkpoint between your team and the AI they use</p>
   <div class="app">
-    <div class="head"><span class="pdot"></span><span class="t">stileai · console</span><span class="hint">ask, or tap a section ↓</span></div>
+    <div class="head"><span class="dots"><i></i><i></i><i></i></span><span class="t">stileai · console</span><span class="hint">ask, or tap a section ↓</span></div>
     <div class="term" id="term">
       <div class="term-out" id="out"></div>
       <div class="cmdbar" id="cmdbar"></div>
