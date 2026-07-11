@@ -65,7 +65,7 @@
   @keyframes underline{from{transform:scaleX(0)}to{transform:scaleX(1)}}
   @keyframes pressBtn{from{transform:scale(1)}50%{transform:scale(.92)}to{transform:scale(1)}}
 
-  .scrim{position:absolute;inset:0;background:radial-gradient(760px 420px at 50% 50%, rgba(7,9,13,.72), transparent 72%);pointer-events:none;opacity:0}
+  .scrim{position:absolute;inset:0;background:radial-gradient(1080px 620px at 50% 50%, rgba(6,8,12,.88), rgba(6,8,12,.42) 44%, transparent 72%);pointer-events:none;opacity:0}
   .stage.playing .scrim.on{animation:fadeOnly .6s ease var(--d) both}
 
   .kicker{font-size:32px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:var(--blue);margin-bottom:26px}
@@ -286,8 +286,8 @@
     ['paste our AWS credentials to fix deploy','secret key'],['analyze this signed NDA and contract','legal'],
     ['dedupe this export of 12,000 user emails','PII'],['here is our source code, find the bug','source code'],
     ['summarize these 400 support tickets with names','customer data'],['break down our cap table and options','financial']];
-  var COLS=[90,300,520,1410,1620,1830, 740, 1180]; // side-weighted columns
-  var pool=[], N=26;
+  var COLS=[80,300,520,1420,1630,1840, 760, 1160]; // side-weighted columns
+  var pool=[], N=22;
   function mk(){ var el=document.createElement('div'); el.className='req';
     var cs=document.createElement('span'); cs.className='cs'; cs.textContent='›';
     var tx=document.createElement('span'); var fl=document.createElement('span'); fl.className='fl';
@@ -299,10 +299,10 @@
     if(sens){ var s=SENS[(Math.random()*SENS.length)|0]; p.tx.textContent=s[0]; p.tag=s[1]; p.fl.textContent=s[1]; }
     else { p.tx.textContent=SAFE[(Math.random()*SAFE.length)|0]; p.tag=''; p.fl.textContent=''; }
     p.el.classList.remove('show');
-    p.el.style.color = sens ? 'rgba(245,165,36,.30)' : 'rgba(150,170,205,.16)';
-    p.el.style.opacity='1';
+    p.el.style.color = sens ? 'rgba(245,178,70,.24)' : 'rgba(150,170,205,.12)';
+    p.el.style.opacity='0';
     p.x = COLS[(Math.random()*COLS.length)|0] + (Math.random()*80-40);
-    p.sp = 78 + Math.random()*70;                 // px per second, upward
+    p.sp = 54 + Math.random()*50;                 // px per second, upward (gentle)
     p.y = spread ? (Math.random()*(H+200)-100) : (H+40+Math.random()*260);
     p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
   }
@@ -329,9 +329,14 @@
           else { p.el.style.color='rgba(31,206,124,.8)'; p.fl.textContent='approved'; }
           p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
           continue;
-        } else { p.state=1; p.el.style.color='rgba(31,206,124,.34)'; }
+        } else { p.state=1; p.el.style.color='rgba(31,206,124,.30)'; }
       }
       if(p.y<-60){ reset(p,false); continue; }
+      // soft fade in near the bottom and out near the top so nothing pops abruptly
+      var edge=1;
+      if(p.y > H-180) edge=(H - p.y)/180;
+      else if(p.y < 170) edge=p.y/170;
+      p.el.style.opacity = edge<0?0:(edge>1?1:edge);
       p.el.style.transform='translate('+p.x+'px,'+p.y+'px)';
     }
   }
