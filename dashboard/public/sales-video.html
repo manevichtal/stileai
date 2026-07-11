@@ -66,6 +66,7 @@
   @keyframes pressBtn{from{transform:scale(1)}50%{transform:scale(.92)}to{transform:scale(1)}}
 
   .scrim{position:absolute;inset:0;background:radial-gradient(1080px 620px at 50% 50%, rgba(6,8,12,.88), rgba(6,8,12,.42) 44%, transparent 72%);pointer-events:none;opacity:0}
+  .scrim.strong{background:radial-gradient(1260px 760px at 50% 50%, rgba(5,7,11,.95), rgba(5,7,11,.72) 42%, rgba(5,7,11,.2) 70%, transparent 82%)}
   .stage.playing .scrim.on{animation:fadeOnly .6s ease var(--d) both}
 
   .kicker{font-size:32px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:var(--blue);margin-bottom:26px}
@@ -114,13 +115,14 @@
   .metrics{display:flex;gap:80px;margin-top:14px}
   .metric{display:flex;flex-direction:column;align-items:center}
   .metric .n{font-size:118px;font-weight:900;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;
-    background:linear-gradient(180deg,#fff,#9fbaff);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .metric .l{margin-top:14px;font-size:34px;font-weight:600;color:var(--mut)}
+    background:linear-gradient(180deg,#fff,#bcd0ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 30px rgba(46,107,255,.45))}
+  .metric .l{margin-top:14px;font-size:34px;font-weight:700;color:#C4CCD8;text-shadow:0 2px 16px rgba(0,0,0,.9)}
   .toolrow{display:flex;gap:18px;margin-top:56px;flex-wrap:wrap;justify-content:center}
   .tool{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 28px;font-size:32px;font-weight:700;backdrop-filter:blur(8px)}
   .tdot{width:15px;height:15px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(31,206,124,.9)}
-  .connline{margin-top:48px;font-size:38px;font-weight:700;text-wrap:balance;max-width:1300px}
-  .proof{margin-top:34px;font-size:33px;font-weight:700;color:var(--mut)}
+  .connline{margin-top:48px;font-size:38px;font-weight:700;text-wrap:balance;max-width:1300px;text-shadow:0 2px 18px rgba(0,0,0,.9)}
+  .proof{margin-top:34px;font-size:33px;font-weight:700;color:#AEB7C4;text-shadow:0 2px 16px rgba(0,0,0,.9)}
   .proof b{color:var(--ink)}
 
   .whitebg{position:absolute;inset:0;background:#FFFFFF;opacity:0}
@@ -217,7 +219,7 @@
 
       <!-- S6 SCALE / QUIET 22-26 -->
       <section class="scene" style="--d:22s;--dur:4s">
-        <div class="scrim on" style="--d:22.1s"></div>
+        <div class="scrim strong on" style="--d:22.1s"></div>
         <div class="kicker fade" style="--d:22.2s">Quietly, all day</div>
         <div class="metrics">
           <div class="metric"><span class="n" id="ctA">0</span><span class="l">prompts checked today</span></div>
@@ -299,7 +301,7 @@
     if(sens){ var s=SENS[(Math.random()*SENS.length)|0]; p.tx.textContent=s[0]; p.tag=s[1]; p.fl.textContent=s[1]; }
     else { p.tx.textContent=SAFE[(Math.random()*SAFE.length)|0]; p.tag=''; p.fl.textContent=''; }
     p.el.classList.remove('show');
-    p.el.style.color = sens ? 'rgba(245,178,70,.34)' : 'rgba(150,170,205,.22)';
+    p.el.style.color = sens ? 'rgba(125,180,255,.52)' : 'rgba(240,246,255,.34)';
     p.el.style.opacity='0';
     p.x = COLS[(Math.random()*COLS.length)|0] + (Math.random()*80-40);
     p.sp = 54 + Math.random()*50;                 // px per second, upward (gentle)
@@ -310,8 +312,11 @@
 
   // during the intro the request wall is full-strength; once the headline
   // arrives it dims back so it reads as ambient background behind the copy.
-  function fieldLevel(t){ var I=INTRO/1000; if(t<I) return 1; var r=(t-I)/0.9; return r>=1?0.42:(1-r*0.58); }
-  function gateActive(st){ return st>=7.4 && st<25.9; }
+  function fieldLevel(t){ var I=INTRO/1000, st=t-I;
+    if(t<I) return 1;
+    if(st>21.2){ if(st<21.9) return 0.42-((st-21.2)/0.7)*0.28; return 0.14; } // calm behind the metrics + CTA
+    var r=(t-I)/0.9; return r>=1?0.42:(1-r*0.58); }
+  function gateActive(st){ return st>=7.4 && st<21.2; }
   function updateField(dt,t){
     var st=t-INTRO/1000, flvl=fieldLevel(t);
     for(var i=0;i<pool.length;i++){ var p=pool[i];
