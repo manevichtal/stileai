@@ -1,4 +1,4 @@
-// StileAI bridge — runs in the ISOLATED world so it CAN use chrome.* APIs. It relays
+// StileAI bridge, runs in the ISOLATED world so it CAN use chrome.* APIs. It relays
 // verdict requests from the page-world interceptor to the background service worker
 // (which holds the StileAI key and calls the backend) and posts the answer back.
 (function () {

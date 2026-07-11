@@ -20,7 +20,7 @@ async function load() {
   $("enabled").checked = cfg.enabled;
   const note = $("outage");
   if (note) note.textContent = OUTAGE[cfg.fallback] || OUTAGE.availability;
-  if (!cfg.key) status("Not linked yet — paste your key and Save.", "muted");
+  if (!cfg.key) status("Not linked yet. Paste your key and Save.", "muted");
   else status(cfg.enabled ? "Protection is on." : "Protection is off.", cfg.enabled ? "ok" : "muted");
 }
 
@@ -48,7 +48,7 @@ async function test() {
     });
     if (r.status === 401) return status("Key not recognized by this workspace.", "err");
     const v = await r.json();
-    if (v && v.effect) status("Connected ✓ — StileAI answered (" + v.effect + ").", "ok");
+    if (v && v.effect) status("Connected ✓. StileAI answered (" + v.effect + ").", "ok");
     else status("Reached the workspace but got an unexpected reply.", "err");
   } catch (_) {
     status("Couldn't reach the workspace URL. Check it and try again.", "err");

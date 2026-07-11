@@ -1,4 +1,4 @@
-// StileAI connect receiver — runs only on the dashboard's /extension/connect page.
+// StileAI connect receiver, runs only on the dashboard's /extension/connect page.
 // That page redeems the user's one-time invite link and posts the seat's key to the
 // window; this content script (ISOLATED world, so it can use chrome.*) picks it up
 // and stores it, binding this browser to the user's seat + org. No copy-paste.

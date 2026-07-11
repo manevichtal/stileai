@@ -1,7 +1,7 @@
 # StileAI browser extension
 
 Extends StileAI's policy checkpoint to the AI **websites** your team uses in the
-browser — **ChatGPT, Claude, and Gemini** — which the API gateway can't reach
+browser, **ChatGPT, Claude, and Gemini**, which the API gateway can't reach
 (those apps lock their network connection). It reads each prompt *before it's sent*,
 checks it against your company's policy using the **same engine and dashboard** as
 the rest of StileAI, and blocks or holds anything restricted (secrets, PII, PHI,
@@ -20,7 +20,7 @@ You type in ChatGPT/Claude/Gemini
 ```
 
 - **Approved prompts pass through untouched.** No latency beyond one quick check.
-- **No prompt content is stored** — the backend redacts before writing audit rows.
+- **No prompt content is stored**, the backend redacts before writing audit rows.
 - **Fail-closed by default**: if StileAI can't be reached, an unverifiable prompt is
   blocked (toggleable in the popup).
 
@@ -31,10 +31,10 @@ You type in ChatGPT/Claude/Gemini
    and produces a **one-time connect link**.
 2. The user **installs the extension** (see below), then **opens the connect link**.
 3. The connect page redeems the link and hands the seat's key to the extension
-   automatically — the browser is now bound to that user's seat + org. Done.
+   automatically, the browser is now bound to that user's seat + org. Done.
 
 Everything after that (which policies apply, approvals, audit) resolves from the key
-to that user and their org — no configuration by the employee.
+to that user and their org, no configuration by the employee.
 
 ## Install (unpacked, for testing / pilots)
 
@@ -61,15 +61,15 @@ so employees install with one click and are managed centrally.
 
 ## Coverage & limitations (v0.1)
 
-- **Covers:** chatgpt.com / chat.openai.com, claude.ai, gemini.google.com — the new
+- **Covers:** chatgpt.com / chat.openai.com, claude.ai, gemini.google.com, the new
   user turn on each, sent via `fetch`.
 - **Interception is at the network `fetch` layer** (hard to bypass casually) and
   matches each site's send endpoint. If a site changes its request format, prompt
-  extraction may need an update — until then the extension inspects the raw request
+  extraction may need an update, until then the extension inspects the raw request
   body rather than letting it through unchecked.
 - **Not yet covered:** GitHub Copilot and the native ChatGPT desktop app (they don't
   run in a normal web page). Other browsers, and prompts sent via `XMLHttpRequest`
   rather than `fetch`, are on the roadmap.
-- This is a **v0.1 pilot build** — intended for design partners, not yet hardened for
+- This is a **v0.1 pilot build**, intended for design partners, not yet hardened for
   a determined insider trying to exfiltrate data. It raises the floor dramatically
   over "nothing," which is what most teams have today.

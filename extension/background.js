@@ -1,4 +1,4 @@
-// StileAI background service worker — the only place the org key lives and the only
+// StileAI background service worker, the only place the org key lives and the only
 // place that talks to the StileAI backend. It answers verdict requests from the
 // bridge by POSTing the prompt to /api/inspect and returning the decision.
 //
@@ -98,7 +98,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
   // The connect page hands us the seat's key after the user redeems their invite
-  // link — store it (and the workspace URL) so the extension is bound going forward.
+  // link, store it (and the workspace URL) so the extension is bound going forward.
   if (msg && msg.type === "setKey" && msg.key) {
     const patch = { key: msg.key, enabled: true };
     if (msg.endpoint) patch.endpoint = String(msg.endpoint).replace(/\/+$/, "");

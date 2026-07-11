@@ -1,8 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "StileAI — AI policy checkpoint",
-  "version": "0.4.0",
+  "name": "StileAI: AI policy checkpoint",
+  "version": "0.4.1",
   "description": "Checks what your team sends to ChatGPT, Claude, and Gemini against your company's AI policy before it leaves the browser.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": ["storage"],
   "host_permissions": [
     "https://stileai.com/*",
@@ -12,7 +18,13 @@
   ],
   "action": {
     "default_title": "StileAI",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "background": {
     "service_worker": "background.js"
