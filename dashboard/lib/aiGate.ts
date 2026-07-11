@@ -100,6 +100,19 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   return result;
 }
 
+// Read-only decision for the in-dashboard Policy Tester and demos: runs the org's
+// policies over a sample prompt and returns the verdict WITHOUT logging to the audit
+// trail or queuing an approval. Same detection + rules as gate(), no side effects.
+export async function previewDecision(orgId: string, promptText: string): Promise<CheckResult> {
+  const admin = createAdminClient();
+  const { data: pols } = await admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true);
+  const rules = { ...BALANCED_RULES };
+  for (const p of pols ?? []) {
+    if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
+  }
+  return checkPrompt(promptText, rules);
+}
+
 // The message StileAI returns (as the AI's reply) when a request is blocked/held.
 export function blockMessage(result: CheckResult): string {
   const mark = result.decision === "denied" ? "⛔" : "🟠";
