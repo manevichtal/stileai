@@ -6,19 +6,26 @@
   window.addEventListener("message", (ev) => {
     if (ev.source !== window) return;
     const d = ev.data;
-    if (!d || d.__stileai !== "decide") return;
+    if (!d) return;
 
-    chrome.runtime.sendMessage(
-      { type: "decide", prompt: d.prompt, label: d.label },
-      (verdict) => {
-        // If the worker was asleep / errored, fall back to allow so we never hang the
-        // page. (The genuine unreachable-backend fail-closed decision is made in the
-        // worker itself, where we can tell "server down" from "extension broken".)
-        if (chrome.runtime.lastError || !verdict) {
-          verdict = { effect: "allow", reason: "", categories: [] };
+    if (d.__stileai === "decide") {
+      chrome.runtime.sendMessage(
+        { type: "decide", prompt: d.prompt, label: d.label },
+        (verdict) => {
+          // If the worker was asleep / errored, fall back to allow so we never hang the
+          // page. (The genuine unreachable-backend fail-closed decision is made in the
+          // worker itself, where we can tell "server down" from "extension broken".)
+          if (chrome.runtime.lastError || !verdict) {
+            verdict = { effect: "allow", reason: "", categories: [] };
+          }
+          window.postMessage({ __stileai: "verdict", id: d.id, verdict }, "*");
         }
-        window.postMessage({ __stileai: "verdict", id: d.id, verdict }, "*");
-      }
-    );
+      );
+    } else if (d.__stileai === "status") {
+      chrome.runtime.sendMessage({ type: "getStatus" }, (status) => {
+        if (chrome.runtime.lastError || !status) status = { enabled: false, configured: false };
+        window.postMessage({ __stileai: "statusResult", status }, "*");
+      });
+    }
   });
 })();
