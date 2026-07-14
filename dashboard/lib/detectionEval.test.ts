@@ -21,7 +21,7 @@ describe("detection coverage", () => {
   });
 
   it("routes the reworded and non-English leaks to the AI (gray zone)", () => {
-    for (const id of ["reworded-confidential", "nonenglish-phi"]) {
+    for (const id of ["reworded-confidential", "nonenglish-clientfin"]) {
       const r = rows.find((x) => x.sample.id === id)!;
       expect(r.gray, id).toBe(true);
     }

@@ -78,7 +78,7 @@ export const CORPUS: Sample[] = [
   // --- the fast layer likely misses; the gray zone SHOULD route these to the AI ---
   { id: "unlabeled-table", label: "sensitive", note: "customer rows, no labels/emails", text: "tidy this up:\nAlice Morgan, 4155551234, Chicago, 2450\nBrian Lee, 4155559876, Denver, 3900\nCarla Diaz, 4155553456, Miami, 1800\nDavid Kim, 4155557788, Austin, 5200" },
   { id: "reworded-confidential", label: "sensitive", note: "confidential deal, no trigger words", text: "Draft a summary of the arrangement where Northwind buys the smaller firm for forty two million, closing in Q3, with the earnout tied to retention of the founding engineers. Keep it tight for the board." },
-  { id: "nonenglish-phi", label: "sensitive", note: "Spanish medical record", text: "Resume el historial clínico: el paciente presenta diabetes tipo 2, presión alta, y toma metformina 850mg dos veces al día. Incluye el diagnóstico en el informe." },
+  { id: "nonenglish-clientfin", label: "sensitive", note: "Spanish client + financial summary", text: "Prepara un resumen para la junta: la facturación del trimestre fue de 4,2 millones, con tres clientes clave, Grupo Salinas, Torres y Compañía, y Delgado S.A., que juntos representan el 60% de los ingresos." },
   { id: "source-paste", label: "sensitive", note: "proprietary code paste", text: "review this for bugs:\nexport function chargeCustomer(id, amount) {\n  const key = process.env.STRIPE_SECRET;\n  return stripe.charges.create({ customer: id, amount });\n}" },
 
   // --- benign that should stay clean ---
