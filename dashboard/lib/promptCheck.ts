@@ -35,6 +35,10 @@ export type CheckResult = {
   // not run (service unavailable / budget spent). Surfaced in the audit trail so an
   // admin knows this one wasn't AI-verified. The local checks still ran.
   unverified?: boolean;
+  // Set when the org is in monitor (observe-only) mode: the request was passed
+  // through unblocked, and `wouldDecision` carries what enforce mode would have done.
+  monitored?: boolean;
+  wouldDecision?: Decision;
 };
 
 export const CATEGORY_LABEL: Record<Category, string> = {

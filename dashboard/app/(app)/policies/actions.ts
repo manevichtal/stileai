@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileContext } from "@/lib/getProfile";
 import { packByKey } from "@/lib/policyTemplates";
 import { packAllowed } from "@/lib/tiers";
+import { isEnforcementMode, monitorUntilFrom } from "@/lib/enforcementMode";
 
 export type Condition = { field: string; op: string; value: unknown };
 export type PolicyInput = {
@@ -144,6 +145,26 @@ export async function updateDefaults(
     );
   if (error) return { ok: false, error: error.message };
   revalidatePath("/policies");
+  return { ok: true };
+}
+
+// Enforcement posture: "enforce" (block for real, default) or "monitor"
+// (observe-only for a window — logs what would happen but blocks nothing).
+// Switching to monitor sets a window (default 14 days); switching to enforce
+// clears it. Kept server-side; days is clamped by monitorUntilFrom.
+export async function updateEnforcementMode(mode: string, days = 14): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  if (!isEnforcementMode(mode)) return { ok: false, error: "Unknown mode." };
+  const supabase = await createClient();
+  const patch: { org_id: string; enforcement_mode: string; monitor_until: string | null } =
+    mode === "monitor"
+      ? { org_id: ctx.orgId, enforcement_mode: "monitor", monitor_until: monitorUntilFrom(Date.now(), days) }
+      : { org_id: ctx.orgId, enforcement_mode: "enforce", monitor_until: null };
+  const { error } = await supabase.from("org_policy_settings").upsert(patch, { onConflict: "org_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 

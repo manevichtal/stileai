@@ -16,8 +16,27 @@ export type AuditRow = {
   matched_policy: string | null;
   reason: string | null;
   employee_id?: string | null;
-  params?: { categories?: string[]; evidence?: Evidence[]; preview?: string } | null;
+  params?: {
+    categories?: string[];
+    evidence?: Evidence[];
+    preview?: string;
+    monitor?: boolean;
+    would_effect?: string;
+    would_reason?: string;
+  } | null;
 };
+
+// A small amber "monitor" tag shown next to monitored rows.
+function MonitorTag() {
+  return (
+    <span
+      className="text-[9.5px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5"
+      style={{ background: "#fff1d6", color: "#8a5a12" }}
+    >
+      monitor
+    </span>
+  );
+}
 
 export function AuditTable({
   rows,
@@ -68,7 +87,16 @@ export function AuditTable({
                   <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink3 whitespace-nowrap"><LocalTime ts={r.ts} /></td>
                   {showEmployee && <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{who(r)}</td>}
                   <td className="px-3.5 py-2.5 font-sans text-[11.5px] text-ink2">{r.resource}</td>
-                  <td className="px-3.5 py-2.5"><EffectBadge effect={r.effect} /></td>
+                  <td className="px-3.5 py-2.5">
+                    {r.status === "monitored" ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <EffectBadge effect={r.params?.would_effect ?? "allow"} />
+                        <MonitorTag />
+                      </span>
+                    ) : (
+                      <EffectBadge effect={r.effect} />
+                    )}
+                  </td>
                   <td className="px-3.5 py-2.5 font-sans text-[11px] text-ink2">
                     {cats.length ? (
                       <span className="inline-flex flex-wrap gap-1">
@@ -98,7 +126,9 @@ function DetailDrawer({ row, who, onClose }: { row: AuditRow; who: string; onClo
   const ev = row.params?.evidence ?? [];
   const cats = row.params?.categories ?? [];
   const preview = row.params?.preview ?? "";
-  const blocked = row.effect !== "allow";
+  const monitored = row.status === "monitored";
+  const shownEffect = monitored ? (row.params?.would_effect ?? "allow") : row.effect;
+  const blocked = shownEffect !== "allow";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
@@ -109,13 +139,19 @@ function DetailDrawer({ row, who, onClose }: { row: AuditRow; who: string; onClo
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-line sticky top-0 bg-card">
           <div className="flex items-center gap-2.5">
-            <EffectBadge effect={row.effect} />
-            {row.status && <StatusBadge status={row.status} />}
+            <EffectBadge effect={shownEffect} />
+            {monitored ? <MonitorTag /> : row.status && <StatusBadge status={row.status} />}
           </div>
           <button onClick={onClose} className="text-ink3 hover:text-ink text-[18px] leading-none px-1">×</button>
         </div>
 
         <div className="p-5 flex flex-col gap-5">
+          {monitored && (
+            <div className="rounded-lg px-3 py-2 font-sans text-[11.5px]" style={{ background: "#fff8ec", border: "1px solid #e7c98a", color: "#8a5a12" }}>
+              Monitor mode: this request was <b>reported only, not blocked</b>. Under enforcement it would have been{" "}
+              <b>{shownEffect === "deny" ? "blocked" : shownEffect === "require_approval" ? "held for approval" : "allowed"}</b>.
+            </div>
+          )}
           <Field label="When"><LocalTime ts={row.ts} /></Field>
           <Field label="Who">{who}{row.actor ? ` · ${row.actor}` : ""}</Field>
           <Field label="AI tool">{row.resource || "—"}</Field>

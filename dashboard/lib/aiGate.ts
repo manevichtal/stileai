@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/apiKeys";
 import { checkPrompt, redactSensitive, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
 import { escalateIfNeeded } from "@/lib/deepInspect";
+import { effectiveMode } from "@/lib/enforcementMode";
 import { resolveEmployeeByKey, listEmployees } from "@/lib/employees";
 import { seatedIds, isActiveStatus } from "@/lib/seats";
 import { isPlatformAdmin } from "@/lib/platformAdmin";
@@ -72,7 +73,11 @@ export async function auditCallerBlock(orgId: string, employeeId: string | null,
 // and, for admin-approval, to the Approvals queue. Never stores restricted content.
 export async function gate(orgId: string, promptText: string, model: string, employeeId?: string | null): Promise<CheckResult> {
   const admin = createAdminClient();
-  const { data: pols } = await admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true);
+  // Load the org's policies AND its enforcement posture in parallel.
+  const [{ data: pols }, { data: settings }] = await Promise.all([
+    admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true),
+    admin.from("org_policy_settings").select("enforcement_mode, monitor_until").eq("org_id", orgId).maybeSingle(),
+  ]);
   const rules = { ...BALANCED_RULES };
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
@@ -84,14 +89,46 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   const result = await escalateIfNeeded(orgId, promptText, rules, free);
 
   const decisionId = "ai-" + crypto.randomUUID();
-  const effect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
-  const status = result.decision === "approved" ? "allowed" : result.decision === "denied" ? "denied" : "pending";
+  const wouldEffect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
   const categories = result.hits.map((h) => h.category);
   // Allowed: nothing sensitive was detected, so a plain preview is safe. Blocked/held:
   // store a REDACTED preview (sensitive spans masked) — context without raw secrets.
   const preview =
     result.decision === "approved" ? promptText.slice(0, 280) : redactSensitive(promptText);
   const evidence = result.hits.map((h) => ({ category: h.category, label: h.label, why: h.evidence }));
+
+  // Monitor mode: observe-only. Log what WOULD have happened, pass the request
+  // through unblocked, and never queue an approval. Enforce mode: today's behavior.
+  const mode = effectiveMode(
+    settings?.enforcement_mode as string | undefined,
+    settings?.monitor_until as string | undefined,
+    Date.now(),
+  );
+
+  if (mode === "monitor" && result.decision !== "approved") {
+    await admin.from("audit_log").insert({
+      org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
+      actor: "employee", action: "ai.request", resource: model,
+      params: { categories, evidence, preview, monitor: true, would_effect: wouldEffect, would_reason: result.reason,
+                ai_verified: result.unverified ? false : undefined },
+      effect: "allow", matched_policy: result.hits[0]?.label ?? null,
+      reason: "Monitor mode: reported only, not blocked. " + result.reason,
+      status: "monitored", employee_id: employeeId ?? null,
+    });
+    // Pass through: the caller gets an allow, so nothing is blocked or held.
+    return {
+      decision: "approved",
+      reason: "Allowed — StileAI is in monitor mode (reporting only, not blocking).",
+      hits: [],
+      profile: result.profile,
+      monitored: true,
+      wouldDecision: result.decision,
+    };
+  }
+
+  // Enforce mode (or a monitored-but-already-allowed request): log the real outcome.
+  const effect = wouldEffect;
+  const status = result.decision === "approved" ? "allowed" : result.decision === "denied" ? "denied" : "pending";
   await admin.from("audit_log").insert({
     org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
     actor: "employee", action: "ai.request", resource: model,

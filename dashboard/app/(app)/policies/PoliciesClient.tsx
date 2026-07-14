@@ -8,12 +8,14 @@ import {
   deletePolicy,
   updateDefaults,
   updateFallbackMode,
+  updateEnforcementMode,
   addPack,
   type PolicyInput,
   type Condition,
 } from "./actions";
 import { POLICY_PACKS, PACK_CATEGORIES, type PolicyPack } from "@/lib/policyTemplates";
 import { packAllowed } from "@/lib/tiers";
+import { daysLeft } from "@/lib/enforcementMode";
 
 const OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "regex", "exists"];
 const EFFECTS = ["allow", "deny", "require_approval"];
@@ -36,6 +38,8 @@ export function PoliciesClient({
   defaultEffect,
   defaultReason,
   fallbackMode,
+  enforcementMode,
+  monitorUntil,
   existingIds,
   initialTab = "rules",
   plan,
@@ -44,6 +48,8 @@ export function PoliciesClient({
   defaultEffect: string;
   defaultReason: string;
   fallbackMode: "availability" | "hold" | "flag";
+  enforcementMode: "enforce" | "monitor";
+  monitorUntil: string | null;
   existingIds: string[];
   initialTab?: "rules" | "library";
   plan: string | null;
@@ -76,6 +82,8 @@ export function PoliciesClient({
           defaultEffect={defaultEffect}
           defaultReason={defaultReason}
           fallbackMode={fallbackMode}
+          enforcementMode={enforcementMode}
+          monitorUntil={monitorUntil}
           editing={editing}
           setEditing={setEditing}
           router={router}
@@ -90,6 +98,8 @@ function RulesTab({
   defaultEffect,
   defaultReason,
   fallbackMode,
+  enforcementMode,
+  monitorUntil,
   editing,
   setEditing,
   router,
@@ -98,12 +108,15 @@ function RulesTab({
   defaultEffect: string;
   defaultReason: string;
   fallbackMode: "availability" | "hold" | "flag";
+  enforcementMode: "enforce" | "monitor";
+  monitorUntil: string | null;
   editing: PolicyInput | null;
   setEditing: (p: PolicyInput | null) => void;
   router: ReturnType<typeof useRouter>;
 }) {
   return (
     <div className="flex flex-col gap-6">
+      <EnforcementBar mode={enforcementMode} monitorUntil={monitorUntil} onSaved={() => router.refresh()} />
       <DefaultsBar
         defaultEffect={defaultEffect}
         defaultReason={defaultReason}
@@ -205,6 +218,77 @@ function DefaultsBar({ defaultEffect, defaultReason, onSaved }: { defaultEffect:
         className="font-sans text-[11.5px] text-blue disabled:text-ink4 hover:underline"
       >
         {busy ? "Saving…" : "Save default"}
+      </button>
+    </div>
+  );
+}
+
+// Enforce vs monitor. Prominent and unambiguous: in monitor mode nothing is
+// blocked, so the copy says so plainly (a security product must never let someone
+// believe they're protected when they're only watching).
+function EnforcementBar({
+  mode,
+  monitorUntil,
+  onSaved,
+}: {
+  mode: "enforce" | "monitor";
+  monitorUntil: string | null;
+  onSaved: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [days, setDays] = useState(14);
+  const left = mode === "monitor" ? daysLeft(monitorUntil, Date.now()) : null;
+
+  async function setMode(next: "enforce" | "monitor", d?: number) {
+    setBusy(true);
+    await updateEnforcementMode(next, d);
+    setBusy(false);
+    onSaved();
+  }
+
+  if (mode === "monitor") {
+    return (
+      <div className="rounded-[14px] border px-4 py-3.5 flex items-center gap-3 flex-wrap"
+           style={{ borderColor: "#b8791a", background: "#fff8ec" }}>
+        <div className="flex flex-col flex-1 min-w-[260px]">
+          <span className="font-sans text-[12.5px] font-semibold" style={{ color: "#8a5a12" }}>
+            👁️ Monitor mode — reporting only, nothing is being blocked
+          </span>
+          <span className="font-sans text-[11px] text-ink3 mt-0.5">
+            Every prompt is checked and logged with what <b>would</b> have happened, but requests pass through.
+            {left != null && <> Ends in <b>{left} day{left === 1 ? "" : "s"}</b>, then enforcement turns on automatically.</>}
+          </span>
+        </div>
+        <button
+          disabled={busy}
+          onClick={() => setMode("enforce")}
+          className="bg-blue text-white font-sans font-semibold text-[12px] rounded-lg px-3.5 py-2 hover:opacity-90 disabled:opacity-50"
+        >
+          {busy ? "Saving…" : "Turn on enforcement now"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-bg2 border border-line rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col flex-1 min-w-[260px]">
+        <span className="font-sans text-[12px] text-ink2">🛡️ Enforcing — restricted prompts are blocked or held for approval</span>
+        <span className="font-sans text-[10.5px] text-ink4">
+          New to StileAI? Run in monitor mode first to see what your team sends, without blocking anyone.
+        </span>
+      </div>
+      <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls()} disabled={busy}>
+        {[7, 14, 30].map((d) => (
+          <option key={d} value={d}>{d} days</option>
+        ))}
+      </select>
+      <button
+        disabled={busy}
+        onClick={() => setMode("monitor", days)}
+        className="font-sans text-[11.5px] text-blue hover:underline disabled:text-ink4"
+      >
+        {busy ? "Saving…" : "Start monitor mode"}
       </button>
     </div>
   );

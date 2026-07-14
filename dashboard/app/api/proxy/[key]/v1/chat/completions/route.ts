@@ -1,7 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
-import { checkPrompt, BALANCED_RULES, decisionFromEffect, type Category } from "@/lib/promptCheck";
-import { resolveCaller, auditCallerBlock } from "@/lib/aiGate";
-import { escalateIfNeeded } from "@/lib/deepInspect";
+import { resolveCaller, auditCallerBlock, gate, blockMessage } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
 import { rateLimit, keyBucket } from "@/lib/rateLimit";
 
@@ -97,39 +94,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
     return json(completion(model, gatePass.reason));
   }
 
-  const orgId = caller.orgId;
   const promptText = extractPrompt(body?.messages);
 
-  // The Policies page is the decision-maker: load the org's enabled policies and
-  // map each restricted-content category to its configured effect. Categories with
-  // no policy fall back to the recommended defaults, so it's safe out of the box.
-  const admin = createAdminClient();
-  const AI_CATEGORIES = new Set<Category>(["secrets", "pii", "client_data", "financial", "legal", "phi", "source_code"]);
-  const { data: pols } = await admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true);
-  const rules = { ...BALANCED_RULES };
-  for (const p of pols ?? []) {
-    if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
-  }
-  // Free deterministic layer, then an AI second opinion on the gray zone. Applies
-  // this org's own rules, only ever tightens, never crosses tenants, never fails open.
-  const result = await escalateIfNeeded(orgId, promptText, rules, checkPrompt(promptText, rules));
+  // Single decision path, shared with the extension route (/api/inspect): loads the
+  // org's policies, runs the free layer + AI gray-zone step, logs the decision,
+  // queues an approval when needed, and honors the org's enforcement mode (in
+  // monitor mode it logs "would have" and passes through). One source of truth.
+  const result = await gate(caller.orgId, promptText, model, caller.employeeId);
 
-  // Record the decision. We never store restricted prompt content — only the
-  // detected categories + reason (and a short preview for SAFE requests).
-  const decisionId = "ai-" + crypto.randomUUID();
-  const effect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
-  const status = result.decision === "approved" ? "allowed" : result.decision === "denied" ? "denied" : "pending";
-  const categories = result.hits.map((h) => h.category);
-  const safePreview = result.decision === "approved" ? promptText.slice(0, 80) : "(restricted content hidden)";
-  await admin.from("audit_log").insert({
-    org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
-    actor: "employee", action: "ai.request", resource: model,
-    params: { categories, preview: safePreview, ai_verified: result.unverified ? false : undefined },
-    effect, matched_policy: result.hits[0]?.label ?? null, reason: result.reason, status,
-    employee_id: caller.employeeId,
-  });
-
-  // Approved → forward to the AI provider with the caller's own key (flows through).
+  // Approved (or monitor mode) → forward to the AI provider with the caller's own
+  // key (flows through untouched).
   if (result.decision === "approved") {
     try {
       const upstream = await fetch(PROVIDER_URL, {
@@ -147,22 +121,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   }
 
   // Denied / needs approval → return the policy message AS the AI's reply; the AI
-  // provider is never called. For 'needs approval', log it to the Approvals queue.
-  if (result.decision === "admin_approval") {
-    await admin.from("approvals").insert({
-      org_id: orgId, decision_id: decisionId, actor: "employee", action: "ai.request",
-      resource: model, params: { categories, preview: "(restricted content hidden)" },
-      reason: result.reason, matched_policy: result.hits[0]?.label ?? null,
-      approvals_required: 1, status: "pending", approvals: [],
-    });
-  }
-
-  const mark = result.decision === "denied" ? "⛔" : "🟠";
-  const head =
-    result.decision === "denied"
-      ? "Blocked by your company's AI policy."
-      : "This request needs approval from your admin before it can be sent to the AI.";
-  const content = `${mark} ${head}\n\n${result.reason}`;
+  // provider is never called. (gate() already logged the decision + any approval.)
+  const content = blockMessage(result);
 
   if (body?.stream) {
     return new Response(sseBlock(model, content), {
