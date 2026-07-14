@@ -162,8 +162,78 @@ function DetailDrawer({ row, who, onClose }: { row: AuditRow; who: string; onClo
           </div>
 
           <Field label="Decision ID"><span className="font-mono text-[11px]">{row.decision_id}</span></Field>
+
+          <FeedbackSection decisionId={row.decision_id} />
         </div>
       </div>
+    </div>
+  );
+}
+
+// Lets an admin flag a decision as wrong. Purely a report — it never changes the
+// decision. The flagged examples help tune detection and seed Phase 3 training.
+function FeedbackSection({ decisionId }: { decisionId: string }) {
+  const [note, setNote] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+
+  async function report(kind: "false_positive" | "false_negative" | "other") {
+    setState("sending");
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision_id: decisionId, kind, note }),
+      });
+      setState(res.ok ? "done" : "error");
+    } catch {
+      setState("error");
+    }
+  }
+
+  if (state === "done") {
+    return (
+      <div className="border-t border-line pt-4">
+        <div className="font-sans text-[12px] text-blue">✓ Thanks — we logged this to improve detection.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-line pt-4">
+      <FieldLabel>Was this decision wrong?</FieldLabel>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Optional: what should have happened?"
+        rows={2}
+        className="mt-1.5 w-full resize-none font-sans text-[12px] text-ink bg-bg2 border border-line rounded-lg px-3 py-2 placeholder:text-ink4 focus:outline-none focus:border-blue"
+      />
+      <div className="flex flex-wrap gap-2 mt-2">
+        <button
+          onClick={() => report("false_positive")}
+          disabled={state === "sending"}
+          className="font-sans text-[11.5px] text-ink2 bg-bg2 border border-line2 rounded-lg px-3 py-1.5 hover:border-blue disabled:opacity-50 transition-colors"
+        >
+          Over-blocked
+        </button>
+        <button
+          onClick={() => report("false_negative")}
+          disabled={state === "sending"}
+          className="font-sans text-[11.5px] text-ink2 bg-bg2 border border-line2 rounded-lg px-3 py-1.5 hover:border-blue disabled:opacity-50 transition-colors"
+        >
+          Missed something
+        </button>
+        <button
+          onClick={() => report("other")}
+          disabled={state === "sending"}
+          className="font-sans text-[11.5px] text-ink2 bg-bg2 border border-line2 rounded-lg px-3 py-1.5 hover:border-blue disabled:opacity-50 transition-colors"
+        >
+          Other
+        </button>
+      </div>
+      {state === "error" && (
+        <div className="font-sans text-[11px] mt-2" style={{ color: "#b02a37" }}>Could not send that report. Please try again.</div>
+      )}
     </div>
   );
 }
