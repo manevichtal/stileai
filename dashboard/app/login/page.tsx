@@ -92,8 +92,10 @@ function LoginPageInner() {
     <main className="flex-1 flex flex-col items-center justify-center px-5 py-16">
       <div className="w-full max-w-[400px]">
         <div className="flex flex-col items-center mb-7">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brandmark.png" alt="StileAI" style={{ height: 30, width: "auto" }} />
+          <a href="/" aria-label="StileAI home">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brandmark.png" alt="StileAI" style={{ height: 30, width: "auto" }} />
+          </a>
           <p className="font-sans text-[12.5px] text-ink3 mt-2.5 text-center">
             The checkpoint for agentic AI.
           </p>
@@ -226,6 +228,12 @@ function LoginPageInner() {
           Each organization is fully isolated. Admins only ever see their own
           org&apos;s policies, audit trail, and approvals.
         </p>
+
+        <div className="mt-6 text-center">
+          <a href="/" className="font-sans text-[12.5px] font-medium text-blue hover:underline">
+            Go back to our website &rarr;
+          </a>
+        </div>
       </div>
     </main>
   );

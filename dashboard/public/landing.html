@@ -295,7 +295,7 @@ function blank(){print('&nbsp;');}
 
 const CMDS={
   help(){return `<span class="w">sections</span>  <span class="mut">tap one below to explore</span>
-  <span class="g">about</span>  <span class="g">how</span>  <span class="g">layers</span>  <span class="g">why</span>  <span class="g">who</span>  <span class="g">demo</span>  <span class="g">inspect</span>  <span class="g">policy</span>  <span class="g">deploy</span>  <span class="g">resilience</span>  <span class="g">standards</span>  <span class="g">pricing</span>  <span class="g">book</span>`;},
+  <span class="g">about</span>  <span class="g">how</span>  <span class="g">layers</span>  <span class="g">why</span>  <span class="g">who</span>  <span class="g">demo</span>  <span class="g">inspect</span>  <span class="g">policy</span>  <span class="g">monitor</span>  <span class="g">deploy</span>  <span class="g">resilience</span>  <span class="g">standards</span>  <span class="g">pricing</span>  <span class="g">book</span>`;},
   about(){return `<span class="bl">// what StileAI is</span>
 Your team uses AI all day, ChatGPT, Claude, Gemini, Copilot, and they
 paste real company data into it: customer lists, source code, contracts,
@@ -397,6 +397,20 @@ cloud is unreachable, StileAI keeps protecting you. It never fails open.
 
 You set the fallback behavior per company, right in your dashboard.
 <span class="mut">back to how &#8594;</span> <span class="runchip" data-run="how">how</span> <span class="mut">&#183;</span> <span class="runchip" data-run="layers">the layers</span>`;},
+  monitor(){return `<span class="bl">// see before you block</span>
+New to StileAI? Turn it on in <span class="w">monitor mode</span> first. For a window you
+choose, StileAI checks every prompt and logs <span class="w">what would have happened</span>,
+allow, hold, or block, but nothing is stopped and no one is interrupted.
+
+  <span class="bl">&#9656;</span> watch what your team actually sends to AI, in one console
+  <span class="bl">&#9656;</span> see which prompts <span class="w">would</span> have been held or blocked, and why
+  <span class="bl">&#9656;</span> tune your policies against real traffic, not guesses
+  <span class="bl">&#9656;</span> when the window ends, <span class="w">enforcement turns on automatically</span>
+
+<span class="w">One honest caveat:</span> in monitor mode nothing is blocked, so your data is
+not yet protected. It's a reporting window, and StileAI says so on every
+page until you switch to enforce. Flip to enforcing the moment you're ready.
+<span class="mut">then enforce &#8594;</span> <span class="runchip" data-run="how">how enforcement works</span> <span class="mut">&#183;</span> <span class="runchip" data-run="book">get started</span>`;},
   msp(){return `<span class="bl">// who it's for</span>
 Any company whose team uses AI and has data it can't afford to leak.
 
@@ -469,14 +483,15 @@ perfectly safe, and we say so out loud.</span>`;},
   book(){return `<span class="bl">// get started</span>
 <span class="g">1.</span> pick a plan and add your seats
 <span class="g">2.</span> point your AI tools at StileAI (one setting, keep your keys)
-<span class="g">3.</span> turn on the policies you want
+<span class="g">3.</span> <span class="w">optional:</span> start in monitor mode to watch your traffic first
+<span class="g">4.</span> turn on the policies you want, then switch to enforce
 
 That's it, every request your team sends is checked from that moment on,
 and you can see every decision in your dashboard.
 
-No free tier: the controls are on from day one, so nothing slips through
-while you "evaluate."
-<span class="w">Ready?</span> <span class="runchip" data-cta="1">Get started &#8594;</span> <span class="mut">&#183;</span> <span class="runchip" data-run="pricing">see pricing</span>`;},
+No free tier, the controls are yours from day one. Monitor mode lets you
+see before you block, but it's still your paid workspace, not a trial.
+<span class="w">Ready?</span> <span class="runchip" data-cta="1">Get started &#8594;</span> <span class="mut">&#183;</span> <span class="runchip" data-run="monitor">monitor mode</span> <span class="mut">&#183;</span> <span class="runchip" data-run="pricing">see pricing</span>`;},
   pricing(){return `<span class="bl">// pricing &#183; per seat, per month</span>
 Priced per protected employee. Every request they send to an AI tool
 is checked against your policies. No free tier, the controls are on
@@ -497,7 +512,7 @@ from day one.
 <span class="mut">ready? &#8594;</span> <span class="runchip" data-cta="1">book a walkthrough</span> <span class="mut">&#183;</span> <span class="runchip" data-run="who">who it's for</span>`;},
   clear(){out.innerHTML='';return null;}
 };
-const ALIAS={why:'problem',who:'msp',standards:'compliance',whoami:'about',start:'book',contact:'book',plans:'pricing',price:'pricing',cost:'pricing','?':'help',ls:'help',detection:'layers',layer:'layers',obfuscation:'layers',disguise:'layers',ai:'layers',uptime:'resilience',offline:'resilience',outage:'resilience',fallback:'resilience',down:'resilience'};
+const ALIAS={why:'problem',who:'msp',standards:'compliance',whoami:'about',start:'book',contact:'book',plans:'pricing',price:'pricing',cost:'pricing','?':'help',ls:'help',detection:'layers',layer:'layers',obfuscation:'layers',disguise:'layers',ai:'layers',uptime:'resilience',offline:'resilience',outage:'resilience',fallback:'resilience',down:'resilience',watch:'monitor',observe:'monitor','watch-only':'monitor','monitor-mode':'monitor',pilot:'monitor',trial:'monitor'};
 
 const DEC={
   allow:{v:'ALLOW',tool:'chatgpt',req:'"draft a reminder email to a vendor about invoice #204"',checks:[['✓','secrets','none'],['✓','customer data','none'],['✓','source code','none'],['✓','policy','general-use → allow']],reason:'no sensitive data, sent to the AI',ctl:'policy: general-use'},
@@ -524,7 +539,7 @@ function run(raw){const cmd=(raw||'').trim();lineN=0;const first=cmd.split(/\s+/
 
 /* tap-to-run */
 let busy=false;
-const CMDSET=new Set(['about','how','layers','resilience','why','who','demo','inspect','policy','deploy','standards','pricing','plans','price','cost','book','clear','help']);
+const CMDSET=new Set(['about','how','layers','resilience','why','who','demo','inspect','policy','monitor','deploy','standards','pricing','plans','price','cost','book','clear','help']);
 const QA=[
  {k:['what is','what does','tell me','explain','overview','purpose'],a:`StileAI is a <span class="w">policy checkpoint</span> between your team and the AI tools they use. Every request they send is checked, gets a verdict (<span class="tag t-ALLOW">ALLOW</span> <span class="tag t-HOLD">HOLD</span> <span class="tag t-BLOCK">BLOCK</span>), and is logged, before it reaches the AI. <span class="mut">more &#8594;</span> <span class="runchip" data-run="about">about</span>`},
  {k:['how does','how do','how it','works','work','mechanism','pipeline','process','function'],a:`Point your AI tools at StileAI instead of the provider (same API, one base-URL change). Each request is scanned for secrets, PII, source code and records, checked against your policies, then allowed, held, or blocked, and logged. <span class="mut">see the diagram &#8594;</span> <span class="runchip" data-run="how">how</span>`},
@@ -540,7 +555,7 @@ const QA=[
  {k:['bypass','evade','100','perfect','guarantee','foolproof','fully safe','completely safe','unbreakable'],a:`Straight answer: it <span class="w">reduces</span> risk, it does not erase it. No tool makes AI perfectly safe. StileAI is defense in depth, fails closed on destructive actions, and logs everything so nothing is invisible.`},
  {k:['chatgpt','claude','openai','copilot','gemini','anthropic','model','provider','llm','which ai','what ai'],a:`A <span class="w">Chrome extension</span> covers ChatGPT, Claude and Gemini on the web, and an <span class="w">API gateway</span> covers Claude Code, Cursor and anything on the OpenAI or Anthropic API. <span class="mut">more &#8594;</span> <span class="runchip" data-run="deploy">deploy</span>`},
  {k:['mcp','connect','integrate','integration','slack','teams','connectwise','autotask','jira','servicenow','pagerduty','webhook','api'],a:`You connect the AI tools your team already uses by changing one setting (the base URL). Approvals and every decision live in your StileAI dashboard, nothing else to wire up.`},
- {k:['try','trial','free','get started','start','monitor','watch-only','pilot','poc'],a:`No free tier, the controls are on from day one. Pick a plan, point your tools at StileAI, and turn on your policies. <span class="mut">more &#8594;</span> <span class="runchip" data-run="pricing">pricing</span>`},
+ {k:['try','trial','free','get started','start','monitor','watch-only','watch only','pilot','poc','observe','see first'],a:`Start in <span class="w">monitor mode</span>: for a window you choose, StileAI logs what <span class="w">would</span> have happened on every prompt without blocking anyone, so you see your environment first. Then flip to enforce. <span class="mut">more &#8594;</span> <span class="runchip" data-run="monitor">monitor</span>`},
  {k:['contact','talk','sales','book','walkthrough','call','meeting','get in touch','demo call'],a:`Use "Get started" at the top to create an account and pick a plan. <span class="mut">where to start &#8594;</span> <span class="runchip" data-run="book">book</span>`},
  {k:['different','competitor','vs','lakera','why you','alternative','better than','compare'],a:`Most AI tools filter the model's answer. StileAI checks the <span class="w">request</span> before it leaves your company, catching secrets, PII and source code, and logs every decision as evidence. Per-seat, multi-tenant.`},
  {k:['verdict','allow','redact','hold','block','difference between'],a:`Three verdicts: <span class="tag t-ALLOW">ALLOW</span> safe, sent to the AI. <span class="tag t-HOLD">HOLD</span> sensitive, waits for an admin. <span class="tag t-BLOCK">BLOCK</span> against policy, stopped before it leaves.`}

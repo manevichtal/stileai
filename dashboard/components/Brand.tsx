@@ -1,27 +1,27 @@
-// StileAI wordmark + interlocking-brackets glyph (from the interlock_20.html
-// reference). Kept as an inline SVG so it needs no assets and stays crisp.
+// StileAI shield glyph — the canonical brand mark, matching the app favicon and
+// the browser extension. Inline SVG so it needs no assets and stays crisp. The
+// gradient ids are shared across instances on a page, which is fine: every
+// instance is identical, so referencing the first def renders them all the same.
 export function BrandMark({ size = 30 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-      <g
-        stroke="#1953F0"
-        strokeWidth="2.6"
-        strokeLinecap="round"
+      <defs>
+        <linearGradient id="stileShieldB" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#2E8CE8" />
+          <stop offset="1" stopColor="#1157AE" />
+        </linearGradient>
+        <linearGradient id="stileShieldG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#F4DA86" />
+          <stop offset=".5" stopColor="#E0B33A" />
+          <stop offset="1" stopColor="#B9862A" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M7 6C7 5.25 7.5 5 8.25 5L23.75 5C24.5 5 25 5.25 25 6C25 10 25.5 13 25 16C24.5 21 20.75 24.5 16 27.25C11.25 24.5 7.5 21 7 16C6.5 13 7 10 7 6Z"
+        fill="url(#stileShieldB)"
+        stroke="url(#stileShieldG)"
+        strokeWidth="1.6"
         strokeLinejoin="round"
-      >
-        <path d="M4 11V6.5A2.5 2.5 0 0 1 6.5 4H11" />
-        <path d="M21 4h4.5A2.5 2.5 0 0 1 28 6.5V11" />
-        <path d="M28 21v4.5a2.5 2.5 0 0 1-2.5 2.5H21" />
-        <path d="M11 28H6.5A2.5 2.5 0 0 1 4 25.5V21" />
-      </g>
-      <rect
-        x="11.6"
-        y="11.6"
-        width="8.8"
-        height="8.8"
-        rx="2"
-        transform="rotate(45 16 16)"
-        fill="#1953F0"
       />
     </svg>
   );
