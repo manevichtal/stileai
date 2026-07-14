@@ -1,0 +1,87 @@
+// Per-site request matchers + prompt extractors for the StileAI interceptor.
+//
+// Factored into its own file for one reason: these extractors are the part most
+// likely to silently break when ChatGPT / Claude / Gemini change their request
+// shapes. Keeping them here lets a regression test (extractors.test.mjs) exercise
+// the REAL code against saved sample bodies, so a vendor change fails CI instead
+// of a customer's block silently going quiet.
+//
+// UMD-ish: in the page (MAIN world) it attaches to `self.__StileAIExtractors`;
+// under Node/vitest it exports via module.exports. No bundler required.
+(function (root, factory) {
+  const api = factory();
+  if (root) root.__StileAIExtractors = api;
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+})(typeof self !== "undefined" ? self : (typeof globalThis !== "undefined" ? globalThis : this), function () {
+  "use strict";
+
+  function longestString(node, best) {
+    best = best || { v: "" };
+    if (typeof node === "string") {
+      if (node.length > best.v.length) best.v = node;
+    } else if (Array.isArray(node)) {
+      for (const n of node) longestString(n, best);
+    } else if (node && typeof node === "object") {
+      for (const k in node) longestString(node[k], best);
+    }
+    return best.v;
+  }
+
+  const SITES = [
+    {
+      host: /(^|\.)chatgpt\.com$|(^|\.)chat\.openai\.com$/,
+      label: "ChatGPT",
+      matches: (u) => /\/backend-api\/.*conversation/.test(u),
+      extract: (body) => {
+        try {
+          const j = JSON.parse(body);
+          const msgs = Array.isArray(j.messages) ? j.messages : [];
+          const users = msgs.filter((m) => (m.author && m.author.role) === "user");
+          const last = users[users.length - 1] || msgs[msgs.length - 1];
+          const parts = last && last.content && last.content.parts;
+          if (Array.isArray(parts)) return parts.map(String).join("\n");
+        } catch (_) {}
+        return null;
+      },
+    },
+    {
+      host: /(^|\.)claude\.ai$/,
+      label: "Claude",
+      matches: (u) => /\/completion(\?|$)|\/chat_conversations\/.*\/completion/.test(u),
+      extract: (body) => {
+        try {
+          const j = JSON.parse(body);
+          if (typeof j.prompt === "string") return j.prompt;
+          if (Array.isArray(j.messages)) {
+            const u = j.messages.filter((m) => m.role === "user").pop() || j.messages.pop();
+            if (u) return typeof u.content === "string" ? u.content : JSON.stringify(u.content);
+          }
+        } catch (_) {}
+        return null;
+      },
+    },
+    {
+      host: /(^|\.)gemini\.google\.com$/,
+      label: "Gemini",
+      matches: (u) => /StreamGenerate|batchexecute|assistant\.lamda/.test(u),
+      extract: (body) => {
+        try {
+          const params = new URLSearchParams(body);
+          const freq = params.get("f.req");
+          if (freq) return longestString(JSON.parse(freq));
+        } catch (_) {}
+        return null;
+      },
+    },
+  ];
+
+  // Resolve the matching site for a request URL on a given host. In the page world
+  // `host` defaults to the live location.hostname; tests pass it explicitly.
+  function siteFor(url, host) {
+    const h = host != null ? host : (typeof location !== "undefined" ? location.hostname : "");
+    for (const s of SITES) if (s.host.test(h) && s.matches(url)) return s;
+    return null;
+  }
+
+  return { SITES, longestString, siteFor };
+});
