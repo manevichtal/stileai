@@ -316,8 +316,9 @@ It looks for what you can't afford to leak:
   <span class="bl">&#9656;</span> <span class="w">records</span>        financial, legal, and client documents
 
 It catches the obvious leaks and the disguised ones, spaced-out keys,
-encoded blobs, or a request that describes the data without naming it,
-with an AI layer that reads intent on the borderline cases.
+encoded blobs, a request that describes the data without naming it, or
+one written in another language, with an AI layer that reads intent on
+the borderline cases.
 
 Every decision is logged. Your team keeps using the AI they like; the
 data you can't lose stays inside the company.
@@ -369,8 +370,9 @@ so a disguised leak is still caught.
                 formats, high-entropy tokens, and valid card numbers,
                 plus your policy's own keywords and their synonyms
   <span class="w">3 &#183; deep-inspect</span> for the gray-zone prompts that look borderline, an
-                AI second opinion reads <span class="w">intent</span>, not just strings, and
-                can turn a would-be allow into a hold or a block
+                AI second opinion reads <span class="w">intent</span>, not just strings, in
+                <span class="w">any language</span>, catching paraphrased or unlabeled data,
+                and can turn a would-be allow into a hold or a block
   <span class="w">4 &#183; decide + log</span> the strictest matching rule wins, the verdict and
                 the reason are logged, the sensitive content is not
 
