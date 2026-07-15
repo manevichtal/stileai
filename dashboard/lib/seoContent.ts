@@ -71,7 +71,7 @@ export const SEO_PAGES: SeoPage[] = [
     ],
     ctaTitle: "Put AI DLP in place this week",
     ctaBody: "Connect StileAI to the AI tools your team already uses and start seeing, and stopping, sensitive data leaving in prompts.",
-    related: ["prevent-chatgpt-data-leaks", "shadow-ai", "ai-governance"],
+    related: ["prevent-chatgpt-data-leaks", "enterprise-ai-security", "prevent-source-code-leaks-ai"],
   },
   {
     slug: "prevent-chatgpt-data-leaks",
@@ -200,7 +200,143 @@ export const SEO_PAGES: SeoPage[] = [
     ],
     ctaTitle: "Make your AI policy enforceable",
     ctaBody: "Configure your rules once and let StileAI enforce them on every request, with a full audit trail behind every decision.",
-    related: ["ai-data-loss-prevention", "shadow-ai", "prevent-chatgpt-data-leaks"],
+    related: ["ai-compliance", "enterprise-ai-security", "shadow-ai"],
+  },
+  {
+    slug: "enterprise-ai-security",
+    eyebrow: "Enterprise AI Security",
+    h1: "Enterprise AI Security: Protect Company Data in Every AI Tool",
+    linkLabel: "Enterprise AI security",
+    metaTitle: "Enterprise AI Security | StileAI",
+    metaDescription:
+      "Enterprise AI security that inspects every prompt to ChatGPT, Claude, Gemini, Cursor and Copilot, and blocks secrets, PII, and source code before they leave. See how StileAI secures AI adoption.",
+    intro:
+      "Your team already uses AI. The question is whether anything checks what they send it. Enterprise AI security is not about banning tools, it is about putting a checkpoint in front of them so people can move fast while secrets, customer data, and source code stay inside the company.",
+    sections: [
+      {
+        h2: "The new perimeter is the prompt",
+        body: [
+          "Security has spent a decade watching files, email, and uploads. None of that sees the chat box, which is now the fastest path for data to leave. The prompt is the new perimeter, and most companies have nothing standing on it.",
+        ],
+      },
+      {
+        h2: "A checkpoint, not a ban",
+        body: ["StileAI sits in the path between your team and every AI tool and gives each request one of three outcomes, so productivity stays high and leaks stop."],
+        bullets: [
+          "ALLOW: safe and in-policy, sent through with no friction.",
+          "HOLD: sensitive, held for an admin to approve.",
+          "BLOCK: against policy, stopped before it leaves.",
+        ],
+      },
+      {
+        h2: "Coverage across the tools your team actually uses",
+        body: ["One policy, enforced everywhere people reach for AI."],
+        bullets: [
+          "Browser tools: ChatGPT, Claude, and Gemini via a managed extension.",
+          "Coding assistants: Cursor, Claude Code, and any OpenAI- or Anthropic-API client via a one-line gateway.",
+          "Meaning-based detection so paraphrased, unlabeled, and non-English content is still caught.",
+        ],
+      },
+      {
+        h2: "Deploy without breaking anything",
+        body: [
+          "Start in monitor mode: StileAI watches and logs what your team sends to AI without changing anything, so you see your real exposure first. When you are ready, flip to enforcement with one switch. If StileAI is ever unreachable it fails closed, it never quietly lets sensitive data through.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "What is enterprise AI security?", a: "Enterprise AI security is the set of controls that keep company data safe as employees use AI tools: inspecting prompts, enforcing policy on what can be sent, and logging every decision for audit." },
+      { q: "Do we have to block AI tools?", a: "No. StileAI is built so your team keeps using ChatGPT, Claude, Gemini, and coding assistants. It only stops the individual requests that carry sensitive data." },
+      { q: "How fast can we roll it out?", a: "Monitor mode can be on the same week. It logs exposure without changing anything, then you enforce your policy with one switch when you are ready." },
+      { q: "What happens if StileAI goes down?", a: "It fails closed. Sensitive requests are held or blocked rather than allowed through, so an outage never becomes a leak." },
+    ],
+    ctaTitle: "Secure AI adoption without slowing your team",
+    ctaBody: "Put a checkpoint in front of every AI tool your team uses, start in monitor mode, and enforce your policy when you are ready.",
+    related: ["ai-data-loss-prevention", "ai-compliance", "shadow-ai"],
+  },
+  {
+    slug: "ai-compliance",
+    eyebrow: "AI Compliance",
+    h1: "AI Compliance: Audit-Ready Controls for SOC 2, GDPR, and HIPAA",
+    linkLabel: "AI compliance and audit evidence",
+    metaTitle: "AI Compliance for SOC 2, GDPR & HIPAA | StileAI",
+    metaDescription:
+      "Turn AI usage into audit evidence. StileAI logs every AI request and maps controls to SOC 2, GDPR, HIPAA, PCI-DSS, ISO 27001, and the EU AI Act, with sensitive values redacted.",
+    intro:
+      "Auditors are starting to ask a simple question: what stops an employee from pasting regulated data into an AI tool? If your answer is a policy document, that is not a control. StileAI turns AI usage into an enforced, logged, audit-ready control.",
+    sections: [
+      {
+        h2: "A control auditors accept",
+        body: [
+          "A written acceptable-use policy asks people to remember rules. A control does something and produces evidence. StileAI enforces your policy on every AI request and records the decision, so you can show not just that you have a rule but that it fires.",
+        ],
+      },
+      {
+        h2: "Mapped to the frameworks you report against",
+        body: ["Detection categories line up with the controls and regulations you already answer to."],
+        bullets: [
+          "SOC 2, ISO 27001, and ISO 42001 (AI management systems).",
+          "GDPR, CCPA, HIPAA, PCI-DSS, and GLBA where they apply.",
+          "The EU AI Act, NIST AI RMF, and OWASP LLM Top 10 risks.",
+        ],
+      },
+      {
+        h2: "Evidence without exposure",
+        body: [
+          "Every decision is logged with who sent what, the policy that caught it, and the outcome, and sensitive values are redacted before anything is stored. You get a complete audit trail without the log itself becoming a new place your secrets live.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "How does StileAI help with compliance audits?", a: "It produces a logged, timestamped record of every AI request and the policy decision behind it, with sensitive data redacted, which you can export for any review period as evidence that your AI controls are enforced." },
+      { q: "Which frameworks does it map to?", a: "The detection categories map to SOC 2, ISO 27001, ISO 42001, GDPR, CCPA, HIPAA, PCI-DSS, GLBA, the EU AI Act, and NIST AI RMF." },
+      { q: "Does the audit log store sensitive data?", a: "No. Sensitive spans are redacted before the decision is logged, so the log records what happened and which policy fired without keeping the secret itself." },
+    ],
+    ctaTitle: "Make AI usage audit-ready",
+    ctaBody: "Enforce your policy on every AI request and hand auditors a clean, redacted record of every decision.",
+    related: ["ai-governance", "enterprise-ai-security", "ai-data-loss-prevention"],
+  },
+  {
+    slug: "prevent-source-code-leaks-ai",
+    eyebrow: "Source Code Protection",
+    h1: "Prevent Source Code Leaks in Copilot, Cursor, and AI Coding Tools",
+    linkLabel: "Prevent source code leaks in AI tools",
+    metaTitle: "Prevent Source Code Leaks in AI Coding Tools | StileAI",
+    metaDescription:
+      "Stop proprietary code, secrets, and config leaking into Copilot, Cursor, Claude Code, and ChatGPT. StileAI inspects requests from coding assistants and blocks leaks before they leave.",
+    intro:
+      "AI coding assistants are pasted the exact things you most need to protect: proprietary source, private keys, and internal config. StileAI inspects what those tools send and stops the requests that carry your code or credentials out of the company.",
+    sections: [
+      {
+        h2: "The IDE is a data-exfiltration path",
+        body: [
+          "A coding assistant reads files, sends context to a model, and gets completions back. That flow is useful, and it is also a direct route for a proprietary file or a hardcoded key to leave your environment, one that your email and file DLP never sees.",
+        ],
+      },
+      {
+        h2: "One line to cover every API-based tool",
+        body: [
+          "For Cursor, Claude Code, and any OpenAI- or Anthropic-API client, StileAI installs as a gateway with a single line. Requests route through the checkpoint, get inspected, and only in-policy ones reach the model. No per-tool integration to maintain.",
+        ],
+      },
+      {
+        h2: "What it catches in code",
+        body: ["Detection is tuned for the things that leak from an IDE."],
+        bullets: [
+          "Secrets: API keys, tokens, and private keys, including novel formats caught by entropy and shape.",
+          "Proprietary source code and internal configuration.",
+          "Connection strings, environment variables, and infrastructure detail.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Does StileAI work with Cursor and Claude Code?", a: "Yes. Any OpenAI- or Anthropic-API client, including Cursor and Claude Code, routes through StileAI with a one-line gateway setup, and every request is inspected before it reaches the model." },
+      { q: "Will it slow down my developers?", a: "In-policy requests pass straight through. Only the requests that carry secrets or proprietary code are held or blocked, so day-to-day coding is unaffected." },
+      { q: "Does it catch hardcoded secrets?", a: "Yes. Secret detection uses format patterns plus entropy and shape analysis, so even novel or unusual key formats are caught, not just known prefixes." },
+    ],
+    ctaTitle: "Keep your source code inside the company",
+    ctaBody: "Route your AI coding tools through StileAI and stop proprietary code and secrets from leaving in a completion request.",
+    related: ["ai-data-loss-prevention", "enterprise-ai-security", "prevent-chatgpt-data-leaks"],
   },
 ];
 

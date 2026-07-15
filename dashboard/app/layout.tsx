@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     title: "StileAI — the policy checkpoint between your team and AI",
     description:
       "Check every AI request against your policies before it reaches ChatGPT, Claude, Gemini, or Copilot.",
-    images: ["/brandmark.png"],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "StileAI — the policy checkpoint between your team and the AI they use" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "StileAI",
     description: "The policy checkpoint between your team and the AI they use.",
-    images: ["/brandmark.png"],
+    images: ["/og.png"],
   },
 };
 
