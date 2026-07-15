@@ -19,6 +19,7 @@ export function KeysClient({ keys }: { keys: KeyRow[] }) {
   const [busy, setBusy] = useState(false);
   const [freshKey, setFreshKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function generate() {
@@ -56,6 +57,32 @@ export function KeysClient({ keys }: { keys: KeyRow[] }) {
               {copied ? "Copied" : "Copy"}
             </button>
             <button onClick={() => setFreshKey(null)} className="font-sans text-[11.5px] text-ink3 px-2">dismiss</button>
+          </div>
+
+          {/* Ready-to-paste one-liner with this key already filled in. */}
+          <div className="mt-4 pt-4 border-t border-blue/20">
+            <div className="font-sans text-[11.5px] text-ink2 mb-2">
+              <span className="font-semibold text-ink">Connect your terminal AI tools in one line.</span>{" "}
+              Paste this into your Terminal — it wires up Claude Code and any OpenAI/Anthropic-SDK agent at once.
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 font-mono text-[11.5px] text-ink bg-card border border-line rounded-lg px-3 py-2 break-all">
+                curl -fsSL https://stileai.com/connect.sh | sh -s -- {freshKey}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`curl -fsSL https://stileai.com/connect.sh | sh -s -- ${freshKey}`);
+                  setCopiedCmd(true);
+                  setTimeout(() => setCopiedCmd(false), 1500);
+                }}
+                className="font-sans text-[11.5px] text-blue border border-blue/40 rounded-lg px-3 py-2 hover:bg-card whitespace-nowrap"
+              >
+                {copiedCmd ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <div className="font-sans text-[10.5px] text-ink4 mt-1.5">
+              Never used the Terminal? <a href="/connect-guide" className="text-blue hover:underline">Step-by-step guide with pictures →</a>
+            </div>
           </div>
         </div>
       )}
