@@ -95,6 +95,20 @@ export async function deletePolicy(id: string): Promise<Result> {
   return { ok: true };
 }
 
+// Delete several policies at once. Scoped to the caller's org (RLS also enforces
+// this) so a stray id from another org can never be deleted here.
+export async function deletePolicies(ids: string[]): Promise<Result & { deleted?: number }> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const clean = (ids || []).filter((x): x is string => typeof x === "string" && x.length > 0);
+  if (clean.length === 0) return { ok: true, deleted: 0 };
+  const supabase = await createClient();
+  const { error } = await supabase.from("policies").delete().in("id", clean).eq("org_id", ctx.orgId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  return { ok: true, deleted: clean.length };
+}
+
 // Enable a whole policy pack (compliance or recommended). Upserts every template
 // in the pack for the org, so it's idempotent and re-adding just refreshes them.
 export async function addPack(packKey: string): Promise<Result & { added?: number }> {

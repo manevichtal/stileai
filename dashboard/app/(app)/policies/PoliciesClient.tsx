@@ -6,6 +6,7 @@ import { EffectBadge, inputCls, labelCls } from "@/components/ui";
 import {
   savePolicy,
   deletePolicy,
+  deletePolicies,
   updateDefaults,
   updateFallbackMode,
   updateEnforcementMode,
@@ -114,6 +115,25 @@ function RulesTab({
   setEditing: (p: PolicyInput | null) => void;
   router: ReturnType<typeof useRouter>;
 }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const ids = policies.map((p) => p.id!).filter(Boolean);
+  const allSelected = ids.length > 0 && ids.every((id) => selected.has(id));
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(ids));
+  async function bulkDelete() {
+    setBulkBusy(true);
+    await deletePolicies([...selected]);
+    setBulkBusy(false);
+    setSelected(new Set());
+    router.refresh();
+  }
   return (
     <div className="flex flex-col gap-6">
       <EnforcementBar mode={enforcementMode} monitorUntil={monitorUntil} onSaved={() => router.refresh()} />
@@ -137,10 +157,35 @@ function RulesTab({
         </button>
       </div>
 
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 bg-bluedim border border-blue/30 rounded-[12px] px-4 py-2.5">
+          <span className="font-sans text-[12px] text-ink font-medium">{selected.size} selected</span>
+          <button
+            onClick={bulkDelete}
+            disabled={bulkBusy}
+            className="font-sans text-[12px] font-semibold text-white rounded-lg px-3 py-1.5 hover:opacity-90 disabled:opacity-50"
+            style={{ background: "#b02a37" }}
+          >
+            {bulkBusy ? "Deleting…" : `Delete ${selected.size} selected`}
+          </button>
+          <button onClick={() => setSelected(new Set())} className="font-sans text-[11.5px] text-ink3 hover:text-ink">Clear</button>
+        </div>
+      )}
+
       <div className="border border-line rounded-[14px] overflow-hidden bg-card">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-bg2 border-b border-line">
+              <th className="px-3.5 py-2.5 w-9">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  aria-label="Select all rules"
+                  className="cursor-pointer align-middle"
+                  disabled={ids.length === 0}
+                />
+              </th>
               {["Priority", "Rule", "Effect", "Matches", "", ""].map((h, i) => (
                 <th key={i} className="text-left font-sans text-[10.5px] text-ink3 uppercase tracking-wide px-3.5 py-2.5 font-medium">
                   {h}
@@ -151,13 +196,22 @@ function RulesTab({
           <tbody>
             {policies.length === 0 && (
               <tr>
-                <td colSpan={6} className="font-sans text-[12.5px] text-ink3 text-center py-10">
+                <td colSpan={7} className="font-sans text-[12.5px] text-ink3 text-center py-10">
                   No rules yet. Add one, or every request falls through to the default.
                 </td>
               </tr>
             )}
             {policies.map((p) => (
-              <tr key={p.id} className={`border-b border-line last:border-0 ${p.enabled ? "" : "opacity-45"}`}>
+              <tr key={p.id} className={`border-b border-line last:border-0 ${p.enabled ? "" : "opacity-45"} ${selected.has(p.id!) ? "bg-bluedim" : ""}`}>
+                <td className="px-3.5 py-3 w-9">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(p.id!)}
+                    onChange={() => toggle(p.id!)}
+                    aria-label={`Select ${p.policy_id}`}
+                    className="cursor-pointer align-middle"
+                  />
+                </td>
                 <td className="px-3.5 py-3 font-sans text-[12.5px] text-ink2">{p.priority}</td>
                 <td className="px-3.5 py-3">
                   <div className="font-sans text-[12.5px] text-ink font-medium">{p.policy_id}</div>
