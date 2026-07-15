@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SEO_PAGES } from "@/lib/seoContent";
 
 // Refreshes the Supabase session on every request and guards app pages. API
 // routes (/api/*) authenticate by API key, not a user session, so they're
@@ -44,6 +45,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/extension") || // public connect page (auth is the one-time token)
     path === "/connect.sh" || // the one-line installer script (fetched by curl, no session)
     path.startsWith("/connect-guide") || // public picture guide for the installer
+    SEO_PAGES.some((p) => path === `/${p.slug}`) || // public keyword landing pages
     path.startsWith("/api") ||
     path.startsWith("/auth");
 

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
+import { SEO_PAGES } from "@/lib/seoContent";
 
 const SITE_URL = "https://stileai.com";
 
@@ -12,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 1,
     },
+    // Keyword landing pages — high priority, these are the pages meant to rank.
+    ...SEO_PAGES.map((p) => ({
+      url: `${SITE_URL}/${p.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    })),
     {
       url: `${SITE_URL}/blog`,
       changeFrequency: "weekly",

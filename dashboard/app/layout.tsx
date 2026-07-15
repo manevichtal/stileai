@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SiteStructuredData } from "@/components/StructuredData";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -43,7 +44,10 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SiteStructuredData />
+        {children}
+      </body>
     </html>
   );
 }
