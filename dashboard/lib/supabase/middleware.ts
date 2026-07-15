@@ -42,6 +42,8 @@ export async function updateSession(request: NextRequest) {
     path === "/robots.txt" ||
     path === "/feed.xml" ||
     path.startsWith("/extension") || // public connect page (auth is the one-time token)
+    path === "/connect.sh" || // the one-line installer script (fetched by curl, no session)
+    path.startsWith("/connect-guide") || // public picture guide for the installer
     path.startsWith("/api") ||
     path.startsWith("/auth");
 

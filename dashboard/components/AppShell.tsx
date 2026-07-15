@@ -24,7 +24,6 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Governance",
     items: [
       { href: "/policies", label: "Policies", icon: "policies", desc: "Rules that allow, ask, or block a request" },
-      { href: "/tester", label: "Policy tester", icon: "spark", desc: "Try a prompt against your live policies" },
       { href: "/audit", label: "Audit log", icon: "audit", desc: "Every decision, with the reason it was made" },
       { href: "/approvals", label: "Approvals", icon: "approvals", desc: "Pending requests waiting on a human" },
     ],

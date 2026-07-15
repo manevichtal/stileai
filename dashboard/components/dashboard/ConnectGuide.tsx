@@ -142,8 +142,34 @@ export function ConnectGuide() {
     <section className="bg-card border border-line rounded-2xl p-6">
       <h3 className="font-sans font-bold text-[15px] text-ink">How to connect your AI</h3>
       <p className="text-[12px] text-ink2 mt-1 max-w-[720px]">
-        StileAI gives you an endpoint that works like the AI’s normal API. Point your tool at it and every request is
-        checked against your <Link href="/policies" className="text-blue hover:underline">policies</Link> first — nothing to install. Pick your tool:
+        StileAI gives you an endpoint that works like the AI’s normal API. Point your tools at it and every request is
+        checked against your <Link href="/policies" className="text-blue hover:underline">policies</Link> first.
+      </p>
+
+      {/* fastest path: the one-line installer */}
+      <div className="mt-4 rounded-xl border p-4" style={{ borderColor: "rgba(25,83,240,.3)", background: "var(--bluedim)" }}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[13.5px] font-bold text-ink">⚡ Fastest way — one line</span>
+          <span className="text-[10px] font-medium rounded px-1.5 py-0.5" style={{ background: "#e8f6ee", color: "#0f7a3d", border: "1px solid #b8e2c6" }}>
+            connects every terminal AI tool at once
+          </span>
+        </div>
+        <p className="text-[11.5px] text-ink2 mt-1.5 mb-2.5 max-w-[720px]">
+          Paste this into your Terminal. It connects Claude Code and any tool that uses the OpenAI or Anthropic SDK
+          (aider, Codex, your own agents) in one step — nothing to edit by hand.
+        </p>
+        <Copyable label="Terminal" body={`curl -fsSL https://stileai.com/connect.sh | sh -s -- YOUR_KEY`} />
+        <p className="text-[11px] text-ink4 mt-2 leading-relaxed">
+          Replace <span className="text-ink3">YOUR_KEY</span> with a key from{" "}
+          <Link href="/keys" className="text-blue hover:underline">API keys</Link>. Never used the Terminal?{" "}
+          <a href="/connect-guide" className="text-blue hover:underline">See the step-by-step guide with pictures →</a>
+          <br />
+          To undo later: <span className="text-ink3">curl -fsSL https://stileai.com/connect.sh | sh -s -- --uninstall</span>
+        </p>
+      </div>
+
+      <p className="text-[12px] text-ink2 mt-5 max-w-[720px]">
+        Prefer to set up one tool by hand, or connecting an app you open from the dock (like Cursor)? Pick your tool:
       </p>
 
       {/* tool tabs */}
