@@ -8,4 +8,5 @@
     </linearGradient>
   </defs>
   <path d="M14 12C14 10.5 15 10 16.5 10L47.5 10C49 10 50 10.5 50 12C50 20 51 26 50 32C49 42 41.5 49 32 54.5C22.5 49 15 42 14 32C13 26 14 20 14 12Z" fill="url(#b)" stroke="url(#g)" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M23 31.6 L29.4 38 L41 24.4" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
