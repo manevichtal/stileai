@@ -14,6 +14,7 @@ import {
   setCategoryEffect,
   applyProtectionLevel,
   applyCompliancePreset,
+  addCustomTerm,
   type PolicyInput,
   type Condition,
 } from "./actions";
@@ -222,6 +223,9 @@ function SimpleProtection({
         </div>
       </section>
 
+      {/* Custom terms */}
+      <CustomTerms terms={policies.filter((p) => p.action === "custom_term")} router={router} />
+
       {/* Live preview */}
       <LivePreview effects={effects} monitor={enforcementMode === "monitor"} />
 
@@ -372,6 +376,88 @@ function LivePreview({ effects, monitor }: { effects: Record<Category, Effect>; 
             </div>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+// Company-specific words to Block or Ask-an-admin on. Covers the sensitive things
+// no generic category can know about: project codenames, internal domains, client
+// names. Stored as policy rows (action "custom_term"); the term text is in resource.
+function CustomTerms({ terms, router }: { terms: PolicyInput[]; router: ReturnType<typeof useRouter> }) {
+  const [term, setTerm] = useState("");
+  const [effect, setEffect] = useState<"deny" | "require_approval">("deny");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function add() {
+    const clean = term.trim();
+    if (clean.length < 2) { setError("Enter a term of at least 2 characters."); return; }
+    setBusy(true); setError(null);
+    const res = await addCustomTerm(clean, effect);
+    setBusy(false);
+    if (!res.ok) { setError(res.error); return; }
+    setTerm("");
+    router.refresh();
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="font-sans font-bold text-[15px] text-ink">Your own words to watch for</h2>
+        <p className="font-sans text-[12px] text-ink3 mt-0.5">
+          Add anything specific to your company that the categories above cannot know: project codenames,
+          internal domains, client names. StileAI will act whenever a message contains one.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-line bg-card p-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") add(); }}
+            placeholder='e.g. Project Titan, @internal.acme.com'
+            className={inputCls("flex-1 min-w-[220px]")}
+          />
+          <select value={effect} onChange={(e) => setEffect(e.target.value as "deny" | "require_approval")} className={inputCls()}>
+            <option value="deny">Block</option>
+            <option value="require_approval">Ask an admin</option>
+          </select>
+          <button
+            onClick={add}
+            disabled={busy}
+            className="bg-blue text-white font-sans font-semibold text-[12.5px] rounded-lg px-3.5 py-2 hover:opacity-90 disabled:opacity-50"
+          >
+            {busy ? "Adding…" : "Add term"}
+          </button>
+        </div>
+        {error && <div className="font-sans text-[11.5px]" style={{ color: "#b02a37" }}>{error}</div>}
+
+        {terms.length === 0 ? (
+          <p className="font-sans text-[11.5px] text-ink4">No custom terms yet. They are optional, but they are how you protect what is unique to you.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {terms.map((t) => (
+              <span key={t.id} className="inline-flex items-center gap-2 rounded-full border border-line bg-bg2 pl-3 pr-2 py-1">
+                <span className="font-mono text-[11.5px] text-ink">{t.resource}</span>
+                <span
+                  className="font-sans text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+                  style={t.effect === "deny" ? { background: "#fdecee", color: "#b02a37" } : { background: "#fff8ec", color: "#8a5a12" }}
+                >
+                  {t.effect === "deny" ? "Block" : "Ask"}
+                </span>
+                <button
+                  onClick={async () => { await deletePolicy(t.id!); router.refresh(); }}
+                  aria-label={`Remove ${t.resource}`}
+                  className="font-sans text-[13px] text-ink3 hover:text-slate leading-none"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

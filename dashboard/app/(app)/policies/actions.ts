@@ -286,6 +286,51 @@ export async function applyCompliancePreset(presetKey: string): Promise<Result> 
   return { ok: true };
 }
 
+// ---- Custom terms ----------------------------------------------------------
+// Company-specific words to Block or Ask-an-admin on (codenames, internal
+// domains, client names). Stored as ordinary policy rows: action "custom_term",
+// the term in `resource`. No separate table, so no migration. Org-scoped by RLS.
+
+function termSlug(term: string): string {
+  const base = term.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32) || "term";
+  // Short deterministic suffix so two different terms never collide on the same slug.
+  let h = 5381;
+  for (let i = 0; i < term.length; i++) h = ((h << 5) + h + term.charCodeAt(i)) >>> 0;
+  return `term-${base}-${h.toString(36)}`;
+}
+
+export async function addCustomTerm(term: string, effect: string): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const clean = (term ?? "").trim();
+  if (clean.length < 2) return { ok: false, error: "Enter a term of at least 2 characters." };
+  if (clean.length > 80) return { ok: false, error: "Keep the term under 80 characters." };
+  if (effect !== "deny" && effect !== "require_approval")
+    return { ok: false, error: "A custom term can Block or Ask an admin." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("policies").upsert(
+    {
+      org_id: ctx.orgId,
+      policy_id: termSlug(clean),
+      effect,
+      priority: 5,
+      actor: "*",
+      action: "custom_term",
+      resource: clean,
+      conditions: [],
+      approvals_required: 1,
+      description: `${effect === "deny" ? "Block" : "Ask an admin about"} messages that contain "${clean}".`,
+      enabled: true,
+    },
+    { onConflict: "org_id,policy_id" },
+  );
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 // How this org handles a gray-zone request when the AI verification step can't run.
 export async function updateFallbackMode(mode: string): Promise<Result> {
   const ctx = await getProfileContext();

@@ -3,7 +3,7 @@
 // through the org's policies, log the decision, and queue an approval if needed.
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/apiKeys";
-import { checkPrompt, redactSensitive, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult } from "@/lib/promptCheck";
+import { checkPrompt, redactSensitive, redactTerms, matchCustomTerms, BALANCED_RULES, decisionFromEffect, type Category, type CheckResult, type CustomTerm, type Decision } from "@/lib/promptCheck";
 import { escalateIfNeeded } from "@/lib/deepInspect";
 import { effectiveMode } from "@/lib/enforcementMode";
 import { resolveEmployeeByKey, listEmployees } from "@/lib/employees";
@@ -13,6 +13,16 @@ import { isPlatformAdmin } from "@/lib/platformAdmin";
 export type { CheckResult } from "@/lib/promptCheck";
 
 const AI_CATEGORIES = new Set<Category>(["secrets", "pii", "client_data", "financial", "legal", "phi", "source_code"]);
+const DSEV: Record<Decision, number> = { approved: 0, admin_approval: 1, denied: 2 };
+
+// Custom terms are stored as ordinary policy rows with a reserved action; the term
+// text lives in `resource`. This keeps them org-scoped and RLS-protected with no
+// separate table. Only restrictive effects apply (deny / require_approval).
+function customTermsFromPolicies(pols: { action?: string | null; effect?: string | null; resource?: string | null }[]): CustomTerm[] {
+  return (pols ?? [])
+    .filter((p) => p.action === "custom_term" && typeof p.resource === "string" && p.resource.trim().length >= 2)
+    .map((p) => ({ term: String(p.resource), decision: decisionFromEffect(String(p.effect)) }));
+}
 
 // The platform-owner's OWN tenant gets unlimited free seats and never needs a
 // paid subscription. An org counts as the platform org when one of its members'
@@ -75,27 +85,43 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   const admin = createAdminClient();
   // Load the org's policies AND its enforcement posture in parallel.
   const [{ data: pols }, { data: settings }] = await Promise.all([
-    admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true),
+    admin.from("policies").select("action, effect, resource").eq("org_id", orgId).eq("enabled", true),
     admin.from("org_policy_settings").select("enforcement_mode, monitor_until").eq("org_id", orgId).maybeSingle(),
   ]);
   const rules = { ...BALANCED_RULES };
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
   }
+  const customTerms = customTermsFromPolicies(pols ?? []);
   // Free deterministic layer first, then an AI second opinion on the gray zone
   // (allowed-but-risky prompts). escalateIfNeeded applies THIS org's own rules and
   // can only tighten the decision; it never crosses tenants and never fails open.
   const free = checkPrompt(promptText, rules);
   const result = await escalateIfNeeded(orgId, promptText, rules, free);
 
+  // Company-specific custom terms are checked on top of the built-in categories.
+  // They can only tighten the decision, matching the "when in doubt, block" stance.
+  const cm = matchCustomTerms(promptText, customTerms);
+  if (cm.matched && DSEV[cm.decision] > DSEV[result.decision]) {
+    result.decision = cm.decision;
+    result.reason =
+      cm.decision === "denied"
+        ? "This request was blocked because it contains a term your company restricts."
+        : "This request needs admin approval because it contains a term your company restricts.";
+  }
+
   const decisionId = "ai-" + crypto.randomUUID();
   const wouldEffect = result.decision === "approved" ? "allow" : result.decision === "denied" ? "deny" : "require_approval";
-  const categories = result.hits.map((h) => h.category);
+  const categories: string[] = result.hits.map((h) => h.category);
+  const evidence: { category: string; label: string; why: string }[] = result.hits.map((h) => ({ category: h.category, label: h.label, why: h.evidence }));
+  if (cm.matched) {
+    categories.push("custom");
+    evidence.push({ category: "custom", label: "Custom term", why: "contains a term your company restricts" });
+  }
   // Allowed: nothing sensitive was detected, so a plain preview is safe. Blocked/held:
-  // store a REDACTED preview (sensitive spans masked) — context without raw secrets.
+  // store a REDACTED preview (sensitive spans + custom terms masked) — context, no raw secrets.
   const preview =
-    result.decision === "approved" ? promptText.slice(0, 280) : redactSensitive(promptText);
-  const evidence = result.hits.map((h) => ({ category: h.category, label: h.label, why: h.evidence }));
+    result.decision === "approved" ? promptText.slice(0, 280) : redactTerms(redactSensitive(promptText), customTerms);
 
   // Monitor mode: observe-only. Log what WOULD have happened, pass the request
   // through unblocked, and never queue an approval. Enforce mode: today's behavior.
@@ -111,14 +137,14 @@ export async function gate(orgId: string, promptText: string, model: string, emp
       actor: "employee", action: "ai.request", resource: model,
       params: { categories, evidence, preview, monitor: true, would_effect: wouldEffect, would_reason: result.reason,
                 ai_verified: result.unverified ? false : undefined },
-      effect: "allow", matched_policy: result.hits[0]?.label ?? null,
+      effect: "allow", matched_policy: result.hits[0]?.label ?? (cm.matched ? "Custom term" : null),
       reason: "Monitor mode: reported only, not blocked. " + result.reason,
       status: "monitored", employee_id: employeeId ?? null,
     });
     // Pass through: the caller gets an allow, so nothing is blocked or held.
     return {
       decision: "approved",
-      reason: "Allowed — StileAI is in monitor mode (reporting only, not blocking).",
+      reason: "Allowed. StileAI is in monitor mode (reporting only, not blocking).",
       hits: [],
       profile: result.profile,
       monitored: true,
@@ -133,14 +159,14 @@ export async function gate(orgId: string, promptText: string, model: string, emp
     org_id: orgId, decision_id: decisionId, ts: new Date().toISOString(),
     actor: "employee", action: "ai.request", resource: model,
     params: { categories, evidence, preview, ai_verified: result.unverified ? false : undefined },
-    effect, matched_policy: result.hits[0]?.label ?? null,
+    effect, matched_policy: result.hits[0]?.label ?? (cm.matched ? "Custom term" : null),
     reason: result.reason, status, employee_id: employeeId ?? null,
   });
   if (result.decision === "admin_approval") {
     await admin.from("approvals").insert({
       org_id: orgId, decision_id: decisionId, actor: "employee", action: "ai.request",
       resource: model, params: { categories, preview: "(restricted content hidden)" },
-      reason: result.reason, matched_policy: result.hits[0]?.label ?? null,
+      reason: result.reason, matched_policy: result.hits[0]?.label ?? (cm.matched ? "Custom term" : null),
       approvals_required: 1, status: "pending", approvals: [],
     });
   }
@@ -152,12 +178,21 @@ export async function gate(orgId: string, promptText: string, model: string, emp
 // trail or queuing an approval. Same detection + rules as gate(), no side effects.
 export async function previewDecision(orgId: string, promptText: string): Promise<CheckResult> {
   const admin = createAdminClient();
-  const { data: pols } = await admin.from("policies").select("action, effect").eq("org_id", orgId).eq("enabled", true);
+  const { data: pols } = await admin.from("policies").select("action, effect, resource").eq("org_id", orgId).eq("enabled", true);
   const rules = { ...BALANCED_RULES };
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
   }
-  return checkPrompt(promptText, rules);
+  const result = checkPrompt(promptText, rules);
+  const cm = matchCustomTerms(promptText, customTermsFromPolicies(pols ?? []));
+  if (cm.matched && DSEV[cm.decision] > DSEV[result.decision]) {
+    result.decision = cm.decision;
+    result.reason =
+      cm.decision === "denied"
+        ? "This request was blocked because it contains a term your company restricts."
+        : "This request needs admin approval because it contains a term your company restricts.";
+  }
+  return result;
 }
 
 // The message StileAI returns (as the AI's reply) when a request is blocked/held.

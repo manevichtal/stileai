@@ -302,6 +302,45 @@ export function decisionFromEffect(effect: string): Decision {
 
 const SEVERITY: Record<Decision, number> = { approved: 0, admin_approval: 1, denied: 2 };
 
+// ---- Custom terms ---------------------------------------------------------
+// Company-specific words an org wants StileAI to act on (project codenames,
+// internal domains, client names). These are per-org, not global patterns, so
+// they live outside the seven built-in categories.
+export type CustomTerm = { term: string; decision: Decision };
+
+// The strictest decision among the org's custom terms found in the prompt
+// (case-insensitive substring). Deterministic; never returns the matched term.
+export function matchCustomTerms(prompt: string, terms: CustomTerm[]): { decision: Decision; matched: boolean } {
+  const lc = (prompt ?? "").toLowerCase();
+  let worst: Decision = "approved";
+  let matched = false;
+  for (const t of terms) {
+    const term = (t.term ?? "").trim().toLowerCase();
+    if (term.length < 2) continue;
+    if (lc.includes(term)) {
+      matched = true;
+      if (SEVERITY[t.decision] > SEVERITY[worst]) worst = t.decision;
+    }
+  }
+  return { decision: worst, matched };
+}
+
+// Mask any custom terms in a text so an org's private words never land in the
+// audit preview, even when only a custom term (not a built-in category) matched.
+export function redactTerms(text: string, terms: CustomTerm[]): string {
+  let out = text ?? "";
+  for (const t of terms) {
+    const term = (t.term ?? "").trim();
+    if (term.length < 2) continue;
+    try {
+      out = out.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "••••");
+    } catch {
+      /* skip a term that cannot be turned into a safe regex */
+    }
+  }
+  return out;
+}
+
 // A privacy-preserving preview for the audit trail: the prompt with every detected
 // sensitive span masked to "••••", so an admin sees the context and intent of a
 // blocked message WITHOUT the raw secret/PII ever being stored. Truncated for size.
@@ -353,7 +392,7 @@ export function checkPrompt(prompt: string, rules: CategoryRules = BALANCED_RULE
 
   const hits = [...seen.values()];
   if (hits.length === 0) {
-    return { decision: "approved", reason: "No policy-restricted content detected — safe, general AI usage.", hits: [], profile: "your policies" };
+    return { decision: "approved", reason: "No policy-restricted content detected. Safe, general AI usage.", hits: [], profile: "your policies" };
   }
 
   let decision: Decision = "approved";

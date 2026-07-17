@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { checkPrompt, redactSensitive, BALANCED_RULES } from "./promptCheck";
+import { checkPrompt, redactSensitive, redactTerms, matchCustomTerms, BALANCED_RULES } from "./promptCheck";
 
 // Under BALANCED_RULES: secrets/phi = denied, pii/client_data/financial/legal/
 // source_code = admin_approval. "approved" means nothing restricted matched.
@@ -106,6 +106,28 @@ describe("redaction masks new heuristic hits", () => {
     const red = redactSensitive("key Zx9Kq2Lm4Np7Rs1Tv6Wy8Bd3Fh5Jk0Aa card 4111 1111 1111 1111");
     expect(red).not.toContain("Zx9Kq2Lm4Np7Rs1Tv6Wy8Bd3Fh5Jk0Aa");
     expect(red).not.toContain("4111 1111 1111 1111");
+    expect(red).toContain("••••");
+  });
+});
+
+describe("custom terms", () => {
+  it("matches case-insensitively and returns the strictest decision", () => {
+    const terms = [
+      { term: "Project Titan", decision: "denied" as const },
+      { term: "acme-internal", decision: "admin_approval" as const },
+    ];
+    expect(matchCustomTerms("can you summarize the project titan roadmap", terms)).toEqual({ decision: "denied", matched: true });
+    expect(matchCustomTerms("email from bob@acme-internal.com", terms)).toEqual({ decision: "admin_approval", matched: true });
+    expect(matchCustomTerms("nothing sensitive here", terms)).toEqual({ decision: "approved", matched: false });
+  });
+
+  it("ignores terms shorter than 2 chars", () => {
+    expect(matchCustomTerms("a a a", [{ term: "a", decision: "denied" }]).matched).toBe(false);
+  });
+
+  it("redactTerms masks a private codename in a preview", () => {
+    const red = redactTerms("the Project Titan launch plan", [{ term: "Project Titan", decision: "denied" }]);
+    expect(red).not.toContain("Project Titan");
     expect(red).toContain("••••");
   });
 });
