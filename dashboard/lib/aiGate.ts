@@ -17,11 +17,21 @@ const DSEV: Record<Decision, number> = { approved: 0, admin_approval: 1, denied:
 
 // Custom terms are stored as ordinary policy rows with a reserved action; the term
 // text lives in `resource`. This keeps them org-scoped and RLS-protected with no
-// separate table. Only restrictive effects apply (deny / require_approval).
-function customTermsFromPolicies(pols: { action?: string | null; effect?: string | null; resource?: string | null }[]): CustomTerm[] {
+// separate table. A term tagged to a category (actor "cat:<category>") follows that
+// category's live outcome; a standalone term carries its own effect.
+type PolicyRow = { action?: string | null; effect?: string | null; resource?: string | null; actor?: string | null };
+export function customTermsFromPolicies(pols: PolicyRow[], rules: Record<Category, Decision> | Partial<Record<Category, Decision>>): CustomTerm[] {
   return (pols ?? [])
     .filter((p) => p.action === "custom_term" && typeof p.resource === "string" && p.resource.trim().length >= 2)
-    .map((p) => ({ term: String(p.resource), decision: decisionFromEffect(String(p.effect)) }));
+    .map((p) => {
+      const actor = String(p.actor ?? "");
+      if (actor.startsWith("cat:")) {
+        const cat = actor.slice(4) as Category;
+        const dec = AI_CATEGORIES.has(cat) ? (rules[cat] ?? decisionFromEffect(String(p.effect))) : decisionFromEffect(String(p.effect));
+        return { term: String(p.resource), decision: dec };
+      }
+      return { term: String(p.resource), decision: decisionFromEffect(String(p.effect)) };
+    });
 }
 
 // The platform-owner's OWN tenant gets unlimited free seats and never needs a
@@ -85,14 +95,14 @@ export async function gate(orgId: string, promptText: string, model: string, emp
   const admin = createAdminClient();
   // Load the org's policies AND its enforcement posture in parallel.
   const [{ data: pols }, { data: settings }] = await Promise.all([
-    admin.from("policies").select("action, effect, resource").eq("org_id", orgId).eq("enabled", true),
+    admin.from("policies").select("action, effect, resource, actor").eq("org_id", orgId).eq("enabled", true),
     admin.from("org_policy_settings").select("enforcement_mode, monitor_until").eq("org_id", orgId).maybeSingle(),
   ]);
   const rules = { ...BALANCED_RULES };
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
   }
-  const customTerms = customTermsFromPolicies(pols ?? []);
+  const customTerms = customTermsFromPolicies(pols ?? [], rules);
   // Free deterministic layer first, then an AI second opinion on the gray zone
   // (allowed-but-risky prompts). escalateIfNeeded applies THIS org's own rules and
   // can only tighten the decision; it never crosses tenants and never fails open.
@@ -178,13 +188,13 @@ export async function gate(orgId: string, promptText: string, model: string, emp
 // trail or queuing an approval. Same detection + rules as gate(), no side effects.
 export async function previewDecision(orgId: string, promptText: string): Promise<CheckResult> {
   const admin = createAdminClient();
-  const { data: pols } = await admin.from("policies").select("action, effect, resource").eq("org_id", orgId).eq("enabled", true);
+  const { data: pols } = await admin.from("policies").select("action, effect, resource, actor").eq("org_id", orgId).eq("enabled", true);
   const rules = { ...BALANCED_RULES };
   for (const p of pols ?? []) {
     if (AI_CATEGORIES.has(p.action as Category)) rules[p.action as Category] = decisionFromEffect(p.effect as string);
   }
   const result = checkPrompt(promptText, rules);
-  const cm = matchCustomTerms(promptText, customTermsFromPolicies(pols ?? []));
+  const cm = matchCustomTerms(promptText, customTermsFromPolicies(pols ?? [], rules));
   if (cm.matched && DSEV[cm.decision] > DSEV[result.decision]) {
     result.decision = cm.decision;
     result.reason =

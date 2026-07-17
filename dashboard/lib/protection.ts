@@ -38,6 +38,7 @@ export type CategoryMeta = {
   label: string;
   short: string;
   example: string;
+  catches: string[]; // plain-language list of what this category already detects
 };
 
 // policyId values match the existing "ai-usage" pack so writing the grid upserts
@@ -48,42 +49,79 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     label: "Passwords, API keys & secrets",
     short: "Credentials of any kind",
     example: "an AWS key, a database password, an access token",
+    catches: [
+      "API keys (AWS, Stripe, GitHub, Google, and more)",
+      "Passwords, passphrases, and access tokens",
+      "Private keys and database connection strings",
+      "Unusual high-entropy tokens it has never seen before",
+    ],
   },
   source_code: {
     policyId: "ai-source-code",
     label: "Source code",
     short: "Proprietary code and config",
     example: "a code file, a script, a config with connection strings",
+    catches: [
+      "Source files and code snippets",
+      "Config files and environment variables",
+      "Internal endpoints and connection strings",
+    ],
   },
   client_data: {
     policyId: "ai-client-data",
     label: "Customer & client data",
     short: "Records about the people you serve",
     example: "a customer list, a client's account details",
+    catches: [
+      "Customer and client lists",
+      "Account records and contact details",
+      "CRM exports and support tickets",
+    ],
   },
   pii: {
     policyId: "ai-pii",
     label: "Personal data (PII)",
     short: "Information that identifies a person",
     example: "names with emails, phone numbers, national IDs, addresses",
+    catches: [
+      "Names paired with emails or phone numbers",
+      "Government IDs (SSN, national ID)",
+      "Addresses and dates of birth",
+      "Payment card numbers (validated)",
+    ],
   },
   financial: {
     policyId: "ai-financial",
     label: "Financial information",
     short: "Money, accounts, and card data",
     example: "unpublished revenue, bank details, a card number",
+    catches: [
+      "Unpublished revenue and forecasts",
+      "Bank and routing numbers",
+      "Card numbers and account balances",
+    ],
   },
   legal: {
     policyId: "ai-legal",
     label: "Legal & contract documents",
     short: "Contracts and legal text",
     example: "an NDA, a signed agreement, litigation notes",
+    catches: [
+      "Contracts, NDAs, and MSAs",
+      "Signed agreements and term sheets",
+      "Litigation and settlement material",
+    ],
   },
   phi: {
     policyId: "ai-phi",
     label: "Health information (PHI)",
     short: "Health data about a person",
     example: "a medical record, a diagnosis, a health claim",
+    catches: [
+      "Diagnoses and treatment details",
+      "Medical records and charts",
+      "Health insurance and claim data",
+    ],
   },
 };
 

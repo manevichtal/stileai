@@ -15,6 +15,7 @@ import {
   applyProtectionLevel,
   applyCompliancePreset,
   addCustomTerm,
+  addCategoryTrigger,
   type PolicyInput,
   type Condition,
 } from "./actions";
@@ -197,7 +198,14 @@ function SimpleProtection({
         </div>
         <div className="rounded-2xl border border-line bg-card divide-y divide-line overflow-hidden">
           {CATEGORY_ORDER.map((cat) => (
-            <CategoryRow key={cat} cat={cat} value={effects[cat]} onChange={(e) => chooseCategory(cat, e)} />
+            <CategoryRow
+              key={cat}
+              cat={cat}
+              value={effects[cat]}
+              onChange={(e) => chooseCategory(cat, e)}
+              triggers={policies.filter((p) => p.action === "custom_term" && p.actor === `cat:${cat}`)}
+              router={router}
+            />
           ))}
         </div>
       </section>
@@ -223,8 +231,11 @@ function SimpleProtection({
         </div>
       </section>
 
-      {/* Custom terms */}
-      <CustomTerms terms={policies.filter((p) => p.action === "custom_term")} router={router} />
+      {/* Custom terms (standalone, not tied to a category) */}
+      <CustomTerms
+        terms={policies.filter((p) => p.action === "custom_term" && !String(p.actor ?? "").startsWith("cat:"))}
+        router={router}
+      />
 
       {/* Live preview */}
       <LivePreview effects={effects} monitor={enforcementMode === "monitor"} />
@@ -244,35 +255,107 @@ const SEG: { key: Effect; tone: string }[] = [
   { key: "deny", tone: "#b02a37" },
 ];
 
-function CategoryRow({ cat, value, onChange }: { cat: Category; value: Effect; onChange: (e: Effect) => void }) {
+function CategoryRow({
+  cat,
+  value,
+  onChange,
+  triggers,
+  router,
+}: {
+  cat: Category;
+  value: Effect;
+  onChange: (e: Effect) => void;
+  triggers: PolicyInput[];
+  router: ReturnType<typeof useRouter>;
+}) {
   const meta = CATEGORY_META[cat];
+  const [open, setOpen] = useState(false);
+  const [term, setTerm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function add() {
+    const clean = term.trim();
+    if (clean.length < 2) { setError("Enter a word of at least 2 characters."); return; }
+    setBusy(true); setError(null);
+    const res = await addCategoryTrigger(cat, clean);
+    setBusy(false);
+    if (!res.ok) { setError(res.error); return; }
+    setTerm("");
+    router.refresh();
+  }
+
   return (
-    <div className="flex items-center gap-4 px-4 py-3.5">
-      <div className="min-w-0 flex-1">
-        <div className="font-sans font-semibold text-[13.5px] text-ink">{meta.label}</div>
-        <div className="font-sans text-[11.5px] text-ink3 mt-0.5">
-          {meta.short}. <span className="text-ink4">e.g. {meta.example}</span>
+    <div>
+      <div className="flex items-center gap-4 px-4 py-3.5">
+        <div className="min-w-0 flex-1">
+          <div className="font-sans font-semibold text-[13.5px] text-ink">{meta.label}</div>
+          <div className="font-sans text-[11.5px] text-ink3 mt-0.5">
+            {meta.short}. <span className="text-ink4">e.g. {meta.example}</span>
+          </div>
+          <button onClick={() => setOpen((o) => !o)} className="font-sans text-[11px] text-blue hover:underline mt-1">
+            {open ? "Close" : "Edit"}
+            {triggers.length > 0 && !open && <span className="text-ink4"> · {triggers.length} added</span>}
+          </button>
+        </div>
+        <div className="flex-none flex rounded-lg border border-line overflow-hidden self-start mt-0.5">
+          {SEG.map((opt) => {
+            const selected = value === opt.key;
+            return (
+              <button
+                key={opt.key}
+                onClick={() => onChange(opt.key)}
+                className="font-sans text-[12px] font-semibold px-3 py-1.5 border-l first:border-l-0 border-line transition-colors"
+                style={selected ? { background: opt.tone, color: "#fff" } : { background: "transparent", color: "#5e656e" }}
+              >
+                {EFFECT_LABEL[opt.key]}
+              </button>
+            );
+          })}
         </div>
       </div>
-      <div className="flex-none flex rounded-lg border border-line overflow-hidden">
-        {SEG.map((opt) => {
-          const selected = value === opt.key;
-          return (
-            <button
-              key={opt.key}
-              onClick={() => onChange(opt.key)}
-              className="font-sans text-[12px] font-semibold px-3 py-1.5 border-l first:border-l-0 border-line transition-colors"
-              style={
-                selected
-                  ? { background: opt.tone, color: "#fff" }
-                  : { background: "transparent", color: "#5e656e" }
-              }
-            >
-              {EFFECT_LABEL[opt.key]}
-            </button>
-          );
-        })}
-      </div>
+
+      {open && (
+        <div className="px-4 pb-4">
+          <div className="rounded-xl border border-line bg-bg2 p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div className="font-sans text-[11.5px] font-semibold text-ink2 mb-1.5">What StileAI catches here</div>
+              <ul className="flex flex-col gap-1">
+                {meta.catches.map((c, i) => (
+                  <li key={i} className="font-sans text-[11.5px] text-ink3 flex gap-2"><span className="text-blue">•</span><span>{c}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="font-sans text-[11.5px] font-semibold text-ink2 mb-1.5">Add your own words that count as this</div>
+              <div className="flex items-center gap-2">
+                <input
+                  value={term}
+                  onChange={(e) => setTerm(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") add(); }}
+                  placeholder="e.g. our token prefix tk_"
+                  className={inputCls("flex-1 min-w-0")}
+                />
+                <button onClick={add} disabled={busy} className="bg-blue text-white font-sans font-semibold text-[12px] rounded-lg px-3 py-2 hover:opacity-90 disabled:opacity-50">
+                  {busy ? "…" : "Add"}
+                </button>
+              </div>
+              {error && <div className="font-sans text-[11px] mt-1" style={{ color: "#b02a37" }}>{error}</div>}
+              {triggers.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {triggers.map((t) => (
+                    <span key={t.id} className="inline-flex items-center gap-2 rounded-full border border-line bg-card pl-2.5 pr-1.5 py-1">
+                      <span className="font-mono text-[11px] text-ink">{t.resource}</span>
+                      <button onClick={async () => { await deletePolicy(t.id!); router.refresh(); }} aria-label={`Remove ${t.resource}`} className="font-sans text-[13px] text-ink3 hover:text-slate leading-none">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="font-sans text-[10.5px] text-ink4 mt-1.5">These follow this category&apos;s setting above ({EFFECT_LABEL[value]}).</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

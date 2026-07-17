@@ -331,6 +331,41 @@ export async function addCustomTerm(term: string, effect: string): Promise<Resul
   return { ok: true };
 }
 
+// Add an org-specific trigger word to one of the built-in categories. It "counts
+// as" that category, so it inherits the category's Allow / Ask / Block outcome
+// (resolved live at check time; the stored effect is just a fallback). Stored as a
+// custom_term row tagged with actor "cat:<category>".
+export async function addCategoryTrigger(category: string, term: string): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  if (!(category in CATEGORY_META)) return { ok: false, error: "Unknown category." };
+  const clean = (term ?? "").trim();
+  if (clean.length < 2) return { ok: false, error: "Enter a word of at least 2 characters." };
+  if (clean.length > 80) return { ok: false, error: "Keep it under 80 characters." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("policies").upsert(
+    {
+      org_id: ctx.orgId,
+      policy_id: `catterm-${category}-${termSlug(clean).replace(/^term-/, "")}`,
+      effect: "require_approval",
+      priority: 5,
+      actor: `cat:${category}`,
+      action: "custom_term",
+      resource: clean,
+      conditions: [],
+      approvals_required: 1,
+      description: `Counts as ${CATEGORY_META[category as keyof typeof CATEGORY_META].label}.`,
+      enabled: true,
+    },
+    { onConflict: "org_id,policy_id" },
+  );
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 // How this org handles a gray-zone request when the AI verification step can't run.
 export async function updateFallbackMode(mode: string): Promise<Result> {
   const ctx = await getProfileContext();
