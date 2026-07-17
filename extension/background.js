@@ -86,10 +86,36 @@ function offlineVerdict(prompt, cfg) {
   return { effect: "allow", reason: "", categories: [], unreachable: true, degraded: true };
 }
 
+// Health beacon: report that a matched send endpoint yielded no extractable
+// prompt (a likely vendor format change). Fire-and-forget, throttled here too so
+// a burst on one tab can't spam the backend. No prompt content is ever sent.
+let lastBeacon = 0;
+async function reportBeacon(site) {
+  try {
+    const now = Date.now();
+    if (now - lastBeacon < 60000) return;
+    lastBeacon = now;
+    const cfg = await getConfig();
+    if (!cfg.key) return;
+    const url = cfg.endpoint.replace(/\/+$/, "") + "/api/health/extraction";
+    let version = "";
+    try { version = chrome.runtime.getManifest().version; } catch (_) {}
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + cfg.key },
+      body: JSON.stringify({ site: String(site || "unknown"), v: version }),
+    }).catch(() => {});
+  } catch (_) {}
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg && msg.type === "decide") {
     inspect(msg.prompt, msg.label).then(sendResponse);
     return true; // keep the channel open for the async reply
+  }
+  if (msg && msg.type === "beacon") {
+    reportBeacon(msg.site);
+    return false; // fire-and-forget, no async reply
   }
   if (msg && msg.type === "getStatus") {
     getConfig().then((c) =>

@@ -26,6 +26,9 @@
         if (chrome.runtime.lastError || !status) status = { enabled: false, configured: false };
         window.postMessage({ __stileai: "statusResult", status }, "*");
       });
+    } else if (d.__stileai === "extractMiss") {
+      // Fire-and-forget health beacon; no reply expected.
+      try { chrome.runtime.sendMessage({ type: "beacon", site: d.label }); } catch (_) {}
     }
   });
 })();

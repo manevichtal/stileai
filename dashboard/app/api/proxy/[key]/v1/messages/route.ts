@@ -102,7 +102,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   }
 
   const promptText = extractPrompt(body);
-  const result = await gate(caller.orgId, promptText, model, caller.employeeId);
+  let result;
+  try {
+    result = await gate(caller.orgId, promptText, model, caller.employeeId);
+  } catch {
+    // Fail closed: if the policy check itself errors, NEVER forward to Anthropic.
+    const content = "🟠 StileAI could not verify this request, so it was held to protect company data. Please try again in a moment.";
+    if (body?.stream) {
+      return new Response(anthropicSSE(model, content), { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+    }
+    return new Response(JSON.stringify(anthropicMessage(model, content)), { headers: { "Content-Type": "application/json" } });
+  }
 
   if (result.decision === "approved") {
     const headers: Record<string, string> = { "Content-Type": "application/json" };

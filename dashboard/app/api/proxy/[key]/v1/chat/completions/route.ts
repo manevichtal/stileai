@@ -100,7 +100,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
   // org's policies, runs the free layer + AI gray-zone step, logs the decision,
   // queues an approval when needed, and honors the org's enforcement mode (in
   // monitor mode it logs "would have" and passes through). One source of truth.
-  const result = await gate(caller.orgId, promptText, model, caller.employeeId);
+  let result;
+  try {
+    result = await gate(caller.orgId, promptText, model, caller.employeeId);
+  } catch {
+    // Fail closed: if the policy check itself errors, NEVER forward to the AI.
+    const content = "🟠 StileAI could not verify this request, so it was held to protect company data. Please try again in a moment.";
+    if (body?.stream) {
+      return new Response(sseBlock(model, content), { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+    }
+    return json(completion(model, content));
+  }
 
   // Approved (or monitor mode) → forward to the AI provider with the caller's own
   // key (flows through untouched).
