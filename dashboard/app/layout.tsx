@@ -32,6 +32,17 @@ export const metadata: Metadata = {
     description: "The policy checkpoint between your team and the AI they use.",
     images: ["/og.png"],
   },
+  // Favicons live at versioned /public paths (not the app/icon.svg convention)
+  // so a filename change forces every browser to refetch instead of showing a
+  // stale cached icon. PNGs cover clients that render SVG favicons poorly.
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
+  },
   // Google Search Console verification. Set GOOGLE_SITE_VERIFICATION in Vercel
   // to the content value Google gives you; the meta tag then renders itself.
   ...(process.env.GOOGLE_SITE_VERIFICATION

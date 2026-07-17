@@ -10,10 +10,11 @@ type SendArgs = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   replyTo?: string;
 };
 
-export async function sendEmail({ to, subject, text, replyTo }: SendArgs): Promise<{ sent: boolean; error?: string }> {
+export async function sendEmail({ to, subject, text, html, replyTo }: SendArgs): Promise<{ sent: boolean; error?: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { sent: false, error: "no_provider" };
   // "from" must be a verified sender on your Resend account. Until a custom domain
@@ -32,6 +33,7 @@ export async function sendEmail({ to, subject, text, replyTo }: SendArgs): Promi
         to: [to],
         subject,
         text,
+        ...(html ? { html } : {}),
         ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     });

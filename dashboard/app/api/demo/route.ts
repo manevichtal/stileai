@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rateLimit";
 import { sendEmail } from "@/lib/email";
+import { demoRequestEmail } from "@/lib/emailTemplates";
 
 // POST /api/demo, the public "Book a demo" form on the landing page.
 //
@@ -92,19 +93,12 @@ export async function POST(req: Request) {
   }
 
   // Best-effort email notification. Never blocks the success response on it.
-  const summary =
-    `New demo request from the StileAI site\n\n` +
-    `Name:      ${name}\n` +
-    `Email:     ${email}\n` +
-    `Company:   ${company || "(not given)"}\n` +
-    `Team size: ${teamSize || "(not given)"}\n` +
-    `Source:    ${source}\n\n` +
-    `Message:\n${message || "(none)"}\n`;
-
+  const built = demoRequestEmail({ name, email, company, teamSize, source, message });
   const mail = await sendEmail({
     to: NOTIFY_TO,
-    subject: `Demo request: ${name}${company ? " (" + company + ")" : ""}`,
-    text: summary,
+    subject: built.subject,
+    text: built.text,
+    html: built.html,
     replyTo: email,
   });
 

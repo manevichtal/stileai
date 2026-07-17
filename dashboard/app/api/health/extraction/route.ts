@@ -1,5 +1,6 @@
 import { orgForKey } from "@/lib/aiGate";
 import { sendEmail } from "@/lib/email";
+import { extractionAlertEmail } from "@/lib/emailTemplates";
 import { rateLimit } from "@/lib/rateLimit";
 
 // POST /api/health/extraction — an operational health beacon from the browser
@@ -45,16 +46,8 @@ export async function POST(req: Request) {
   try {
     const gate = await rateLimit("email:extraction_miss:" + site, 1, 6 * 60 * 60);
     if (gate.allowed) {
-      await sendEmail({
-        to: NOTIFY_TO,
-        subject: `StileAI alert: the ${site} extractor may be broken`,
-        text:
-          `Heads up. StileAI's browser extension just reported that it could not read a message from ${site}.\n\n` +
-          `This usually means ${site} changed how its page sends messages, which can quietly reduce what StileAI catches on that site until the extractor is updated.\n\n` +
-          `What to do: tell your StileAI build assistant to "update the ${site} extractor." Nothing sensitive is included in this alert.\n\n` +
-          `Extension version: ${extVersion || "unknown"}\n` +
-          `Time: ${new Date().toISOString()}\n`,
-      });
+      const mail = extractionAlertEmail({ site, extVersion, ts: new Date().toISOString() });
+      await sendEmail({ to: NOTIFY_TO, subject: mail.subject, text: mail.text, html: mail.html });
     }
   } catch {
     /* email is best-effort; the logged line above is the source of truth */
