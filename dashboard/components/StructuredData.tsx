@@ -27,7 +27,7 @@ export function SiteStructuredData() {
           "@type": "Organization",
           name: "StileAI",
           url: SITE,
-          logo: `${SITE}/icon.svg`,
+          logo: `${SITE}/apple-icon.png`,
           description:
             "StileAI is the security checkpoint between a company's team and the AI tools they use, checking every prompt against policy before secrets, PII, or source code can leave.",
           sameAs: [] as string[],

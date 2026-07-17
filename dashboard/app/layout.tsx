@@ -37,10 +37,12 @@ export const metadata: Metadata = {
   // stale cached icon. PNGs cover clients that render SVG favicons poorly.
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
     ],
+    shortcut: "/favicon.ico",
     apple: "/apple-icon.png",
   },
   // Google Search Console verification. Set GOOGLE_SITE_VERIFICATION in Vercel
