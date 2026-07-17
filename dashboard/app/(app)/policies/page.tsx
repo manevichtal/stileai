@@ -45,13 +45,13 @@ export default async function PoliciesPage({
   return (
     <>
       <PageHeader
-        title="Policies"
-        subtitle="The rules your AI agents must clear before acting."
+        title="Protection"
+        subtitle="Decide what your team can and cannot send to AI tools."
       />
       <PoliciesClient
         policies={policies}
         defaultEffect={settings?.default_effect ?? "require_approval"}
-        defaultReason={settings?.default_reason ?? "No policy matched — defaulting to human approval."}
+        defaultReason={settings?.default_reason ?? "No policy matched, defaulting to human approval."}
         fallbackMode={(settings?.ai_fallback_mode as "availability" | "hold" | "flag") ?? "availability"}
         enforcementMode={(settings?.enforcement_mode as "enforce" | "monitor") ?? "enforce"}
         monitorUntil={(settings?.monitor_until as string | null) ?? null}

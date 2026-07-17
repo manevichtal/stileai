@@ -6,6 +6,13 @@ import { getProfileContext } from "@/lib/getProfile";
 import { packByKey } from "@/lib/policyTemplates";
 import { packAllowed } from "@/lib/tiers";
 import { isEnforcementMode, monitorUntilFrom } from "@/lib/enforcementMode";
+import {
+  CATEGORY_META,
+  PROTECTION_LEVELS,
+  COMPLIANCE_PRESETS,
+  type Effect,
+} from "@/lib/protection";
+import type { Category } from "@/lib/promptCheck";
 
 export type Condition = { field: string; op: string; value: unknown };
 export type PolicyInput = {
@@ -163,7 +170,7 @@ export async function updateDefaults(
 }
 
 // Enforcement posture: "enforce" (block for real, default) or "monitor"
-// (observe-only for a window — logs what would happen but blocks nothing).
+// (observe-only for a window: logs what would happen but blocks nothing).
 // Switching to monitor sets a window (default 14 days); switching to enforce
 // clears it. Kept server-side; days is clamped by monitorUntilFrom.
 export async function updateEnforcementMode(mode: string, days = 14): Promise<Result> {
@@ -176,6 +183,103 @@ export async function updateEnforcementMode(mode: string, days = 14): Promise<Re
       ? { org_id: ctx.orgId, enforcement_mode: "monitor", monitor_until: monitorUntilFrom(Date.now(), days) }
       : { org_id: ctx.orgId, enforcement_mode: "enforce", monitor_until: null };
   const { error } = await supabase.from("org_policy_settings").upsert(patch, { onConflict: "org_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+// ---- Simple "Protection" model -------------------------------------------
+// The redesigned Policies page edits the seven content categories directly.
+// Each category compiles to one `policies` row (action = category), which is
+// exactly what lib/aiGate.ts reads to decide a prompt. policy_id is shared with
+// the ai-usage pack so writes are idempotent, never duplicated.
+
+const EFFECTS = new Set<Effect>(["allow", "require_approval", "deny"]);
+
+function describeCategory(category: Category, effect: Effect): string {
+  const meta = CATEGORY_META[category];
+  const verb = effect === "deny" ? "Block" : effect === "allow" ? "Allow" : "Ask an admin to approve";
+  return `${verb} AI requests that contain ${meta.short.toLowerCase()}.`;
+}
+
+// Upsert the given category -> effect choices as policy rows for the org.
+async function writeCategoryMap(
+  orgId: string,
+  map: Partial<Record<Category, Effect>>,
+): Promise<Result> {
+  const rows = (Object.entries(map) as [Category, Effect][])
+    .filter(([cat, eff]) => cat in CATEGORY_META && EFFECTS.has(eff))
+    .map(([cat, eff]) => ({
+      org_id: orgId,
+      policy_id: CATEGORY_META[cat].policyId,
+      effect: eff,
+      priority: 10,
+      actor: "*",
+      action: cat,
+      resource: "*",
+      conditions: [],
+      approvals_required: 1,
+      description: describeCategory(cat, eff),
+      enabled: true,
+    }));
+  if (rows.length === 0) return { ok: true };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("policies").upsert(rows, { onConflict: "org_id,policy_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+// Set a single content category's outcome (Allow / Ask an admin / Block).
+export async function setCategoryEffect(category: string, effect: string): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  if (!(category in CATEGORY_META)) return { ok: false, error: "Unknown category." };
+  if (!EFFECTS.has(effect as Effect)) return { ok: false, error: "Choose Allow, Ask an admin, or Block." };
+  return writeCategoryMap(ctx.orgId, { [category as Category]: effect as Effect });
+}
+
+// Apply a one-click protection level: sets all seven categories AND the
+// enforcement mode (Watch only = monitor; Balanced/Strict = enforce).
+export async function applyProtectionLevel(levelKey: string): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const level = PROTECTION_LEVELS.find((l) => l.key === levelKey);
+  if (!level) return { ok: false, error: "Unknown protection level." };
+
+  const wrote = await writeCategoryMap(ctx.orgId, level.map);
+  if (!wrote.ok) return wrote;
+
+  const supabase = await createClient();
+  const patch: { org_id: string; enforcement_mode: string; monitor_until: string | null } =
+    level.enforcement === "monitor"
+      ? { org_id: ctx.orgId, enforcement_mode: "monitor", monitor_until: monitorUntilFrom(Date.now(), 14) }
+      : { org_id: ctx.orgId, enforcement_mode: "enforce", monitor_until: null };
+  const { error } = await supabase.from("org_policy_settings").upsert(patch, { onConflict: "org_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/policies");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+// Apply a compliance preset (SOC 2 / HIPAA / PCI / GDPR / ISO 27001): sets the
+// seven categories to that framework's posture and switches to enforcing.
+export async function applyCompliancePreset(presetKey: string): Promise<Result> {
+  const ctx = await getProfileContext();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const preset = COMPLIANCE_PRESETS.find((p) => p.key === presetKey);
+  if (!preset) return { ok: false, error: "Unknown compliance preset." };
+
+  const wrote = await writeCategoryMap(ctx.orgId, preset.map);
+  if (!wrote.ok) return wrote;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("org_policy_settings")
+    .upsert({ org_id: ctx.orgId, enforcement_mode: "enforce", monitor_until: null }, { onConflict: "org_id" });
   if (error) return { ok: false, error: error.message };
   revalidatePath("/policies");
   revalidatePath("/dashboard");

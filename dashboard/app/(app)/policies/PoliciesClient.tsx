@@ -11,12 +11,27 @@ import {
   updateFallbackMode,
   updateEnforcementMode,
   addPack,
+  setCategoryEffect,
+  applyProtectionLevel,
+  applyCompliancePreset,
   type PolicyInput,
   type Condition,
 } from "./actions";
 import { POLICY_PACKS, PACK_CATEGORIES, type PolicyPack } from "@/lib/policyTemplates";
 import { packAllowed } from "@/lib/tiers";
 import { daysLeft } from "@/lib/enforcementMode";
+import {
+  CATEGORY_META,
+  CATEGORY_ORDER,
+  EFFECT_LABEL,
+  PROTECTION_LEVELS,
+  COMPLIANCE_PRESETS,
+  effectsFromPolicies,
+  activeLevelKey,
+  activePresetKey,
+  type Effect,
+} from "@/lib/protection";
+import type { Category } from "@/lib/promptCheck";
 
 const OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "regex", "exists"];
 const EFFECTS = ["allow", "deny", "require_approval"];
@@ -56,13 +71,352 @@ export function PoliciesClient({
   plan: string | null;
 }) {
   const router = useRouter();
+  const [advanced, setAdvanced] = useState(false);
+
+  return (
+    <div className="px-8 pb-10 w-full">
+      {advanced ? (
+        <AdvancedView
+          policies={policies}
+          defaultEffect={defaultEffect}
+          defaultReason={defaultReason}
+          fallbackMode={fallbackMode}
+          enforcementMode={enforcementMode}
+          monitorUntil={monitorUntil}
+          existingIds={existingIds}
+          initialTab={initialTab}
+          plan={plan}
+          router={router}
+          onBack={() => setAdvanced(false)}
+        />
+      ) : (
+        <SimpleProtection
+          policies={policies}
+          enforcementMode={enforcementMode}
+          monitorUntil={monitorUntil}
+          onAdvanced={() => setAdvanced(true)}
+          router={router}
+        />
+      )}
+    </div>
+  );
+}
+
+// ===========================================================================
+// SIMPLE VIEW: the default. Protection levels, a 7-category grid, compliance
+// presets, and a live "what your team will experience" preview.
+// ===========================================================================
+
+function SimpleProtection({
+  policies,
+  enforcementMode,
+  monitorUntil,
+  onAdvanced,
+  router,
+}: {
+  policies: PolicyInput[];
+  enforcementMode: "enforce" | "monitor";
+  monitorUntil: string | null;
+  onAdvanced: () => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [effects, setEffects] = useState<Record<Category, Effect>>(() => effectsFromPolicies(policies));
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const activeLevel = activeLevelKey(effects, enforcementMode);
+  const activePreset = activePresetKey(effects);
+
+  async function chooseCategory(cat: Category, eff: Effect) {
+    setEffects((e) => ({ ...e, [cat]: eff }));
+    await setCategoryEffect(cat, eff);
+    router.refresh();
+  }
+  async function chooseLevel(key: string) {
+    const level = PROTECTION_LEVELS.find((l) => l.key === key);
+    if (!level) return;
+    setBusy("level:" + key);
+    setEffects({ ...level.map });
+    await applyProtectionLevel(key);
+    setBusy(null);
+    router.refresh();
+  }
+  async function choosePreset(key: string) {
+    const preset = COMPLIANCE_PRESETS.find((p) => p.key === key);
+    if (!preset) return;
+    setBusy("preset:" + key);
+    setEffects({ ...preset.map });
+    await applyCompliancePreset(key);
+    setBusy(null);
+    router.refresh();
+  }
+
+  return (
+    <div className="max-w-[940px] flex flex-col gap-7">
+      <EnforcementBar mode={enforcementMode} monitorUntil={monitorUntil} onSaved={() => router.refresh()} />
+
+      {/* Protection levels */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-sans font-bold text-[15px] text-ink">Pick a protection level</h2>
+          <p className="font-sans text-[12px] text-ink3 mt-0.5">One click sets everything below. You can fine-tune afterward.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {PROTECTION_LEVELS.map((lvl) => {
+            const active = activeLevel === lvl.key;
+            return (
+              <button
+                key={lvl.key}
+                onClick={() => chooseLevel(lvl.key)}
+                disabled={busy === "level:" + lvl.key}
+                className={`text-left rounded-2xl border p-4 transition-colors ${
+                  active ? "border-blue bg-bluedim" : "border-line bg-card hover:border-line2"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-sans font-bold text-[14px] text-ink">{lvl.name}</span>
+                  {lvl.recommended && (
+                    <span className="font-sans text-[9px] uppercase tracking-wide text-blue bg-white border border-blue/30 rounded px-1.5 py-0.5">Recommended</span>
+                  )}
+                  {active && <span className="ml-auto font-sans text-[11px] text-blue font-semibold">Active</span>}
+                </div>
+                <p className="font-sans text-[11.5px] text-ink2 leading-relaxed mt-1.5">{lvl.tagline}</p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Category grid */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-sans font-bold text-[15px] text-ink">What should happen to each kind of sensitive content?</h2>
+          <p className="font-sans text-[12px] text-ink3 mt-0.5">
+            When your team sends one of these to an AI tool, StileAI can allow it, ask an admin first, or block it.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-card divide-y divide-line overflow-hidden">
+          {CATEGORY_ORDER.map((cat) => (
+            <CategoryRow key={cat} cat={cat} value={effects[cat]} onChange={(e) => chooseCategory(cat, e)} />
+          ))}
+        </div>
+      </section>
+
+      {/* Compliance presets */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-sans font-bold text-[15px] text-ink">Need to match a compliance framework?</h2>
+          <p className="font-sans text-[12px] text-ink3 mt-0.5">
+            One click sets the protections the framework expects. You can still adjust any row after.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {COMPLIANCE_PRESETS.map((p) => (
+            <CompliancePresetRow
+              key={p.key}
+              preset={p}
+              active={activePreset === p.key}
+              busy={busy === "preset:" + p.key}
+              onApply={() => choosePreset(p.key)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Live preview */}
+      <LivePreview effects={effects} monitor={enforcementMode === "monitor"} />
+
+      <div className="pt-1">
+        <button onClick={onAdvanced} className="font-sans text-[12.5px] text-ink3 hover:text-ink underline underline-offset-2">
+          Advanced settings and rules
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const SEG: { key: Effect; tone: string }[] = [
+  { key: "allow", tone: "#0f7a3d" },
+  { key: "require_approval", tone: "#b8791a" },
+  { key: "deny", tone: "#b02a37" },
+];
+
+function CategoryRow({ cat, value, onChange }: { cat: Category; value: Effect; onChange: (e: Effect) => void }) {
+  const meta = CATEGORY_META[cat];
+  return (
+    <div className="flex items-center gap-4 px-4 py-3.5">
+      <div className="min-w-0 flex-1">
+        <div className="font-sans font-semibold text-[13.5px] text-ink">{meta.label}</div>
+        <div className="font-sans text-[11.5px] text-ink3 mt-0.5">
+          {meta.short}. <span className="text-ink4">e.g. {meta.example}</span>
+        </div>
+      </div>
+      <div className="flex-none flex rounded-lg border border-line overflow-hidden">
+        {SEG.map((opt) => {
+          const selected = value === opt.key;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => onChange(opt.key)}
+              className="font-sans text-[12px] font-semibold px-3 py-1.5 border-l first:border-l-0 border-line transition-colors"
+              style={
+                selected
+                  ? { background: opt.tone, color: "#fff" }
+                  : { background: "transparent", color: "#5e656e" }
+              }
+            >
+              {EFFECT_LABEL[opt.key]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CompliancePresetRow({
+  preset,
+  active,
+  busy,
+  onApply,
+}: {
+  preset: (typeof COMPLIANCE_PRESETS)[number];
+  active: boolean;
+  busy: boolean;
+  onApply: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`rounded-xl border p-4 ${active ? "border-blue bg-bluedim" : "border-line bg-card"}`}>
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-sans font-bold text-[13.5px] text-ink">{preset.name}</span>
+            <span className="font-sans text-[10.5px] text-ink3">{preset.framework}</span>
+            {active && <span className="font-sans text-[10.5px] text-blue font-semibold">Applied</span>}
+          </div>
+          <p className="font-sans text-[11.5px] text-ink2 leading-relaxed mt-1">{preset.summary}</p>
+        </div>
+        <button
+          onClick={onApply}
+          disabled={busy}
+          className={`flex-none font-sans font-semibold text-[12px] rounded-lg px-3.5 py-2 disabled:opacity-50 ${
+            active ? "bg-bg2 border border-line text-ink2 hover:bg-bg3" : "bg-blue text-white hover:opacity-90"
+          }`}
+        >
+          {busy ? "Applying…" : active ? "Re-apply" : "Apply"}
+        </button>
+      </div>
+      <button onClick={() => setOpen((o) => !o)} className="font-sans text-[11px] text-blue hover:underline mt-2">
+        {open ? "Hide details" : "What this sets"}
+      </button>
+      {open && (
+        <ul className="mt-2 flex flex-col gap-1.5 border-t border-line pt-2.5">
+          {CATEGORY_ORDER.map((cat) => (
+            <li key={cat} className="flex items-center gap-2 font-sans text-[11.5px]">
+              <span className="w-[190px] text-ink2">{CATEGORY_META[cat].label}</span>
+              <EffectBadge effect={preset.map[cat] === "require_approval" ? "require_approval" : preset.map[cat]} />
+              {preset.controls[cat] && <span className="text-ink4 text-[10.5px]">{preset.controls[cat]}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// A handful of realistic prompts, pre-labeled with the categories they contain,
+// so the preview shows the outcome of the CURRENT grid without running detection.
+const PREVIEW_SAMPLES: { text: string; cats: Category[] }[] = [
+  { text: "Use this to test the integration: sk_live_9f2a3c8b1d…", cats: ["secrets"] },
+  { text: "Clean up our customer list: john@acme.com, +1 415 555 0148, …", cats: ["client_data", "pii"] },
+  { text: "Draft a summary of our Q3 numbers: revenue $2.4M, margin 61%…", cats: ["financial"] },
+  { text: "Refactor this module for me: export function auth(req){…}", cats: ["source_code"] },
+  { text: "Explain how OAuth 2.0 refresh tokens work.", cats: [] },
+];
+
+const SEVERITY: Record<Effect, number> = { allow: 0, require_approval: 1, deny: 2 };
+
+function outcomeFor(cats: Category[], effects: Record<Category, Effect>): Effect {
+  let worst: Effect = "allow";
+  for (const c of cats) if (SEVERITY[effects[c]] > SEVERITY[worst]) worst = effects[c];
+  return worst;
+}
+
+function LivePreview({ effects, monitor }: { effects: Record<Category, Effect>; monitor: boolean }) {
+  return (
+    <section className="rounded-2xl border border-line bg-bg2 p-5">
+      <h2 className="font-sans font-bold text-[14px] text-ink">What your team will experience</h2>
+      <p className="font-sans text-[11.5px] text-ink3 mt-0.5">
+        {monitor
+          ? "You are in Watch mode, so nothing is blocked yet. This is what WOULD happen once you enforce."
+          : "Based on your settings right now."}
+      </p>
+      <div className="mt-3 flex flex-col gap-2">
+        {PREVIEW_SAMPLES.map((s, i) => {
+          const eff = outcomeFor(s.cats, effects);
+          const { label, color, bg } =
+            eff === "deny"
+              ? { label: "Blocked", color: "#b02a37", bg: "#fdecee" }
+              : eff === "require_approval"
+                ? { label: "Held for approval", color: "#8a5a12", bg: "#fff8ec" }
+                : { label: "Allowed", color: "#0f7a3d", bg: "#e9f6ee" };
+          return (
+            <div key={i} className="flex items-center gap-3 rounded-lg bg-card border border-line px-3 py-2.5">
+              <span className="font-mono text-[11px] text-ink2 truncate flex-1">{s.text}</span>
+              <span
+                className="flex-none font-sans text-[11px] font-semibold rounded-full px-2.5 py-1"
+                style={{ color, background: monitor ? "#eef0f3" : bg }}
+              >
+                {monitor ? `Would be: ${label}` : label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ===========================================================================
+// ADVANCED VIEW: the original power-user surface, unchanged: the raw rules
+// table, defaults, fallback, and the full policy library.
+// ===========================================================================
+
+function AdvancedView({
+  policies,
+  defaultEffect,
+  defaultReason,
+  fallbackMode,
+  enforcementMode,
+  monitorUntil,
+  existingIds,
+  initialTab,
+  plan,
+  router,
+  onBack,
+}: {
+  policies: PolicyInput[];
+  defaultEffect: string;
+  defaultReason: string;
+  fallbackMode: "availability" | "hold" | "flag";
+  enforcementMode: "enforce" | "monitor";
+  monitorUntil: string | null;
+  existingIds: string[];
+  initialTab: "rules" | "library";
+  plan: string | null;
+  router: ReturnType<typeof useRouter>;
+  onBack: () => void;
+}) {
   const [editing, setEditing] = useState<PolicyInput | null>(null);
   const [tab, setTab] = useState<"rules" | "library">(initialTab);
 
   return (
-    <div className={`px-8 pb-8 flex flex-col gap-5 ${tab === "library" ? "w-full" : "max-w-[1000px]"}`}>
+    <div className={`flex flex-col gap-5 ${tab === "library" ? "w-full" : "max-w-[1000px]"}`}>
+      <button onClick={onBack} className="self-start font-sans text-[12.5px] text-blue hover:underline">
+        &larr; Back to simple view
+      </button>
       <div className="flex gap-6 border-b border-line">
-        {([["rules", "Your policies"], ["library", "Policy library"]] as const).map(([k, label]) => (
+        {([["rules", "Your rules"], ["library", "Policy library"]] as const).map(([k, label]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -137,11 +491,7 @@ function RulesTab({
   return (
     <div className="flex flex-col gap-6">
       <EnforcementBar mode={enforcementMode} monitorUntil={monitorUntil} onSaved={() => router.refresh()} />
-      <DefaultsBar
-        defaultEffect={defaultEffect}
-        defaultReason={defaultReason}
-        onSaved={() => router.refresh()}
-      />
+      <DefaultsBar defaultEffect={defaultEffect} defaultReason={defaultReason} onSaved={() => router.refresh()} />
       <FallbackBar mode={fallbackMode} onSaved={() => router.refresh()} />
 
       <div className="flex items-center justify-between">
@@ -306,7 +656,7 @@ function EnforcementBar({
            style={{ borderColor: "#b8791a", background: "#fff8ec" }}>
         <div className="flex flex-col flex-1 min-w-[260px]">
           <span className="font-sans text-[12.5px] font-semibold" style={{ color: "#8a5a12" }}>
-            👁️ Monitor mode — reporting only, nothing is being blocked
+            👁️ Watch mode: reporting only, nothing is being blocked
           </span>
           <span className="font-sans text-[11px] text-ink3 mt-0.5">
             Every prompt is checked and logged with what <b>would</b> have happened, but requests pass through.
@@ -327,9 +677,9 @@ function EnforcementBar({
   return (
     <div className="bg-bg2 border border-line rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
       <div className="flex flex-col flex-1 min-w-[260px]">
-        <span className="font-sans text-[12px] text-ink2">🛡️ Enforcing — restricted prompts are blocked or held for approval</span>
+        <span className="font-sans text-[12px] text-ink2">🛡️ Enforcing: restricted prompts are blocked or held for approval</span>
         <span className="font-sans text-[10.5px] text-ink4">
-          New to StileAI? Run in monitor mode first to see what your team sends, without blocking anyone.
+          New to StileAI? Run in Watch mode first to see what your team sends, without blocking anyone.
         </span>
       </div>
       <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls()} disabled={busy}>
@@ -342,7 +692,7 @@ function EnforcementBar({
         onClick={() => setMode("monitor", days)}
         className="font-sans text-[11.5px] text-blue hover:underline disabled:text-ink4"
       >
-        {busy ? "Saving…" : "Start monitor mode"}
+        {busy ? "Saving…" : "Start Watch mode"}
       </button>
     </div>
   );
@@ -452,7 +802,7 @@ function PolicyModal({ initial, onClose, onSaved }: { initial: PolicyInput; onCl
               <button onClick={() => set({ conditions: [...p.conditions, { field: "", op: "eq", value: "" }] })} className="font-sans text-[11px] text-blue hover:underline">+ add condition</button>
             </div>
             <div className="flex flex-col gap-2">
-              {p.conditions.length === 0 && <span className="font-sans text-[11px] text-ink4">No conditions — the rule matches on actor/action/resource alone.</span>}
+              {p.conditions.length === 0 && <span className="font-sans text-[11px] text-ink4">No conditions. The rule matches on actor/action/resource alone.</span>}
               {p.conditions.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <input value={c.field} onChange={(e) => setCond(i, { field: e.target.value })} className={inputCls("flex-1")} placeholder="amount" />
@@ -487,7 +837,7 @@ function PolicyModal({ initial, onClose, onSaved }: { initial: PolicyInput; onCl
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className={labelCls()}>{label}{hint && <span className="text-ink4 font-normal"> — {hint}</span>}</span>
+      <span className={labelCls()}>{label}{hint && <span className="text-ink4 font-normal">: {hint}</span>}</span>
       {children}
     </label>
   );
@@ -497,7 +847,6 @@ function PolicyLibrary({ existingIds, onChanged, plan }: { existingIds: Set<stri
   const byKey = new Map(POLICY_PACKS.map((p) => [p.key, p]));
   const total = POLICY_PACKS.reduce((n, p) => n + p.templates.length, 0);
 
-  // Group into the named categories, in order; anything uncategorized falls to "More".
   const grouped = PACK_CATEGORIES.map((cat) => ({
     name: cat.name,
     packs: cat.keys.map((k) => byKey.get(k)).filter((p): p is PolicyPack => Boolean(p)),
@@ -509,9 +858,9 @@ function PolicyLibrary({ existingIds, onChanged, plan }: { existingIds: Set<stri
   return (
     <div className="flex flex-col gap-8">
       <p className="font-sans text-[12px] text-ink3 max-w-[680px]">
-        {total} ready-made policies across {POLICY_PACKS.length} packs. Turn on a set and each pack maps
-        to real controls; enabling one adds its policies to yours, which you can then edit or disable
-        individually under <span className="text-ink2">Your policies</span>.
+        {total} ready-made policies across {POLICY_PACKS.length} packs, including agent-action controls for
+        teams governing AI agents. Enabling one adds its policies to yours, which you can then edit or disable
+        individually under <span className="text-ink2">Your rules</span>.
       </p>
       {grouped.map((group) => (
         <div key={group.name} className="flex flex-col gap-4">
