@@ -35,9 +35,11 @@ and latency percentiles.
 - [ ] **Set `CRON_SECRET`** in Vercel (any long random string). Vercel automatically
       sends it to the cron, and the prune route rejects anything without it. Optional:
       `AUDIT_RETENTION_DAYS` (default 90).
-- [ ] **Alert on `extraction_miss`.** In Vercel, add a Log Drain or a log alert that
-      notifies you when a log line contains `"evt":"extraction_miss"`. That is your
-      early warning that a vendor changed their format and an extractor needs a fix.
+- [ ] **Extractor-break alerts: nothing to set up.** If a vendor changes their format,
+      StileAI emails the owner automatically (throttled to one per site every 6 hours).
+      It reuses the same email setup as the demo form, so as long as `RESEND_API_KEY`
+      is configured, this already works. Change the recipient with `EXTRACTION_NOTIFY_EMAIL`.
+      The event is also logged as an `extraction_miss` line if you ever want a log alert too.
 - [ ] **Uptime check.** Point any uptime monitor (Better Uptime, Pingdom, or a free
       one) at `https://stileai.com/api/health`. It returns 200 when healthy, 503 when
       the database is unreachable.

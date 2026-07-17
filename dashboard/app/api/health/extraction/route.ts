@@ -1,14 +1,20 @@
 import { orgForKey } from "@/lib/aiGate";
+import { sendEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rateLimit";
 
 // POST /api/health/extraction — an operational health beacon from the browser
 // extension. It fires when the extension matched a real "send" endpoint but could
 // not extract a user message, which almost always means the AI vendor changed
-// their request shape. We log it (no prompt content, ever) so StileAI notices and
-// fixes the extractor before coverage silently drops for that site.
-//
-// Set up an alert on the "extraction_miss" log line (see docs/hardening.md).
+// their request shape. We log it (no prompt content, ever) AND email the owner so
+// the extractor gets fixed before coverage silently drops for that site.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Who gets the alert. Reuses the demo-notify address by default; override with
+// EXTRACTION_NOTIFY_EMAIL. Emails only go out if RESEND_API_KEY is configured
+// (the same setup that already powers the demo-request emails).
+const NOTIFY_TO =
+  process.env.EXTRACTION_NOTIFY_EMAIL || process.env.DEMO_NOTIFY_EMAIL || "manevichtal@gmail.com";
 
 export async function POST(req: Request) {
   const auth = req.headers.get("authorization") || "";
@@ -31,5 +37,28 @@ export async function POST(req: Request) {
   console.warn(
     JSON.stringify({ evt: "extraction_miss", orgId, site, extVersion, ts: new Date().toISOString() }),
   );
+
+  // Email the owner, throttled to at most one per site every 6 hours so a real
+  // breakage (which fires for every user at once) can't flood the inbox. The
+  // limiter fails open, and sendEmail no-ops when RESEND_API_KEY is unset, so a
+  // beacon never errors and never blocks the extension.
+  try {
+    const gate = await rateLimit("email:extraction_miss:" + site, 1, 6 * 60 * 60);
+    if (gate.allowed) {
+      await sendEmail({
+        to: NOTIFY_TO,
+        subject: `StileAI alert: the ${site} extractor may be broken`,
+        text:
+          `Heads up. StileAI's browser extension just reported that it could not read a message from ${site}.\n\n` +
+          `This usually means ${site} changed how its page sends messages, which can quietly reduce what StileAI catches on that site until the extractor is updated.\n\n` +
+          `What to do: tell your StileAI build assistant to "update the ${site} extractor." Nothing sensitive is included in this alert.\n\n` +
+          `Extension version: ${extVersion || "unknown"}\n` +
+          `Time: ${new Date().toISOString()}\n`,
+      });
+    }
+  } catch {
+    /* email is best-effort; the logged line above is the source of truth */
+  }
+
   return new Response(null, { status: 204 });
 }
