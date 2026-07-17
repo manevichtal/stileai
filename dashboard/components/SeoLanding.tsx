@@ -94,6 +94,8 @@ export function SeoLanding({ page }: { page: SeoPage }) {
           <nav className="flex items-center gap-4 text-[12.5px] text-ink2">
             <Link href="/" className="hover:text-ink">Home</Link>
             <Link href="/blog" className="hover:text-ink">Blog</Link>
+            <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+            <Link href="/terms" className="hover:text-ink">Terms</Link>
             <Link href="/login" className="hover:text-ink">Log in</Link>
           </nav>
         </div>

@@ -45,6 +45,8 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/extension") || // public connect page (auth is the one-time token)
     path === "/connect.sh" || // the one-line installer script (fetched by curl, no session)
     path.startsWith("/connect-guide") || // public picture guide for the installer
+    path === "/terms" || // public legal pages
+    path === "/privacy" ||
     SEO_PAGES.some((p) => path === `/${p.slug}`) || // public keyword landing pages
     path.startsWith("/api") ||
     path.startsWith("/auth");

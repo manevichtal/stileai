@@ -221,6 +221,14 @@ function LoginPageInner() {
                   ? "Continue to payment"
                   : "Sign in"}
             </button>
+
+            {mode === "signup" && (
+              <p className="font-sans text-[11px] text-ink3 text-center leading-relaxed -mt-1">
+                By creating an account you agree to our{" "}
+                <a href="/terms" target="_blank" className="text-blue hover:underline">Terms</a>{" and "}
+                <a href="/privacy" target="_blank" className="text-blue hover:underline">Privacy Policy</a>.
+              </p>
+            )}
           </form>
         </div>
 

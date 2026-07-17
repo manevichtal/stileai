@@ -31,7 +31,12 @@
     {
       host: /(^|\.)chatgpt\.com$|(^|\.)chat\.openai\.com$/,
       label: "ChatGPT",
-      matches: (u) => /\/backend-api\/.*conversation/.test(u),
+      // Only the real "send a message" endpoint: POST /backend-api/conversation
+      // (or the newer /backend-api/f/conversation), optionally with a query
+      // string. Deliberately NOT /conversations (history list), /conversation/{id}
+      // (open a chat), or /conversation/requirements (proof-of-work), which fire
+      // on page load and carry high-entropy tokens, not user messages.
+      matches: (u) => /\/backend-api\/(f\/)?conversation(\?|$)/.test(u),
       extract: (body) => {
         try {
           const j = JSON.parse(body);

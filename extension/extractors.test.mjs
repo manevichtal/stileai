@@ -45,6 +45,19 @@ describe("ChatGPT extractor", () => {
     expect(site.extract("{ not json")).toBe(null);
     expect(site.extract(JSON.stringify({ nope: true }))).toBe(null);
   });
+
+  it("does NOT match ChatGPT's own load-time endpoints (no false blocks)", () => {
+    // These fire on page load, before the user types, and carry high-entropy
+    // tokens, not user messages. Matching them caused a spurious credential block.
+    expect(site.matches("https://chatgpt.com/backend-api/conversation/requirements")).toBe(false);
+    expect(site.matches("https://chatgpt.com/backend-api/conversations?offset=0&limit=28")).toBe(false);
+    expect(site.matches("https://chatgpt.com/backend-api/conversation/2b3f-uuid")).toBe(false);
+    expect(site.matches("https://chatgpt.com/backend-api/conversation/init")).toBe(false);
+    // ...but the real send endpoints still match, with or without a query string.
+    expect(site.matches("https://chatgpt.com/backend-api/conversation")).toBe(true);
+    expect(site.matches("https://chatgpt.com/backend-api/f/conversation")).toBe(true);
+    expect(site.matches("https://chatgpt.com/backend-api/conversation?ex=1")).toBe(true);
+  });
 });
 
 describe("Claude extractor", () => {
