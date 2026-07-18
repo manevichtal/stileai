@@ -101,6 +101,39 @@ describe("Gemini extractor", () => {
   });
 });
 
+describe("Grok extractor", () => {
+  const site = byLabel("Grok");
+  const url = "https://grok.com/rest/app-chat/conversations/abc123/responses";
+
+  it("matches a follow-up send and reads the message field", () => {
+    expect(site.matches(url)).toBe(true);
+    const body = JSON.stringify({
+      message: "here is the prod key AKIA5F2KQX8",
+      modelName: "grok-3",
+      parentResponseId: "b3bcf1a9-57ce-5236-b35d-710afe71e056",
+    });
+    expect(site.extract(body)).toContain("AKIA5F2KQX8");
+  });
+
+  it("matches a new-conversation send", () => {
+    expect(site.matches("https://grok.com/rest/app-chat/conversations/new")).toBe(true);
+    const body = JSON.stringify({ message: "leak customer john@acme.co", modelName: "grok-3" });
+    expect(site.extract(body)).toContain("john@acme.co");
+  });
+
+  it("does NOT extract from the sibling fetch that only carries responseIds", () => {
+    // grok.com posts {responseIds:[...]} to fetch its own answer back; that is not a
+    // user message, so extraction must return null (no spurious check on a UUID).
+    const body = JSON.stringify({ responseIds: ["671c12e1-aa24-403c-b6e3-e502f8225be6"] });
+    expect(site.extract(body)).toBe(null);
+  });
+
+  it("resolves via siteFor on grok.com host", () => {
+    expect(siteFor(url, "grok.com")).toBe(site);
+    expect(siteFor(url, "example.com")).toBe(null);
+  });
+});
+
 describe("siteFor", () => {
   it("returns null for a non-AI host even if the path matches", () => {
     expect(siteFor("https://evil.com/backend-api/conversation", "evil.com")).toBe(null);

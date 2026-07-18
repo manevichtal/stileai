@@ -78,6 +78,30 @@
         return null;
       },
     },
+    {
+      host: /(^|\.)grok\.com$/,
+      label: "Grok",
+      // grok.com posts the user turn to its chat API: /rest/app-chat/conversations/new
+      // for a fresh chat, or /rest/app-chat/conversations/{id}/responses for a follow-up.
+      // The message rides in a top-level "message" field. We key extraction on that
+      // field so the sibling POST that only carries {responseIds:[...]} (grok fetching
+      // its own answer back) is ignored, no false block, no noise.
+      matches: (u) => /\/rest\/app-chat\/conversations\//.test(u),
+      extract: (body) => {
+        try {
+          const j = JSON.parse(body);
+          if (typeof j.message === "string") return j.message;
+          if (Array.isArray(j.messages) && j.messages.length) {
+            const last = j.messages[j.messages.length - 1];
+            if (last) {
+              if (typeof last.message === "string") return last.message;
+              if (typeof last.content === "string") return last.content;
+            }
+          }
+        } catch (_) {}
+        return null;
+      },
+    },
   ];
 
   // Resolve the matching site for a request URL on a given host. In the page world
