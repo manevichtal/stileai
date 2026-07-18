@@ -36,7 +36,8 @@
         "https://chat.openai.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://grok.com/*"
+        "https://grok.com/*",
+        "https://copilot.microsoft.com/*"
       ],
       "js": ["extractors.js", "interceptor.js"],
       "run_at": "document_start",
@@ -48,7 +49,8 @@
         "https://chat.openai.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://grok.com/*"
+        "https://grok.com/*",
+        "https://copilot.microsoft.com/*"
       ],
       "js": ["bridge.js"],
       "run_at": "document_start",

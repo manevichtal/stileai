@@ -102,6 +102,40 @@
         return null;
       },
     },
+    {
+      host: /(^|\.)copilot\.microsoft\.com$/,
+      label: "Copilot",
+      // Microsoft Copilot's chat API lives under /c/api/conversations/{id}/... The
+      // user turn is POSTed there; history is a GET (the interceptor only extracts
+      // POSTs, so history is never read). The message is a text run inside a
+      // content array: content:[{type:"text",text:"..."}], mirroring the turn shape.
+      matches: (u) => /\/c\/api\/conversations\//.test(u),
+      extract: (body) => {
+        try {
+          const j = JSON.parse(body);
+          const fromContent = (c) =>
+            Array.isArray(c)
+              ? c.filter((p) => p && p.type === "text" && typeof p.text === "string").map((p) => p.text).join("\n")
+              : "";
+          if (typeof j.text === "string") return j.text;
+          if (typeof j.message === "string") return j.message;
+          let t = fromContent(j.content);
+          if (t) return t;
+          // a turn wrapper, a messages list, or a results list (human turn)
+          const turn = Array.isArray(j.messages)
+            ? j.messages[j.messages.length - 1]
+            : Array.isArray(j.results)
+            ? j.results.filter((r) => r && r.author && r.author.type === "human").pop()
+            : j.turn || j.message || null;
+          if (turn && typeof turn === "object") {
+            if (typeof turn.text === "string") return turn.text;
+            t = fromContent(turn.content);
+            if (t) return t;
+          }
+        } catch (_) {}
+        return null;
+      },
+    },
   ];
 
   // Resolve the matching site for a request URL on a given host. In the page world

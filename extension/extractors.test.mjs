@@ -134,6 +134,43 @@ describe("Grok extractor", () => {
   });
 });
 
+describe("Copilot extractor", () => {
+  const site = byLabel("Copilot");
+  const url = "https://copilot.microsoft.com/c/api/conversations/biGTUmdHjc5PDCgNUQkBW/turns";
+
+  it("matches the conversations API and reads text from the content array", () => {
+    expect(site.matches(url)).toBe(true);
+    const body = JSON.stringify({
+      content: [{ type: "text", text: "here is the prod key AKIA5F2KQX8" }],
+      mode: "smart",
+    });
+    expect(site.extract(body)).toContain("AKIA5F2KQX8");
+  });
+
+  it("reads a plain text field when present", () => {
+    expect(site.extract(JSON.stringify({ text: "leak customer john@acme.co" }))).toContain("john@acme.co");
+  });
+
+  it("pulls the human turn out of a results list", () => {
+    const body = JSON.stringify({
+      results: [
+        { author: { type: "ai" }, content: [{ type: "text", text: "hi there" }] },
+        { author: { type: "human" }, content: [{ type: "text", text: "our source is auth/login.ts" }] },
+      ],
+    });
+    expect(site.extract(body)).toContain("auth/login.ts");
+  });
+
+  it("resolves via siteFor on copilot.microsoft.com host", () => {
+    expect(siteFor(url, "copilot.microsoft.com")).toBe(site);
+    expect(siteFor(url, "example.com")).toBe(null);
+  });
+
+  it("returns null on an unrelated shape (no false blocks)", () => {
+    expect(site.extract(JSON.stringify({ telemetry: true, count: 3 }))).toBe(null);
+  });
+});
+
 describe("siteFor", () => {
   it("returns null for a non-AI host even if the path matches", () => {
     expect(siteFor("https://evil.com/backend-api/conversation", "evil.com")).toBe(null);
