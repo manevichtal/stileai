@@ -90,14 +90,25 @@
       extract: (body) => {
         try {
           const j = JSON.parse(body);
-          if (typeof j.message === "string") return j.message;
+          // grok fetches its own answer back with {responseIds:[...]} and no user
+          // text. That is not a message; skip it (returning the longest string here
+          // would surface a UUID and create audit noise).
+          if (j && j.responseIds && !j.message && !j.messages && !j.input) return null;
+          // Grok has moved the user turn between fields across versions. Probe the
+          // known direct fields first, then the last message in a list, then fall
+          // back to the longest string in the payload (which is the user's text).
+          for (const k of ["message", "input", "text", "prompt", "query"]) {
+            if (typeof j[k] === "string" && j[k].trim()) return j[k];
+          }
           if (Array.isArray(j.messages) && j.messages.length) {
             const last = j.messages[j.messages.length - 1];
             if (last) {
-              if (typeof last.message === "string") return last.message;
-              if (typeof last.content === "string") return last.content;
+              if (typeof last.message === "string" && last.message.trim()) return last.message;
+              if (typeof last.content === "string" && last.content.trim()) return last.content;
             }
           }
+          const longest = longestString(j);
+          if (longest && longest.trim().length >= 2) return longest;
         } catch (_) {}
         return null;
       },

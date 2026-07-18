@@ -128,6 +128,17 @@ describe("Grok extractor", () => {
     expect(site.extract(body)).toBe(null);
   });
 
+  it("falls back to the longest string when the message is under an unexpected field", () => {
+    // Grok has shuffled the user turn between fields across versions. As long as the
+    // request carries the user's text somewhere, the longest-string fallback finds it.
+    const body = JSON.stringify({
+      modelName: "grok-3",
+      conversationId: "b3bcf1a9-57ce-5236-b35d-710afe71e056",
+      userInput: { kind: "text", value: "here is our aws key AKIA5F2KQX8ZZQEXAMPLE" },
+    });
+    expect(site.extract(body)).toContain("AKIA5F2KQX8ZZQEXAMPLE");
+  });
+
   it("resolves via siteFor on grok.com host", () => {
     expect(siteFor(url, "grok.com")).toBe(site);
     expect(siteFor(url, "example.com")).toBe(null);
