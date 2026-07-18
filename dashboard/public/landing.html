@@ -182,8 +182,72 @@
   .app .cin{color:#E6EDF5;caret-color:#5B9DFF}
   .app .cin::placeholder{color:#55677A}
 </style>
+<!-- Cold-open intro: plays once per visitor, then reveals the page. The blocking
+     script below flags first-time visitors BEFORE paint so there is no flash of
+     the homepage; repeat visitors and crawlers (no JS) never see the overlay. -->
+<script>
+(function(){try{
+  if(!localStorage.getItem('stileai_intro_v1') &&
+     !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    document.documentElement.classList.add('si-play');
+  }
+}catch(e){}})();
+</script>
+<style>
+  .si-cover{display:none}
+  html.si-play{overflow:hidden}
+  html.si-play .si-cover{display:block}
+  .si-cover{position:fixed;inset:0;z-index:2147483000;opacity:1;transition:opacity 1s ease;
+    background:radial-gradient(130% 100% at 50% 42%,#FFFFFF 0%,#F4F6FA 100%);
+    font-family:"Inter",system-ui,sans-serif}
+  .si-cover.si-gone{opacity:0;pointer-events:none}
+  .si-field{position:absolute;inset:0;overflow:hidden}
+  .si-card{position:absolute;width:280px;background:#fff;border:1px solid #E6E8EC;border-radius:14px;
+    box-shadow:0 18px 40px rgba(20,30,60,.08);padding:13px 15px;will-change:transform,opacity;
+    animation:si-drift var(--dur) linear var(--delay) infinite}
+  .si-card .hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .si-card .dot{width:16px;height:16px;border-radius:5px;flex:none}
+  .si-card .tool{font-size:11.5px;font-weight:600;color:#5E656E;font-family:"Inter",system-ui,sans-serif}
+  .si-card .bd{font-size:13px;line-height:1.5;color:#2A2F36;font-family:"JetBrains Mono",ui-monospace,monospace}
+  .si-card .sens{background:#FDECEE;color:#C8323F;border:1px solid #F3C9CE;border-radius:5px;padding:0 5px}
+  .si-card.far{transform:scale(.8);filter:blur(2px);opacity:.45;z-index:1}
+  .si-card.mid{transform:scale(.92);filter:blur(.4px);opacity:.7;z-index:2}
+  .si-card.near{transform:scale(1);opacity:.9;z-index:3}
+  @keyframes si-drift{
+    0%{transform:translateY(46px) scale(var(--sc));opacity:0}
+    14%{opacity:var(--op)}
+    82%{opacity:var(--op)}
+    100%{transform:translateY(-150px) scale(var(--sc));opacity:0}
+  }
+  .si-veil{position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:radial-gradient(58% 46% at 50% 50%,rgba(255,255,255,.94) 0%,rgba(255,255,255,.86) 42%,rgba(255,255,255,0) 100%)}
+  .si-center{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:0 24px}
+  .si-line{max-width:16ch;text-align:center;font-weight:800;letter-spacing:-1.2px;line-height:1.1;
+    font-size:clamp(30px,5.4vw,52px);color:#111418;
+    opacity:0;transform:translateY(10px);transition:opacity .6s ease,transform .6s ease}
+  .si-line.in{opacity:1;transform:none}
+  .si-line.out{opacity:0;transform:translateY(-8px)}
+  .si-line .b{color:#1953F0}
+  .si-reveal{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:0 24px;
+    opacity:0;transform:translateY(10px);transition:opacity .8s ease,transform .8s ease;pointer-events:none}
+  .si-reveal.in{opacity:1;transform:none}
+  .si-reveal .rl{font-weight:800;letter-spacing:-1.2px;line-height:1.1;font-size:clamp(30px,5.4vw,52px);
+    color:#111418;text-align:center;max-width:18ch}
+  .si-reveal .rl .b{color:#1953F0}
+  .si-skip{position:absolute;top:22px;right:26px;z-index:7;color:#AAB0B8;font-size:13px;font-weight:500;cursor:pointer;
+    background:none;border:none;font-family:"Inter",system-ui,sans-serif}
+  .si-skip:hover{color:#111418}
+  @media(max-width:560px){.si-card{width:230px}}
+</style>
 </head>
 <body>
+<div class="si-cover" id="siCover" aria-hidden="true">
+  <div class="si-field" id="siField"></div>
+  <div class="si-veil"></div>
+  <div class="si-center"><div class="si-line" id="siLine"></div></div>
+  <div class="si-reveal" id="siReveal"><div class="rl">That's why <span class="b">StileAI</span> was created.</div></div>
+  <button class="si-skip" id="siSkip" type="button">Skip &rsaquo;</button>
+</div>
 <main class="stage">
   <header class="topbar">
     <nav class="nav-left">
@@ -750,6 +814,71 @@ function highlight(cmd){if(!cbar)return;[].forEach.call(cbar.children,x=>x.class
   });
   if(location.hash==='#demo')openDemo('hash');
   window.StileOpenDemo=openDemo;
+})();
+</script>
+<script>
+(function(){
+  var root=document.documentElement;
+  if(!root.classList.contains('si-play'))return;  // repeat visitor / reduced motion / no-JS crawler
+  var cover=document.getElementById('siCover');
+  var field=document.getElementById('siField');
+  var lineEl=document.getElementById('siLine');
+  var revealEl=document.getElementById('siReveal');
+  var timers=[];
+  function later(fn,ms){var t=setTimeout(fn,ms);timers.push(t);return t;}
+  function clearAll(){timers.forEach(clearTimeout);timers=[];}
+
+  var TOOLS={chatgpt:{name:'ChatGPT',color:'#10a37f'},copilot:{name:'GitHub Copilot',color:'#24292f'},claude:{name:'Claude',color:'#d97757'},gemini:{name:'Gemini',color:'#4285f4'}};
+  var CARDS=[
+    ['chatgpt','Debug our deploy, the AWS key is {AKIA5F2K…QX8}',4,15,'mid'],
+    ['copilot','// prod db_password = {pr0d_9xK!v2}',67,11,'far'],
+    ['claude','Review this signed contract for {Acme Corp}',74,39,'near'],
+    ['gemini','Customer list: {john@acme.co, 4111 22…}',2,54,'near'],
+    ['chatgpt','Our Q3 revenue is {$4.2M}, help me forecast',58,63,'mid'],
+    ['copilot','export STRIPE_KEY={sk_live_5F…9dQ2}',12,76,'far'],
+    ['gemini','New hire SSNs: {123-45-6789, 402-…}',40,6,'far'],
+    ['claude',"Here's our source: {auth/login.ts}, fix it",80,68,'mid']
+  ];
+  CARDS.forEach(function(c,i){
+    var t=TOOLS[c[0]];
+    var dur=(16+(i%5)*2.2), delay=-(i*2.6+1);
+    var sc=c[4]==='far'?.8:c[4]==='mid'?.92:1;
+    var op=c[4]==='far'?.45:c[4]==='mid'?.7:.9;
+    var body=c[1].replace(/\{([^}]+)\}/g,'<span class="sens">$1</span>');
+    var el=document.createElement('div');
+    el.className='si-card '+c[4];
+    el.style.left=c[2]+'%'; el.style.top=c[3]+'%';
+    el.style.setProperty('--dur',dur+'s'); el.style.setProperty('--delay',delay+'s');
+    el.style.setProperty('--sc',sc); el.style.setProperty('--op',op);
+    el.innerHTML='<div class="hd"><span class="dot" style="background:'+t.color+'"></span><span class="tool">'+t.name+'</span></div><div class="bd">'+body+'</div>';
+    field.appendChild(el);
+  });
+
+  var LINES=[
+    'Sorry to interrupt.',
+    'Quick question.',
+    'When did you last see what your team typed into <span class="b">ChatGPT</span>?',
+    'Today, someone pasted a password. A customer. Your source code.',
+    'It left the company, and no one saw it go.'
+  ];
+  var HOLD=2700, FADE=720;
+  function run(idx){
+    if(idx>=LINES.length){finish();return;}
+    lineEl.innerHTML=LINES[idx]; lineEl.className='si-line in';
+    later(function(){ lineEl.className='si-line out'; later(function(){run(idx+1);},FADE); },HOLD);
+  }
+  function finish(){ revealEl.classList.add('in'); later(done,2600); }
+  var ended=false;
+  function done(){
+    if(ended)return; ended=true;
+    clearAll();
+    try{localStorage.setItem('stileai_intro_v1','1');}catch(e){}
+    cover.classList.add('si-gone');
+    root.classList.remove('si-play');            // restore page scroll
+    later(function(){ cover.style.display='none'; },1100);
+  }
+  document.getElementById('siSkip').addEventListener('click',done);
+  later(function(){run(0);},700);
 })();
 </script>
 </body>
