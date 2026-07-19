@@ -1,6 +1,7 @@
 import { resolveCaller, gate, blockMessage, auditCallerBlock } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
 import { rateLimit, keyBucket } from "@/lib/rateLimit";
+import { extractAnthropicPrompt } from "@/lib/proxyExtract";
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
 
@@ -15,25 +16,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-
-function extractPrompt(body: { system?: unknown; messages?: unknown }): string {
-  const parts: string[] = [];
-  const sys = body?.system;
-  if (typeof sys === "string") parts.push(sys);
-  else if (Array.isArray(sys)) parts.push(sys.map((b) => (b as { text?: string })?.text ?? "").join(" "));
-  for (const m of Array.isArray(body?.messages) ? body.messages : []) {
-    const c = (m as { content?: unknown })?.content;
-    if (typeof c === "string") parts.push(c);
-    else if (Array.isArray(c)) {
-      for (const b of c) {
-        const block = b as { text?: string; content?: unknown };
-        if (typeof block?.text === "string") parts.push(block.text);
-        else if (typeof block?.content === "string") parts.push(block.content);
-      }
-    }
-  }
-  return parts.join("\n");
-}
 
 function anthropicMessage(model: string, text: string) {
   return {
@@ -101,7 +83,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
     return new Response(JSON.stringify(anthropicMessage(model, gatePass.reason)), { headers: { "Content-Type": "application/json" } });
   }
 
-  const promptText = extractPrompt(body);
+  const promptText = extractAnthropicPrompt(body);
   let result;
   try {
     result = await gate(caller.orgId, promptText, model, caller.employeeId);

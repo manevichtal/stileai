@@ -1,6 +1,7 @@
 import { resolveCaller, auditCallerBlock, gate, blockMessage } from "@/lib/aiGate";
 import { callerDecision } from "@/lib/seats";
 import { rateLimit, keyBucket } from "@/lib/rateLimit";
+import { extractOpenAIPrompt } from "@/lib/proxyExtract";
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB: prompts + tool context can be large
 
@@ -16,18 +17,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const PROVIDER_URL = "https://api.openai.com/v1/chat/completions";
-
-function extractPrompt(messages: unknown): string {
-  if (!Array.isArray(messages)) return "";
-  return messages
-    .map((m) => {
-      const c = (m as { content?: unknown })?.content;
-      if (typeof c === "string") return c;
-      if (Array.isArray(c)) return c.map((p) => (p as { text?: string })?.text ?? "").join(" ");
-      return "";
-    })
-    .join("\n");
-}
 
 function completion(model: string, content: string) {
   return {
@@ -94,7 +83,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ key: st
     return json(completion(model, gatePass.reason));
   }
 
-  const promptText = extractPrompt(body?.messages);
+  const promptText = extractOpenAIPrompt(body?.messages);
 
   // Single decision path, shared with the extension route (/api/inspect): loads the
   // org's policies, runs the free layer + AI gray-zone step, logs the decision,
